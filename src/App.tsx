@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import MyListings from "./pages/MyListings";
 import Favorites from "./pages/Favorites";
 import CreateListing from "./pages/CreateListing";
+import EditListing from "./pages/EditListing";
 import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/my-listings" element={<MyListings />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/create-listing" element={<CreateListing />} />
+              <Route path="/edit-listing/:id" element={<EditListing />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<Privacy />} />
