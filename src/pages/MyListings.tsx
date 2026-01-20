@@ -1,27 +1,26 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mockProducts } from "@/data/mockProducts";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { listingStatuses, planLimits } from "@/data/constants";
 import { 
   Plus, 
   Edit2, 
   Trash2, 
   Eye, 
-  MoreVertical,
-  AlertCircle,
   Package,
   Star,
-  Crown
+  Crown,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,22 +32,160 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface Listing {
+  id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  category: string;
+  condition: string | null;
+  university: string | null;
+  images: string[] | null;
+  is_featured: boolean | null;
+  status: string | null;
+  created_at: string;
+}
 
 const MyListings = () => {
-  // Mock user's listings (first 3 for demo)
-  const [listings, setListings] = useState(mockProducts.slice(0, 3));
+  const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
   
-  const user = {
-    plan: "Pro",
-    listingsCount: 3,
-    listingsLimit: 10,
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const userPlan = profile?.plan || "free";
+  const listingsLimit = planLimits[userPlan] || 1;
+  const canAddMore = listings.length < listingsLimit;
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast({
+          title: "Error loading listings",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setListings(data || []);
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchListings();
+  }, [user, toast]);
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from("listings")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user?.id);
+
+    if (error) {
+      toast({
+        title: "Error deleting listing",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setListings(listings.filter((listing) => listing.id !== id));
+      toast({
+        title: "Listing deleted",
+        description: "Your listing has been removed.",
+      });
+      
+      // Update profile listings count
+      if (profile) {
+        await supabase
+          .from("profiles")
+          .update({ listings_count: Math.max(0, (profile.listings_count || 1) - 1) })
+          .eq("user_id", user?.id);
+        refreshProfile();
+      }
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setListings(listings.filter((listing) => listing.id !== id));
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    const { error } = await supabase
+      .from("listings")
+      .update({ status: newStatus })
+      .eq("id", id)
+      .eq("user_id", user?.id);
+
+    if (error) {
+      toast({
+        title: "Error updating status",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setListings(listings.map((listing) => 
+        listing.id === id ? { ...listing, status: newStatus } : listing
+      ));
+      toast({
+        title: "Status updated",
+        description: `Listing marked as ${newStatus}`,
+      });
+    }
   };
 
-  const canAddMore = user.listingsCount < user.listingsLimit;
+  const getStatusIcon = (status: string | null) => {
+    switch (status) {
+      case "sold":
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      case "unavailable":
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+    }
+  };
+
+  const getStatusBadge = (status: string | null) => {
+    const statusInfo = listingStatuses.find(s => s.value === status) || listingStatuses[0];
+    return (
+      <Badge variant="outline" className="capitalize">
+        <span className={`w-2 h-2 rounded-full ${statusInfo.color} mr-1.5`} />
+        {statusInfo.label}
+      </Badge>
+    );
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-12">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="font-display text-3xl font-bold mb-4">Sign in to view your listings</h1>
+            <Button variant="hero" onClick={() => navigate("/auth")}>
+              Sign In
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,7 +213,7 @@ const MyListings = () => {
               </Link>
             ) : (
               <Link to="/pricing">
-                <Button variant="gold" className="mt-4 md:mt-0">
+                <Button variant="outline" className="mt-4 md:mt-0 border-accent text-accent hover:bg-accent/10">
                   <Crown className="w-5 h-5 mr-2" />
                   Upgrade to List More
                 </Button>
@@ -93,13 +230,13 @@ const MyListings = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">{user.plan} Plan</span>
+                    <span className="font-semibold capitalize">{userPlan} Plan</span>
                     <Badge variant="outline" className="border-primary text-primary">
-                      {user.listingsCount}/{user.listingsLimit} used
+                      {listings.length}/{listingsLimit} used
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    You can list {user.listingsLimit - user.listingsCount} more items this month
+                    You can list {Math.max(0, listingsLimit - listings.length)} more items
                   </p>
                 </div>
               </div>
@@ -107,7 +244,7 @@ const MyListings = () => {
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
                     className="gradient-bg h-2 rounded-full transition-all"
-                    style={{ width: `${(user.listingsCount / user.listingsLimit) * 100}%` }}
+                    style={{ width: `${Math.min((listings.length / listingsLimit) * 100, 100)}%` }}
                   />
                 </div>
               </div>
@@ -115,70 +252,113 @@ const MyListings = () => {
           </div>
 
           {/* Listings Grid */}
-          {listings.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : listings.length > 0 ? (
             <div className="grid gap-4">
               {listings.map((listing) => (
                 <div
                   key={listing.id}
-                  className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow"
+                  className={`bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow ${
+                    listing.status === "sold" ? "opacity-75" : ""
+                  }`}
                 >
                   <div className="flex flex-col md:flex-row gap-4">
                     {/* Image */}
-                    <div className="w-full md:w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="w-full md:w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 relative">
                       <img
-                        src={listing.images[0]}
+                        src={listing.images?.[0] || "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"}
                         alt={listing.title}
                         className="w-full h-full object-cover"
                       />
+                      {listing.status === "sold" && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="text-white font-bold">SOLD</span>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <h3 className="font-semibold text-lg truncate">
                               {listing.title}
                             </h3>
-                            {listing.isFeatured && (
+                            {listing.is_featured && (
                               <Badge className="gradient-bg text-primary-foreground">
                                 <Star className="w-3 h-3 mr-1 fill-current" />
                                 Featured
                               </Badge>
                             )}
+                            {getStatusBadge(listing.status)}
                           </div>
                           <p className="text-muted-foreground text-sm line-clamp-2 mb-2">
                             {listing.description}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             <Badge variant="outline">{listing.category}</Badge>
-                            <Badge variant="outline">{listing.condition}</Badge>
-                            <Badge variant="outline">{listing.university}</Badge>
+                            {listing.condition && (
+                              <Badge variant="outline" className="capitalize">
+                                {listing.condition.replace("_", " ")}
+                              </Badge>
+                            )}
+                            {listing.university && (
+                              <Badge variant="outline">{listing.university}</Badge>
+                            )}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0">
                           <div className="font-display text-xl font-bold gradient-text">
                             GH₵{listing.price.toLocaleString()}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            Listed: {listing.createdAt}
+                            {new Date(listing.created_at).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
                     </div>
                     
                     {/* Actions */}
-                    <div className="flex md:flex-col gap-2 md:justify-center">
+                    <div className="flex md:flex-col gap-2 md:justify-center flex-shrink-0">
                       <Link to={`/product/${listing.id}`}>
                         <Button variant="outline" size="sm" className="w-full">
                           <Eye className="w-4 h-4 mr-2" />
                           View
                         </Button>
                       </Link>
-                      <Button variant="outline" size="sm">
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
+                      <Link to={`/edit-listing/${listing.id}`}>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                      </Link>
+                      
+                      {/* Status Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full">
+                            {getStatusIcon(listing.status)}
+                            <span className="ml-2">Status</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {listingStatuses.map((status) => (
+                            <DropdownMenuItem
+                              key={status.value}
+                              onClick={() => handleStatusChange(listing.id, status.value)}
+                              className="cursor-pointer"
+                            >
+                              <span className={`w-2 h-2 rounded-full ${status.color} mr-2`} />
+                              {status.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">

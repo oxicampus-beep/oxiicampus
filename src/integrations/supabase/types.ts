@@ -25,6 +25,7 @@ export type Database = {
           is_featured: boolean | null
           is_sold: boolean | null
           price: number
+          status: string | null
           title: string
           university: string | null
           updated_at: string
@@ -40,6 +41,7 @@ export type Database = {
           is_featured?: boolean | null
           is_sold?: boolean | null
           price: number
+          status?: string | null
           title: string
           university?: string | null
           updated_at?: string
@@ -55,6 +57,7 @@ export type Database = {
           is_featured?: boolean | null
           is_sold?: boolean | null
           price?: number
+          status?: string | null
           title?: string
           university?: string | null
           updated_at?: string

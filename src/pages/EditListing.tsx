@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import ImageUpload from "@/components/listings/ImageUpload";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ghanaUniversities, categories, conditions, planLimits } from "@/data/constants";
+import { ghanaUniversities, categories, conditions, listingStatuses } from "@/data/constants";
 import { 
   Tag, 
   FileText, 
@@ -21,87 +21,107 @@ import {
   Loader2,
 } from "lucide-react";
 
-const CreateListing = () => {
+const EditListing = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
-  const [university, setUniversity] = useState(profile?.university || "");
+  const [university, setUniversity] = useState("");
+  const [status, setStatus] = useState("available");
   const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      if (!id || !user) return;
+
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        toast({
+          title: "Error loading listing",
+          description: error.message,
+          variant: "destructive",
+        });
+        navigate("/my-listings");
+        return;
+      }
+
+      if (!data) {
+        toast({
+          title: "Listing not found",
+          description: "This listing doesn't exist or you don't have permission to edit it",
+          variant: "destructive",
+        });
+        navigate("/my-listings");
+        return;
+      }
+
+      setTitle(data.title);
+      setDescription(data.description || "");
+      setPrice(data.price.toString());
+      setCategory(data.category);
+      setCondition(data.condition || "");
+      setUniversity(data.university || "");
+      setStatus(data.status || "available");
+      setImages(data.images || []);
+      setIsLoading(false);
+    };
+
+    fetchListing();
+  }, [id, user, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to create a listing",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
+    if (!user || !id) return;
 
-    // Check listing limits based on plan
-    const userPlan = profile?.plan || "free";
-    const currentListings = profile?.listings_count || 0;
-    const limit = planLimits[userPlan] || 1;
-
-    if (currentListings >= limit) {
-      toast({
-        title: "Listing limit reached",
-        description: `You've reached your ${userPlan} plan limit of ${limit} listings. Upgrade to list more!`,
-        variant: "destructive",
-      });
-      navigate("/pricing");
-      return;
-    }
-
-    setIsLoading(true);
+    setIsSaving(true);
 
     try {
-      const { error } = await supabase.from("listings").insert({
-        user_id: user.id,
-        title,
-        description,
-        price: parseFloat(price),
-        category,
-        condition,
-        university,
-        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"],
-        status: "available",
-      });
+      const { error } = await supabase
+        .from("listings")
+        .update({
+          title,
+          description,
+          price: parseFloat(price),
+          category,
+          condition,
+          university,
+          status,
+          images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"],
+        })
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
-      // Update listings count
-      await supabase
-        .from("profiles")
-        .update({ listings_count: currentListings + 1 })
-        .eq("user_id", user.id);
-
-      await refreshProfile();
-
       toast({
-        title: "Listing created!",
-        description: "Your listing is now live.",
+        title: "Listing updated!",
+        description: "Your changes have been saved.",
       });
 
       navigate("/my-listings");
     } catch (error: any) {
       toast({
-        title: "Error creating listing",
+        title: "Error updating listing",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -111,12 +131,23 @@ const CreateListing = () => {
         <Navbar />
         <div className="pt-24 pb-16">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="font-display text-3xl font-bold mb-4">Sign in to create a listing</h1>
-            <p className="text-muted-foreground mb-6">You need to be signed in to create listings</p>
+            <h1 className="font-display text-3xl font-bold mb-4">Sign in required</h1>
             <Button variant="hero" onClick={() => navigate("/auth")}>
               Sign In
             </Button>
           </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-16 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
         <Footer />
       </div>
@@ -140,13 +171,35 @@ const CreateListing = () => {
 
           <div className="max-w-2xl mx-auto">
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-              Create New Listing
+              Edit Listing
             </h1>
             <p className="text-muted-foreground mb-8">
-              Fill in the details below to list your item
+              Update your listing details
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Status */}
+              <div className="space-y-2">
+                <Label htmlFor="status">Listing Status</Label>
+                <div className="flex flex-wrap gap-2">
+                  {listingStatuses.map((s) => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => setStatus(s.value)}
+                      className={`px-4 py-2 rounded-lg border transition-colors ${
+                        status === s.value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <span className={`inline-block w-2 h-2 rounded-full ${s.color} mr-2`} />
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="title" className="flex items-center gap-2">
@@ -273,22 +326,32 @@ const CreateListing = () => {
               </div>
 
               {/* Submit */}
-              <Button
-                type="submit"
-                variant="hero"
-                size="xl"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Listing"
-                )}
-              </Button>
+              <div className="flex gap-4">
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="xl"
+                  className="flex-1"
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xl"
+                  onClick={() => navigate("/my-listings")}
+                >
+                  Cancel
+                </Button>
+              </div>
             </form>
           </div>
         </div>
@@ -299,4 +362,4 @@ const CreateListing = () => {
   );
 };
 
-export default CreateListing;
+export default EditListing;
