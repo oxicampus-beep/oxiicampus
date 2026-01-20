@@ -25,12 +25,12 @@ const HeroSection = () => {
       </div>
       
       {/* Floating Elements */}
-      <div className="absolute top-32 right-[20%] animate-float">
+      <div className="absolute top-32 right-[20%] animate-float hidden md:block">
         <div className="glass-card p-4 rounded-2xl shadow-lg border border-white/20">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
       </div>
-      <div className="absolute bottom-40 left-[15%] animate-float" style={{ animationDelay: "2s" }}>
+      <div className="absolute bottom-40 left-[15%] animate-float hidden md:block" style={{ animationDelay: "2s" }}>
         <div className="glass-card p-4 rounded-2xl shadow-lg border border-white/20">
           <ShoppingBag className="w-8 h-8 text-accent" />
         </div>
@@ -47,7 +47,7 @@ const HeroSection = () => {
           </div>
 
           {/* Headline with Animation */}
-          <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 animate-slide-up-delay-1 text-white">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-bold mb-6 animate-slide-up-delay-1 text-white">
             <span className="inline-block animate-text-shimmer bg-clip-text text-transparent bg-[linear-gradient(110deg,#fff,45%,#e0b0ff,55%,#fff)] bg-[length:250%_100%]">
               Buy & Sell on
             </span>
@@ -55,62 +55,65 @@ const HeroSection = () => {
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto animate-slide-up-delay-2">
+          <p className="text-lg sm:text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto animate-slide-up-delay-2 px-4">
             Connect with fellow students. List your items. Reach thousands of buyers across universities in Ghana.
           </p>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-10 animate-slide-up-delay-2">
-            <div className="relative flex items-center">
-              <div className="absolute left-4 pointer-events-none">
-                <Search className="w-5 h-5 text-muted-foreground" />
+          {/* Search Bar - Responsive */}
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-10 animate-slide-up-delay-2 px-4">
+            <div className="relative flex flex-col sm:flex-row items-stretch gap-2 sm:gap-0">
+              <div className="relative flex-1">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Search className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Search for laptops, textbooks, services..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-6 text-base sm:text-lg rounded-full sm:rounded-l-full sm:rounded-r-none bg-white/95 backdrop-blur-sm border-0 shadow-lg focus-visible:ring-accent"
+                />
               </div>
-              <Input
-                type="text"
-                placeholder="Search for laptops, textbooks, services..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-32 py-6 text-lg rounded-full bg-white/95 backdrop-blur-sm border-0 shadow-lg focus-visible:ring-accent"
-              />
               <Button
                 type="submit"
                 variant="hero"
-                className="absolute right-2 rounded-full px-6"
+                className="w-full sm:w-auto rounded-full sm:rounded-l-none sm:rounded-r-full px-8 py-6"
               >
-                Search
+                <span className="sm:hidden">Search</span>
+                <span className="hidden sm:inline">Search</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </form>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up-delay-3">
-            <Link to="/auth?mode=signup">
-              <Button size="xl" className="bg-white text-primary hover:bg-white/90 shadow-lg group">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up-delay-3 px-4">
+            <Link to="/auth?mode=signup" className="w-full sm:w-auto">
+              <Button size="xl" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 shadow-lg group">
                 Start Selling Free
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link to="/products">
-              <Button variant="outline" size="xl" className="border-white/50 text-white hover:bg-white/10">
+            <Link to="/products" className="w-full sm:w-auto">
+              <Button variant="outline" size="xl" className="w-full sm:w-auto border-white/50 text-white hover:bg-white/10">
                 Browse Listings
               </Button>
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 max-w-xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-xl mx-auto px-4">
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold text-white">5K+</div>
-              <div className="text-sm text-white/70 mt-1">Active Listings</div>
+              <div className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white">5K+</div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1">Active Listings</div>
             </div>
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold text-white">10+</div>
-              <div className="text-sm text-white/70 mt-1">Universities</div>
+              <div className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white">10+</div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1">Universities</div>
             </div>
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold text-white">20K+</div>
-              <div className="text-sm text-white/70 mt-1">Students</div>
+              <div className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white">20K+</div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1">Students</div>
             </div>
           </div>
         </div>

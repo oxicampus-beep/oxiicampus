@@ -42,41 +42,46 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/create-listing" className="text-background/70 hover:text-background transition-colors text-sm">
+                  Sell an Item
+                </Link>
+              </li>
+              <li>
                 <Link to="/pricing" className="text-background/70 hover:text-background transition-colors text-sm">
                   Pricing Plans
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="text-background/70 hover:text-background transition-colors text-sm">
-                  Sign Up
+                <Link to="/how-it-works" className="text-background/70 hover:text-background transition-colors text-sm">
+                  How It Works
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Company */}
           <div>
-            <h4 className="font-display font-semibold mb-4">Categories</h4>
+            <h4 className="font-display font-semibold mb-4">Company</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
-                  Electronics
-                </a>
+                <Link to="/about" className="text-background/70 hover:text-background transition-colors text-sm">
+                  About Us
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
-                  Books & Notes
-                </a>
+                <Link to="/contact" className="text-background/70 hover:text-background transition-colors text-sm">
+                  Contact Us
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
-                  Services
-                </a>
+                <Link to="/privacy" className="text-background/70 hover:text-background transition-colors text-sm">
+                  Privacy Policy
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-background/70 hover:text-background transition-colors text-sm">
-                  Clothing
-                </a>
+                <Link to="/terms" className="text-background/70 hover:text-background transition-colors text-sm">
+                  Terms of Service
+                </Link>
               </li>
             </ul>
           </div>

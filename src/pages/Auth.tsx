@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,15 @@ import {
   GraduationCap,
   Phone,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { signUp, signIn, user } = useAuth();
+  const { toast } = useToast();
+  
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,12 +42,71 @@ const Auth = () => {
     setIsSignUp(searchParams.get("mode") === "signup");
   }, [searchParams]);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
+
+    try {
+      if (isSignUp) {
+        const { error } = await signUp(email, password, {
+          full_name: name,
+          phone,
+          university,
+        });
+        
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast({
+              title: "Account exists",
+              description: "This email is already registered. Try signing in instead.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Sign up failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to verify your account, or sign in if email confirmation is disabled.",
+          });
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        
+        if (error) {
+          toast({
+            title: "Sign in failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully signed in.",
+          });
+          navigate("/");
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const universities = [
@@ -244,6 +309,7 @@ const Auth = () => {
                   onBlur={() => setFocusedField(null)}
                   className="pl-12 pr-12 h-12 rounded-xl border-2 transition-all focus:border-primary focus:shadow-purple"
                   required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -339,7 +405,7 @@ const Auth = () => {
           <div className="text-center text-white">
             <h2 className="font-display text-4xl md:text-5xl font-bold mb-6">
               Join Ghana's Largest
-              <span className="block text-gold-light">Student Marketplace</span>
+              <span className="block text-white/90">Student Marketplace</span>
             </h2>
             <p className="text-xl text-white/80 max-w-md mx-auto">
               Connect with 20,000+ students across 10+ universities. Buy, sell, and thrive together.
