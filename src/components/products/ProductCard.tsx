@@ -1,18 +1,56 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, BadgeCheck } from "lucide-react";
+import { MapPin, Star, BadgeCheck, Heart, Share2 } from "lucide-react";
 import { Product } from "@/data/mockProducts";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { toast } = useToast();
+  const favorite = isFavorite(product.id);
+
   const conditionColors = {
     new: "bg-success text-success-foreground",
     "like-new": "bg-primary text-primary-foreground",
     good: "bg-accent text-accent-foreground",
     fair: "bg-muted text-muted-foreground",
+  };
+
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(product.id);
+    toast({
+      title: favorite ? "Removed from favorites" : "Added to favorites",
+      description: favorite 
+        ? "Item removed from your favorites." 
+        : "Item saved to your favorites!",
+    });
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/product/${product.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: product.title,
+        text: `Check out ${product.title} on OxiCampus for GH₵${product.price}!`,
+        url: shareUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link copied!",
+        description: "Product link has been copied to clipboard.",
+      });
+    }
   };
 
   return (
@@ -25,6 +63,27 @@ const ProductCard = ({ product }: ProductCardProps) => {
             alt={product.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
+          
+          {/* Action Buttons */}
+          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-full bg-white/90 hover:bg-white shadow-md transition-colors"
+            >
+              <Share2 className="w-4 h-4 text-foreground" />
+            </button>
+            <button
+              onClick={handleFavorite}
+              className={`p-2 rounded-full shadow-md transition-colors ${
+                favorite 
+                  ? "bg-destructive text-destructive-foreground" 
+                  : "bg-white/90 hover:bg-white text-foreground"
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${favorite ? "fill-current" : ""}`} />
+            </button>
+          </div>
+          
           {product.isFeatured && (
             <div className="absolute top-3 left-3 px-3 py-1 gradient-bg rounded-full flex items-center gap-1.5 shadow-purple">
               <Star className="w-3.5 h-3.5 text-primary-foreground fill-current" />
@@ -34,7 +93,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </div>
           )}
           <div
-            className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${
+            className={`absolute bottom-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${
               conditionColors[product.condition]
             }`}
           >
