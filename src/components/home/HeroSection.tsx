@@ -48,10 +48,10 @@ const HeroSection = () => {
 
           {/* Headline with Animation */}
           <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 animate-slide-up-delay-1 text-white">
-            <span className="inline-block animate-text-shimmer bg-clip-text text-transparent bg-[linear-gradient(110deg,#fff,45%,#ffd700,55%,#fff)] bg-[length:250%_100%]">
+            <span className="inline-block animate-text-shimmer bg-clip-text text-transparent bg-[linear-gradient(110deg,#fff,45%,#e0b0ff,55%,#fff)] bg-[length:250%_100%]">
               Buy & Sell on
             </span>
-            <span className="block mt-2 text-accent drop-shadow-lg">Your Campus</span>
+            <span className="block mt-2 text-white drop-shadow-lg">Your Campus</span>
           </h1>
 
           {/* Subheadline */}
@@ -101,15 +101,15 @@ const HeroSection = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 max-w-xl mx-auto">
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold text-accent">5K+</div>
+              <div className="font-display text-3xl md:text-4xl font-bold text-white">5K+</div>
               <div className="text-sm text-white/70 mt-1">Active Listings</div>
             </div>
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold text-accent">10+</div>
+              <div className="font-display text-3xl md:text-4xl font-bold text-white">10+</div>
               <div className="text-sm text-white/70 mt-1">Universities</div>
             </div>
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold text-accent">20K+</div>
+              <div className="font-display text-3xl md:text-4xl font-bold text-white">20K+</div>
               <div className="text-sm text-white/70 mt-1">Students</div>
             </div>
           </div>

@@ -80,13 +80,13 @@ const About = () => {
       <section className="pt-24 pb-16 gradient-bg relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/30 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-white/30 rounded-full blur-3xl" />
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
               Empowering Campus
-              <span className="block mt-2 text-accent">Commerce in Ghana</span>
+              <span className="block mt-2 text-white">Commerce in Ghana</span>
             </h1>
             <p className="text-xl text-primary-foreground/80 mb-8">
               OxiCampus is on a mission to connect every university student in Ghana, 
@@ -94,13 +94,13 @@ const About = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/auth?mode=signup">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90">
+                <Button className="bg-white text-primary hover:bg-white/90">
                   Join OxiCampus
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
               <Link to="/products">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Button variant="outline" className="border-white text-white hover:bg-white/10">
                   Explore Listings
                 </Button>
               </Link>
@@ -249,7 +249,7 @@ const About = () => {
             Become part of Ghana's fastest-growing student marketplace today.
           </p>
           <Link to="/auth?mode=signup">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90">
+            <Button className="bg-white text-primary hover:bg-white/90">
               Get Started Free
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
