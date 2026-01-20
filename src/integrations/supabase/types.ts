@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      listings: {
+        Row: {
+          category: string
+          condition: string | null
+          created_at: string
+          description: string | null
+          id: string
+          images: string[] | null
+          is_featured: boolean | null
+          is_sold: boolean | null
+          price: number
+          title: string
+          university: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          condition?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_featured?: boolean | null
+          is_sold?: boolean | null
+          price: number
+          title: string
+          university?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          condition?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_featured?: boolean | null
+          is_sold?: boolean | null
+          price?: number
+          title?: string
+          university?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          is_verified: boolean | null
+          listings_count: number | null
+          phone: string | null
+          plan: string | null
+          university: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          listings_count?: number | null
+          phone?: string | null
+          plan?: string | null
+          university?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          listings_count?: number | null
+          phone?: string | null
+          plan?: string | null
+          university?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

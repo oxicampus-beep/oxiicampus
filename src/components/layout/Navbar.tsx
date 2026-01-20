@@ -1,19 +1,33 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ShoppingBag, User } from "lucide-react";
+import { Menu, X, ShoppingBag, User, Plus, LogOut, Heart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
 
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Browse", path: "/products" },
+    { name: "How It Works", path: "/how-it-works" },
     { name: "Pricing", path: "/pricing" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/10">
@@ -48,16 +62,71 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/auth?mode=signup">
-              <Button variant="hero" size="sm">
-                Get Started
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link to="/create-listing">
+                  <Button variant="hero" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Sell Item
+                  </Button>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <div className="w-9 h-9 rounded-full gradient-bg flex items-center justify-center">
+                        <User className="w-5 h-5 text-white" />
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2">
+                      <p className="font-medium truncate">{profile?.full_name || "User"}</p>
+                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="w-4 h-4" />
+                        My Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/my-listings" className="flex items-center gap-2 cursor-pointer">
+                        <Package className="w-4 h-4" />
+                        My Listings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/favorites" className="flex items-center gap-2 cursor-pointer">
+                        <Heart className="w-4 h-4" />
+                        Favorites
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 cursor-pointer text-destructive"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/auth?mode=signup">
+                  <Button variant="hero" size="sm">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -87,18 +156,66 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 mt-4 px-4">
-                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="hero" className="w-full">
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
+              
+              {user ? (
+                <>
+                  <Link
+                    to="/create-listing"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-muted-foreground flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Sell Item
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-muted-foreground flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    My Profile
+                  </Link>
+                  <Link
+                    to="/my-listings"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-muted-foreground flex items-center gap-2"
+                  >
+                    <Package className="w-4 h-4" />
+                    My Listings
+                  </Link>
+                  <Link
+                    to="/favorites"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-muted-foreground flex items-center gap-2"
+                  >
+                    <Heart className="w-4 h-4" />
+                    Favorites
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMenuOpen(false);
+                    }}
+                    className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-destructive flex items-center gap-2 text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-2 mt-4 px-4">
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="hero" className="w-full">
+                      Get Started
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}
