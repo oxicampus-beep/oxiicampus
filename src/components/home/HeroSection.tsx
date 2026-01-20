@@ -1,23 +1,37 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Users, ShoppingBag } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowRight, Sparkles, ShoppingBag, Search } from "lucide-react";
 
 const HeroSection = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 gradient-bg">
       {/* Background Elements */}
-      <div className="absolute inset-0 gradient-hero-bg opacity-5" />
-      <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-slow" />
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-deep/20 rounded-full blur-3xl" />
+      </div>
       
       {/* Floating Elements */}
       <div className="absolute top-32 right-[20%] animate-float">
-        <div className="glass-card p-4 rounded-2xl shadow-purple">
-          <Sparkles className="w-8 h-8 text-primary" />
+        <div className="glass-card p-4 rounded-2xl shadow-lg border border-white/20">
+          <Sparkles className="w-8 h-8 text-white" />
         </div>
       </div>
       <div className="absolute bottom-40 left-[15%] animate-float" style={{ animationDelay: "2s" }}>
-        <div className="glass-card p-4 rounded-2xl shadow-gold">
+        <div className="glass-card p-4 rounded-2xl shadow-lg border border-white/20">
           <ShoppingBag className="w-8 h-8 text-accent" />
         </div>
       </div>
@@ -25,34 +39,60 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8 animate-slide-up">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 mb-8 animate-slide-up backdrop-blur-sm">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <span className="text-sm font-medium text-white">
               Ghana's #1 Student Marketplace
             </span>
           </div>
 
-          {/* Headline */}
-          <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 animate-slide-up-delay-1">
-            Buy & Sell on
-            <span className="block gradient-text">Your Campus</span>
+          {/* Headline with Animation */}
+          <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 animate-slide-up-delay-1 text-white">
+            <span className="inline-block animate-text-shimmer bg-clip-text text-transparent bg-[linear-gradient(110deg,#fff,45%,#ffd700,55%,#fff)] bg-[length:250%_100%]">
+              Buy & Sell on
+            </span>
+            <span className="block mt-2 text-accent drop-shadow-lg">Your Campus</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-slide-up-delay-2">
+          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto animate-slide-up-delay-2">
             Connect with fellow students. List your items. Reach thousands of buyers across universities in Ghana.
           </p>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-10 animate-slide-up-delay-2">
+            <div className="relative flex items-center">
+              <div className="absolute left-4 pointer-events-none">
+                <Search className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <Input
+                type="text"
+                placeholder="Search for laptops, textbooks, services..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-32 py-6 text-lg rounded-full bg-white/95 backdrop-blur-sm border-0 shadow-lg focus-visible:ring-accent"
+              />
+              <Button
+                type="submit"
+                variant="hero"
+                className="absolute right-2 rounded-full px-6"
+              >
+                Search
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </form>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up-delay-3">
             <Link to="/auth?mode=signup">
-              <Button variant="hero" size="xl" className="group">
+              <Button size="xl" className="bg-white text-primary hover:bg-white/90 shadow-lg group">
                 Start Selling Free
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link to="/products">
-              <Button variant="outline" size="xl">
+              <Button variant="outline" size="xl" className="border-white/50 text-white hover:bg-white/10">
                 Browse Listings
               </Button>
             </Link>
@@ -61,16 +101,16 @@ const HeroSection = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 max-w-xl mx-auto">
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold gradient-text">5K+</div>
-              <div className="text-sm text-muted-foreground mt-1">Active Listings</div>
+              <div className="font-display text-3xl md:text-4xl font-bold text-accent">5K+</div>
+              <div className="text-sm text-white/70 mt-1">Active Listings</div>
             </div>
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold gradient-text">10+</div>
-              <div className="text-sm text-muted-foreground mt-1">Universities</div>
+              <div className="font-display text-3xl md:text-4xl font-bold text-accent">10+</div>
+              <div className="text-sm text-white/70 mt-1">Universities</div>
             </div>
             <div className="text-center animate-slide-up-delay-3">
-              <div className="font-display text-3xl md:text-4xl font-bold gradient-text">20K+</div>
-              <div className="text-sm text-muted-foreground mt-1">Students</div>
+              <div className="font-display text-3xl md:text-4xl font-bold text-accent">20K+</div>
+              <div className="text-sm text-white/70 mt-1">Students</div>
             </div>
           </div>
         </div>
