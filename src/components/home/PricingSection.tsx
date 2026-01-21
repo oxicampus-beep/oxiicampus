@@ -1,6 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, Star, Crown, Zap } from "lucide-react";
+import { Check, Star, Crown, Zap, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const plans = [
   {
@@ -19,6 +23,7 @@ const plans = [
     buttonText: "Get Started",
     buttonVariant: "outline" as const,
     popular: false,
+    planKey: "free",
   },
   {
     name: "Pro",
@@ -37,6 +42,7 @@ const plans = [
     buttonText: "Go Pro",
     buttonVariant: "hero" as const,
     popular: true,
+    planKey: "pro",
   },
   {
     name: "Premium",
@@ -56,10 +62,82 @@ const plans = [
     buttonText: "Go Premium",
     buttonVariant: "gold" as const,
     popular: false,
+    planKey: "premium",
   },
 ];
 
 const PricingSection = () => {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleSelectPlan = async (planKey: string) => {
+    // Free plan - just go to signup
+    if (planKey === "free") {
+      navigate("/auth?mode=signup");
+      return;
+    }
+
+    // Check if user is logged in
+    if (!user) {
+      toast.error("Please sign in to upgrade your plan");
+      navigate("/auth?mode=signin");
+      return;
+    }
+
+    // Check if already on this plan
+    if (profile?.plan === planKey) {
+      toast.info("You're already on this plan");
+      return;
+    }
+
+    setLoadingPlan(planKey);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("paystack-initialize", {
+        body: {
+          plan: planKey,
+          email: user.email,
+        },
+      });
+
+      if (error) {
+        console.error("Payment initialization error:", error);
+        toast.error("Failed to initialize payment. Please try again.");
+        return;
+      }
+
+      if (data?.authorization_url) {
+        // Redirect to Paystack checkout
+        window.location.href = data.authorization_url;
+      } else {
+        toast.error("Failed to get payment URL. Please try again.");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  const getButtonText = (plan: typeof plans[0]) => {
+    if (loadingPlan === plan.planKey) {
+      return (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Processing...
+        </>
+      );
+    }
+    
+    if (profile?.plan === plan.planKey) {
+      return "Current Plan";
+    }
+    
+    return plan.buttonText;
+  };
+
   return (
     <section className="py-24 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -86,6 +164,12 @@ const PricingSection = () => {
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 gradient-bg rounded-full text-sm font-semibold text-primary-foreground">
                   Most Popular
+                </div>
+              )}
+
+              {profile?.plan === plan.planKey && (
+                <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 rounded-full text-xs font-semibold text-white">
+                  Current
                 </div>
               )}
 
@@ -122,14 +206,27 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Link to="/auth?mode=signup">
-                <Button variant={plan.buttonVariant} className="w-full">
-                  {plan.buttonText}
-                </Button>
-              </Link>
+              <Button
+                variant={plan.buttonVariant}
+                className="w-full"
+                onClick={() => handleSelectPlan(plan.planKey)}
+                disabled={loadingPlan !== null || profile?.plan === plan.planKey}
+              >
+                {getButtonText(plan)}
+              </Button>
             </div>
           ))}
         </div>
+
+        {!user && (
+          <p className="text-center text-muted-foreground mt-8">
+            Already have an account?{" "}
+            <Link to="/auth?mode=signin" className="text-primary hover:underline">
+              Sign in
+            </Link>{" "}
+            to upgrade your plan.
+          </p>
+        )}
       </div>
     </section>
   );
