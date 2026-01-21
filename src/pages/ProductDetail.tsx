@@ -261,31 +261,28 @@ const ProductDetail = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <Button
                     variant="whatsapp"
-                    size="lg"
                     onClick={handleWhatsApp}
-                    className="w-full"
+                    className="w-full h-11"
                     disabled={!listing.whatsapp_number && !listing.phone_number}
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    <MessageCircle className="w-4 h-4" />
                     WhatsApp
                   </Button>
                   <Button
                     variant="call"
-                    size="lg"
                     onClick={handleCall}
-                    className="w-full"
+                    className="w-full h-11"
                     disabled={!listing.phone_number}
                   >
-                    <Phone className="w-5 h-5" />
+                    <Phone className="w-4 h-4" />
                     Call
                   </Button>
                   <Button
                     variant="outline"
-                    size="lg"
                     onClick={handleMessage}
-                    className="w-full"
+                    className="w-full h-11"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4" />
                     Message
                   </Button>
                 </div>
