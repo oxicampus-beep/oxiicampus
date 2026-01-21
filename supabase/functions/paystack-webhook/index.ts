@@ -54,13 +54,14 @@ Deno.serve(async (req) => {
       const subscriptionEnd = new Date();
       subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
 
-      // Update user profile with new plan and verification
+      // Update user profile with new plan, verification, and subscription expiry
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           plan: plan,
-          is_verified: plan === "premium", // Verify premium users
+          is_verified: true, // Verify all paid users
           listings_count: 0, // Reset listings count for new period
+          subscription_expires_at: subscriptionEnd.toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
