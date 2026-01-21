@@ -8,21 +8,25 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ghanaUniversities } from "@/data/constants";
 import { 
   User, 
   Mail, 
   Phone, 
-  MapPin, 
   Edit2, 
   Camera,
   BadgeCheck,
   Package,
   Heart,
-  Settings,
   Crown,
   Loader2,
-  GraduationCap
+  GraduationCap,
+  MessageCircle,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
+import { formatDistanceToNow, format, isPast, addDays } from "date-fns";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -32,6 +36,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [listingsCount, setListingsCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   
   // Editable fields
   const [fullName, setFullName] = useState("");
@@ -47,18 +52,26 @@ const Profile = () => {
   }, [profile]);
 
   useEffect(() => {
-    const fetchListingsCount = async () => {
+    const fetchCounts = async () => {
       if (!user) return;
       
-      const { count } = await supabase
-        .from("listings")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+      const [listingsResult, messagesResult] = await Promise.all([
+        supabase
+          .from("listings")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("receiver_id", user.id)
+          .eq("is_read", false),
+      ]);
       
-      setListingsCount(count || 0);
+      setListingsCount(listingsResult.count || 0);
+      setUnreadMessages(messagesResult.count || 0);
     };
 
-    fetchListingsCount();
+    fetchCounts();
   }, [user]);
 
   const handleSave = async () => {
@@ -138,6 +151,13 @@ const Profile = () => {
     ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : "Recently";
 
+  // Subscription status
+  const subscriptionExpiresAt = (profile as any)?.subscription_expires_at 
+    ? new Date((profile as any).subscription_expires_at) 
+    : null;
+  const isSubscriptionActive = subscriptionExpiresAt && !isPast(subscriptionExpiresAt);
+  const isExpiringSoon = subscriptionExpiresAt && !isPast(subscriptionExpiresAt) && isPast(addDays(new Date(), -7));
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -201,8 +221,52 @@ const Profile = () => {
             </div>
           </div>
 
+          {/* Subscription Status Card */}
+          {userPlan !== "free" && (
+            <div className={`mb-8 p-6 rounded-2xl border ${
+              isSubscriptionActive 
+                ? isExpiringSoon 
+                  ? "bg-accent/10 border-accent" 
+                  : "bg-success/10 border-success"
+                : "bg-destructive/10 border-destructive"
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {isSubscriptionActive ? (
+                    <CheckCircle className={`w-6 h-6 ${isExpiringSoon ? "text-accent" : "text-success"}`} />
+                  ) : (
+                    <AlertCircle className="w-6 h-6 text-destructive" />
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      {isSubscriptionActive 
+                        ? isExpiringSoon 
+                          ? "Subscription Expiring Soon" 
+                          : "Active Subscription"
+                        : "Subscription Expired"}
+                    </h3>
+                    {subscriptionExpiresAt && (
+                      <p className="text-sm text-muted-foreground">
+                        {isSubscriptionActive 
+                          ? `Expires ${format(subscriptionExpiresAt, "MMMM d, yyyy")} (${formatDistanceToNow(subscriptionExpiresAt, { addSuffix: true })})`
+                          : `Expired on ${format(subscriptionExpiresAt, "MMMM d, yyyy")}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {(!isSubscriptionActive || isExpiringSoon) && (
+                  <Link to="/pricing">
+                    <Button variant="hero" size="sm">
+                      {isSubscriptionActive ? "Renew" : "Resubscribe"}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-card rounded-xl border border-border p-4">
               <Package className="w-8 h-8 text-primary mb-2" />
               <div className="font-display text-2xl font-bold">{listingsCount}</div>
@@ -235,6 +299,20 @@ const Profile = () => {
                 <Heart className="w-8 h-8 text-destructive mb-2" />
                 <div className="font-display text-2xl font-bold">View</div>
                 <div className="text-sm text-muted-foreground">Favorites</div>
+              </div>
+            </Link>
+            <Link to="/messages" className="block">
+              <div className="bg-card rounded-xl border border-border p-4 hover:shadow-purple transition-shadow h-full relative">
+                <MessageCircle className="w-8 h-8 text-primary mb-2" />
+                <div className="font-display text-2xl font-bold">
+                  {unreadMessages > 0 ? unreadMessages : "View"}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {unreadMessages > 0 ? "Unread Messages" : "Messages"}
+                </div>
+                {unreadMessages > 0 && (
+                  <span className="absolute top-2 right-2 w-3 h-3 rounded-full bg-destructive animate-pulse" />
+                )}
               </div>
             </Link>
           </div>
@@ -300,11 +378,18 @@ const Profile = () => {
                   <div className="flex-1">
                     <label className="text-sm text-muted-foreground">University</label>
                     {isEditing ? (
-                      <Input 
-                        value={university} 
+                      <select
+                        value={university}
                         onChange={(e) => setUniversity(e.target.value)}
-                        className="mt-1" 
-                      />
+                        className="w-full mt-1 h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select university</option>
+                        {ghanaUniversities.map((uni) => (
+                          <option key={uni} value={uni}>
+                            {uni}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
                       <p className="font-medium">{profile?.university || "Not set"}</p>
                     )}
@@ -331,6 +416,26 @@ const Profile = () => {
               </div>
             )}
           </div>
+
+          {/* Upgrade CTA for free users */}
+          {userPlan === "free" && (
+            <div className="mt-8 p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl border border-primary/20">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-display text-xl font-bold mb-1">Upgrade Your Plan</h3>
+                  <p className="text-muted-foreground">
+                    Get more listings, verified badge, and priority support with Pro or Premium plans.
+                  </p>
+                </div>
+                <Link to="/pricing">
+                  <Button variant="hero">
+                    <Crown className="w-4 h-4 mr-2" />
+                    View Plans
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
