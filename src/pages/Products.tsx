@@ -4,8 +4,10 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockProducts, categories, universities } from "@/data/mockProducts";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useListings } from "@/hooks/useListings";
+import { categories } from "@/data/constants";
+import { ghanaUniversities } from "@/data/constants";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,21 +15,35 @@ const Products = () => {
   const [selectedUniversity, setSelectedUniversity] = useState("All Universities");
   const [showFilters, setShowFilters] = useState(false);
 
-  const filteredProducts = mockProducts.filter((product) => {
-    const matchesSearch = product.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || product.category === selectedCategory;
-    const matchesUniversity =
-      selectedUniversity === "All Universities" ||
-      product.university === selectedUniversity;
-    return matchesSearch && matchesCategory && matchesUniversity;
+  const { listings, isLoading } = useListings({
+    category: selectedCategory,
+    university: selectedUniversity,
+    search: searchQuery,
   });
 
-  const featuredProducts = filteredProducts.filter((p) => p.isFeatured);
-  const regularProducts = filteredProducts.filter((p) => !p.isFeatured);
-  const sortedProducts = [...featuredProducts, ...regularProducts];
+  // Transform listings to match ProductCard expected format
+  const transformedProducts = listings.map((listing) => ({
+    id: listing.id,
+    title: listing.title,
+    price: listing.price,
+    images: listing.images || ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"],
+    location: listing.university || "Ghana",
+    university: listing.university || "Unknown University",
+    category: listing.category,
+    condition: listing.condition as "new" | "like-new" | "good" | "fair" || "good",
+    description: listing.description || "",
+    isFeatured: listing.is_featured || false,
+    createdAt: listing.created_at,
+    seller: {
+      id: listing.user_id,
+      name: listing.seller?.full_name || "Seller",
+      avatar: listing.seller?.avatar_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      phone: listing.phone_number || "",
+      isVerified: listing.seller?.is_verified || false,
+    },
+  }));
+
+  const universities = ["All Universities", ...ghanaUniversities.slice(0, 10)];
 
   return (
     <div className="min-h-screen bg-background">
@@ -97,7 +113,7 @@ const Products = () => {
                     Category
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {categories.map((category) => (
+                    {["All", ...categories].map((category) => (
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
@@ -163,13 +179,17 @@ const Products = () => {
 
           {/* Results Count */}
           <p className="text-muted-foreground mb-6">
-            {sortedProducts.length} listing{sortedProducts.length !== 1 && "s"} found
+            {transformedProducts.length} listing{transformedProducts.length !== 1 && "s"} found
           </p>
 
           {/* Products Grid */}
-          {sortedProducts.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : transformedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {sortedProducts.map((product) => (
+              {transformedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

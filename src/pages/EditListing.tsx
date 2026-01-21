@@ -19,6 +19,8 @@ import {
   GraduationCap,
   ArrowLeft,
   Loader2,
+  Phone,
+  MessageCircle,
 } from "lucide-react";
 
 const EditListing = () => {
@@ -37,6 +39,8 @@ const EditListing = () => {
   const [university, setUniversity] = useState("");
   const [status, setStatus] = useState("available");
   const [images, setImages] = useState<string[]>([]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -77,6 +81,8 @@ const EditListing = () => {
       setUniversity(data.university || "");
       setStatus(data.status || "available");
       setImages(data.images || []);
+      setPhoneNumber(data.phone_number || "");
+      setWhatsappNumber(data.whatsapp_number || "");
       setIsLoading(false);
     };
 
@@ -102,6 +108,8 @@ const EditListing = () => {
           university,
           status,
           images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"],
+          phone_number: phoneNumber || null,
+          whatsapp_number: whatsappNumber || phoneNumber || null,
         })
         .eq("id", id)
         .eq("user_id", user.id);
@@ -312,6 +320,39 @@ const EditListing = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Contact Numbers */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    placeholder="e.g., 0241234567"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp Number (optional)
+                  </Label>
+                  <Input
+                    id="whatsappNumber"
+                    type="tel"
+                    placeholder="Same as phone if empty"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
               </div>
 
               {/* Images */}

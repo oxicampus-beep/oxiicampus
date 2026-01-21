@@ -19,6 +19,8 @@ import {
   GraduationCap,
   ArrowLeft,
   Loader2,
+  Phone,
+  MessageCircle,
 } from "lucide-react";
 
 const CreateListing = () => {
@@ -34,6 +36,8 @@ const CreateListing = () => {
   const [condition, setCondition] = useState("");
   const [university, setUniversity] = useState(profile?.university || "");
   const [images, setImages] = useState<string[]>([]);
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phone || "");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +80,8 @@ const CreateListing = () => {
         university,
         images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"],
         status: "available",
+        phone_number: phoneNumber || null,
+        whatsapp_number: whatsappNumber || phoneNumber || null,
       });
 
       if (error) throw error;
@@ -259,6 +265,39 @@ const CreateListing = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Contact Numbers */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    placeholder="e.g., 0241234567"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp Number (optional)
+                  </Label>
+                  <Input
+                    id="whatsappNumber"
+                    type="tel"
+                    placeholder="Same as phone if empty"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
               </div>
 
               {/* Images */}

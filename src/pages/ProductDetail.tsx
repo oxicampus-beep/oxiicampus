@@ -1,8 +1,9 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { mockProducts } from "@/data/mockProducts";
+import { useListing } from "@/hooks/useListings";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft,
   MapPin,
@@ -14,16 +15,32 @@ import {
   Heart,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  Send,
 } from "lucide-react";
 import { useState } from "react";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = mockProducts.find((p) => p.id === id);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { listing, isLoading } = useListing(id);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
 
-  if (!product) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-32 pb-16 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!listing) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -37,34 +54,58 @@ const ProductDetail = () => {
             </Link>
           </div>
         </main>
+        <Footer />
       </div>
     );
   }
 
+  const images = listing.images && listing.images.length > 0 
+    ? listing.images 
+    : ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"];
+
   const handleWhatsApp = () => {
+    const whatsappNumber = listing.whatsapp_number || listing.phone_number;
+    if (!whatsappNumber) {
+      alert("Seller hasn't provided a WhatsApp number");
+      return;
+    }
+    const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const message = encodeURIComponent(
-      `Hi! I'm interested in your listing: "${product.title}" on OxiCampus. Is it still available?`
+      `Hi! I'm interested in your listing: "${listing.title}" on OxiCampus. Is it still available?`
     );
-    window.open(`https://wa.me/${product.seller.phone}?text=${message}`, "_blank");
+    window.open(`https://wa.me/${cleanNumber}?text=${message}`, "_blank");
   };
 
   const handleCall = () => {
-    window.open(`tel:+${product.seller.phone}`, "_self");
+    const phoneNumber = listing.phone_number;
+    if (!phoneNumber) {
+      alert("Seller hasn't provided a phone number");
+      return;
+    }
+    window.open(`tel:${phoneNumber}`, "_self");
+  };
+
+  const handleMessage = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    navigate(`/messages?user=${listing.user_id}&listing=${listing.id}`);
   };
 
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === product.images.length - 1 ? 0 : prev + 1
+      prev === images.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? product.images.length - 1 : prev - 1
+      prev === 0 ? images.length - 1 : prev - 1
     );
   };
 
-  const conditionLabels = {
+  const conditionLabels: Record<string, string> = {
     new: "Brand New",
     "like-new": "Like New",
     good: "Good Condition",
@@ -91,11 +132,11 @@ const ProductDetail = () => {
             <div className="space-y-4">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-secondary">
                 <img
-                  src={product.images[currentImageIndex]}
-                  alt={product.title}
+                  src={images[currentImageIndex]}
+                  alt={listing.title}
                   className="w-full h-full object-cover"
                 />
-                {product.images.length > 1 && (
+                {images.length > 1 && (
                   <>
                     <button
                       onClick={prevImage}
@@ -111,7 +152,7 @@ const ProductDetail = () => {
                     </button>
                   </>
                 )}
-                {product.isFeatured && (
+                {listing.is_featured && (
                   <div className="absolute top-4 left-4 px-4 py-2 gradient-bg rounded-full text-sm font-semibold text-primary-foreground shadow-purple">
                     ⭐ Featured
                   </div>
@@ -119,9 +160,9 @@ const ProductDetail = () => {
               </div>
 
               {/* Thumbnails */}
-              {product.images.length > 1 && (
+              {images.length > 1 && (
                 <div className="flex gap-3">
-                  {product.images.map((img, index) => (
+                  {images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
@@ -133,7 +174,7 @@ const ProductDetail = () => {
                     >
                       <img
                         src={img}
-                        alt={`${product.title} ${index + 1}`}
+                        alt={`${listing.title} ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
                     </button>
@@ -148,7 +189,7 @@ const ProductDetail = () => {
               <div>
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <h1 className="font-display text-3xl md:text-4xl font-bold">
-                    {product.title}
+                    {listing.title}
                   </h1>
                   <button
                     onClick={() => setIsLiked(!isLiked)}
@@ -164,57 +205,66 @@ const ProductDetail = () => {
                   </button>
                 </div>
                 <div className="font-display text-4xl md:text-5xl font-bold gradient-text">
-                  GH₵{product.price.toLocaleString()}
+                  GH₵{listing.price.toLocaleString()}
                 </div>
               </div>
 
               {/* Quick Info */}
               <div className="flex flex-wrap gap-3">
                 <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                  {product.category}
+                  {listing.category}
                 </span>
-                <span className="px-4 py-2 bg-success/10 text-success rounded-full text-sm font-medium">
-                  {conditionLabels[product.condition]}
-                </span>
+                {listing.condition && (
+                  <span className="px-4 py-2 bg-success/10 text-success rounded-full text-sm font-medium">
+                    {conditionLabels[listing.condition] || listing.condition}
+                  </span>
+                )}
               </div>
 
               {/* Location */}
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="w-5 h-5" />
-                <span>
-                  {product.location} • {product.university}
-                </span>
+                <span>{listing.university || "Ghana"}</span>
               </div>
 
               {/* Seller Card */}
               <div className="p-5 bg-card rounded-2xl border border-border">
                 <div className="flex items-center gap-4 mb-4">
-                  <img
-                    src={product.seller.avatar}
-                    alt={product.seller.name}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
-                  />
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                    {listing.seller?.avatar_url ? (
+                      <img
+                        src={listing.seller.avatar_url}
+                        alt={listing.seller.full_name || "Seller"}
+                        className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-primary">
+                        {(listing.seller?.full_name || "S")[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-lg">
-                        {product.seller.name}
+                        {listing.seller?.full_name || "Seller"}
                       </span>
-                      {product.seller.isVerified && (
+                      {listing.seller?.is_verified && (
                         <BadgeCheck className="w-5 h-5 text-primary" />
                       )}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {product.university}
+                      {listing.seller?.university || listing.university}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <Button
                     variant="whatsapp"
                     size="lg"
                     onClick={handleWhatsApp}
                     className="w-full"
+                    disabled={!listing.whatsapp_number && !listing.phone_number}
                   >
                     <MessageCircle className="w-5 h-5" />
                     WhatsApp
@@ -224,9 +274,19 @@ const ProductDetail = () => {
                     size="lg"
                     onClick={handleCall}
                     className="w-full"
+                    disabled={!listing.phone_number}
                   >
                     <Phone className="w-5 h-5" />
                     Call
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleMessage}
+                    className="w-full"
+                  >
+                    <Send className="w-5 h-5" />
+                    Message
                   </Button>
                 </div>
               </div>
@@ -237,7 +297,7 @@ const ProductDetail = () => {
                   Description
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  {product.description}
+                  {listing.description || "No description provided."}
                 </p>
               </div>
 
@@ -246,7 +306,7 @@ const ProductDetail = () => {
                 <Calendar className="w-4 h-4" />
                 <span>
                   Posted on{" "}
-                  {new Date(product.createdAt).toLocaleDateString("en-GB", {
+                  {new Date(listing.created_at).toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
