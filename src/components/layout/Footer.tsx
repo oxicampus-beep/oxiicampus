@@ -92,7 +92,10 @@ const Footer = () => {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-background/70 text-sm">
                 <Mail className="w-4 h-4" />
-                hello@oxicampus.com
+                oxicampus@gmail.com
+              </li>
+              <li className="text-background/70 text-sm">
+                📞 +233 550 617 425
               </li>
             </ul>
             <div className="mt-6">

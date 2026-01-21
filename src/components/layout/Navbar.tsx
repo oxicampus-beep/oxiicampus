@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+<<<<<<< HEAD
 import { Menu, X, User, Plus, LogOut, Heart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import oxiLogo from "@/asset/logo.png";
+=======
+import { Menu, X, ShoppingBag, User, Plus, LogOut, Heart, Package, MessageCircle, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRoles } from "@/hooks/useRoles";
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 246f6102ce40f81b90fbf7a4934ab8dc51ade7eb
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +22,50 @@ import {
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
+  const { isAdmin } = useRoles();
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchUnreadCount = async () => {
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("receiver_id", user.id)
+        .eq("is_read", false);
+      
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnreadCount();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(`unread-messages-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -64,6 +114,18 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
+                {/* Messages Button with Badge */}
+                <Link to="/messages" className="relative">
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <MessageCircle className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+
                 <Link to="/create-listing">
                   <Button variant="hero" size="sm">
                     <Plus className="w-4 h-4 mr-2" />
@@ -102,6 +164,28 @@ const Navbar = () => {
                         Favorites
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/messages" className="flex items-center gap-2 cursor-pointer">
+                        <MessageCircle className="w-4 h-4" />
+                        Messages
+                        {unreadCount > 0 && (
+                          <span className="ml-auto w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="flex items-center gap-2 cursor-pointer text-primary">
+                            <Shield className="w-4 h-4" />
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={handleSignOut}
@@ -160,6 +244,19 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link
+                    to="/messages"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-muted-foreground flex items-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="ml-auto w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
                     to="/create-listing"
                     onClick={() => setIsMenuOpen(false)}
                     className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-muted-foreground flex items-center gap-2"
@@ -191,6 +288,16 @@ const Navbar = () => {
                     <Heart className="w-4 h-4" />
                     Favorites
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="px-4 py-3 rounded-lg font-medium hover:bg-secondary text-primary flex items-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" />
+                      Admin Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleSignOut();

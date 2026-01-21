@@ -192,7 +192,7 @@ const MyListings = () => {
       <Navbar />
 
       <div className="pt-24 pb-12">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
@@ -257,11 +257,11 @@ const MyListings = () => {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : listings.length > 0 ? (
-            <div className="grid gap-4">
+            <div className="grid gap-4 md:gap-6">
               {listings.map((listing) => (
                 <div
                   key={listing.id}
-                  className={`bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow ${
+                  className={`bg-card rounded-xl border border-border p-4 md:p-6 hover:shadow-md transition-shadow ${
                     listing.status === "sold" ? "opacity-75" : ""
                   }`}
                 >
