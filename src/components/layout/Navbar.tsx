@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-<<<<<<< HEAD
-import { Menu, X, User, Plus, LogOut, Heart, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import oxiLogo from "@/asset/logo.png";
-=======
 import { Menu, X, ShoppingBag, User, Plus, LogOut, Heart, Package, MessageCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoles } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
->>>>>>> 246f6102ce40f81b90fbf7a4934ab8dc51ade7eb
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import oxiLogo from "@/asset/logo.png";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
