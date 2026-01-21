@@ -12,20 +12,24 @@ import {
   Mail,
   ArrowRight
 } from "lucide-react";
+import team1 from "@/asset/1.jpeg";
+import team2 from "@/asset/2.jpeg";
+import team3 from "@/asset/3.jpeg";
+import team4 from "@/asset/4.jpeg";
 
 const teamMembers = [
   {
-    name: "Kwame Asante",
+    name: "Adabah Micheal Jnr",
     role: "Founder & CEO",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+    image: team1,
     bio: "Former KNUST student with a passion for connecting campus communities through technology.",
     linkedin: "#",
     twitter: "#",
   },
   {
-    name: "Ama Serwaa",
+    name: "Manasseh K. Kabutey",
     role: "Head of Product",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+    image: team2,
     bio: "UG alumna who believes every student deserves access to affordable resources.",
     linkedin: "#",
     twitter: "#",
@@ -33,7 +37,7 @@ const teamMembers = [
   {
     name: "Kofi Mensah",
     role: "Lead Developer",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    image: team3,
     bio: "Tech enthusiast from Ashesi, building the future of campus commerce.",
     linkedin: "#",
     twitter: "#",
@@ -41,7 +45,7 @@ const teamMembers = [
   {
     name: "Efua Darkwah",
     role: "Community Manager",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
+    image: team4,
     bio: "Cape Coast graduate dedicated to growing vibrant student seller communities.",
     linkedin: "#",
     twitter: "#",

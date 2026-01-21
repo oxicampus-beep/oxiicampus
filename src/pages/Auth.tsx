@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import oxiLogo from "@/asset/logo.png";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -127,12 +129,11 @@ const Auth = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <Link to="/" className="inline-flex items-center gap-2 mb-8 group">
-            <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-purple transition-transform group-hover:scale-105">
-              <ShoppingBag className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-xl gradient-text">
-              OxiCampus
-            </span>
+            <img 
+              src={oxiLogo} 
+              alt="OxiCampus Logo" 
+              className="h-10 w-auto transition-transform group-hover:scale-105"
+            />
           </Link>
 
           {/* Header */}
