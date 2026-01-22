@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingBag, User, Plus, LogOut, Heart, Package, MessageCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoles } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +18,11 @@ import oxiLogo from "@/asset/logo.png";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadCount = useRef(0);
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
   const { isAdmin } = useRoles();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -34,18 +37,46 @@ const Navbar = () => {
         .eq("receiver_id", user.id)
         .eq("is_read", false);
       
-      setUnreadCount(count || 0);
+      const newCount = count || 0;
+      
+      // Show toast notification if count increased (new message received)
+      if (newCount > prevUnreadCount.current && prevUnreadCount.current > 0) {
+        toast({
+          title: "New message received!",
+          description: "You have a new message. Check your inbox.",
+        });
+      }
+      
+      prevUnreadCount.current = newCount;
+      setUnreadCount(newCount);
     };
 
     fetchUnreadCount();
 
-    // Subscribe to new messages
+    // Subscribe to new messages in real-time
     const channel = supabase
       .channel(`unread-messages-${user.id}`)
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Show immediate notification for new message
+          toast({
+            title: "New message received!",
+            description: "You have a new message. Check your inbox.",
+          });
+          fetchUnreadCount();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
           schema: "public",
           table: "messages",
           filter: `receiver_id=eq.${user.id}`,
@@ -59,7 +90,7 @@ const Navbar = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, toast]);
 
   const navLinks = [
     { name: "Home", path: "/" },

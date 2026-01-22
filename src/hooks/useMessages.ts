@@ -211,19 +211,25 @@ export const useConversation = (otherUserId: string | undefined) => {
   useEffect(() => {
     fetchMessages();
 
-    // Subscribe to new messages
+    // Subscribe to new messages in real-time
     const channel = supabase
-      .channel(`messages-${user?.id}-${otherUserId}`)
+      .channel(`conversation-${user?.id}-${otherUserId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `receiver_id=eq.${user?.id}`,
         },
-        () => {
-          fetchMessages();
+        (payload) => {
+          const newMessage = payload.new as any;
+          // Only refetch if message is part of this conversation
+          if (
+            (newMessage.sender_id === user?.id && newMessage.receiver_id === otherUserId) ||
+            (newMessage.sender_id === otherUserId && newMessage.receiver_id === user?.id)
+          ) {
+            fetchMessages();
+          }
         }
       )
       .subscribe();
