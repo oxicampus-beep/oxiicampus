@@ -22,7 +22,6 @@ const teamMembers = [
     name: "Adabah Micheal Jnr",
     role: "Founder & CEO",
     image: team1,
-    bio: "Former KNUST student with a passion for connecting campus communities through technology.",
     linkedin: "#",
     twitter: "#",
   },
@@ -30,7 +29,6 @@ const teamMembers = [
     name: "Manasseh K. Kabutey",
     role: "Head of Product",
     image: team2,
-    bio: "UG alumna who believes every student deserves access to affordable resources.",
     linkedin: "#",
     twitter: "#",
   },
@@ -38,7 +36,6 @@ const teamMembers = [
     name: "Kofi Mensah",
     role: "Lead Developer",
     image: team3,
-    bio: "Tech enthusiast from Ashesi, building the future of campus commerce.",
     linkedin: "#",
     twitter: "#",
   },
@@ -46,7 +43,6 @@ const teamMembers = [
     name: "Efua Darkwah",
     role: "Community Manager",
     image: team4,
-    bio: "Cape Coast graduate dedicated to growing vibrant student seller communities.",
     linkedin: "#",
     twitter: "#",
   },
@@ -214,8 +210,7 @@ const About = () => {
                   <h3 className="font-display text-xl font-bold mb-1 group-hover:text-primary transition-colors">
                     {member.name}
                   </h3>
-                  <p className="text-primary font-medium text-sm mb-3">{member.role}</p>
-                  <p className="text-muted-foreground text-sm mb-4">{member.bio}</p>
+                  <p className="text-primary font-medium text-sm mb-4">{member.role}</p>
                   <div className="flex gap-3">
                     <a
                       href={member.linkedin}

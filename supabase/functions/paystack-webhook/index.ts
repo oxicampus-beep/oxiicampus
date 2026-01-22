@@ -6,6 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-paystack-signature",
 };
 
+// Plan limits matching the frontend
+const PLAN_LIMITS: Record<string, number> = {
+  free: 1,
+  pro: 10,
+  premium: 50,
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -54,12 +61,16 @@ Deno.serve(async (req) => {
       const subscriptionEnd = new Date();
       subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
 
+      // Determine verification and featured status based on plan
+      const isPremium = plan === "premium";
+      const newListingLimit = PLAN_LIMITS[plan] || 1;
+
       // Update user profile with new plan, verification, and subscription expiry
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           plan: plan,
-          is_verified: true, // Verify all paid users
+          is_verified: isPremium, // Only premium users get verified badge
           listings_count: 0, // Reset listings count for new period
           subscription_expires_at: subscriptionEnd.toISOString(),
           updated_at: new Date().toISOString(),
@@ -74,9 +85,21 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`Successfully upgraded user ${userId} to ${plan} plan`);
+      // For premium users, feature all their existing listings
+      if (isPremium) {
+        const { error: featureError } = await supabase
+          .from("listings")
+          .update({ is_featured: true })
+          .eq("user_id", userId);
 
-      // Log the payment for records
+        if (featureError) {
+          console.error("Error featuring listings:", featureError);
+        } else {
+          console.log(`Featured all listings for premium user ${userId}`);
+        }
+      }
+
+      console.log(`Successfully upgraded user ${userId} to ${plan} plan (limit: ${newListingLimit} listings)`);
       console.log(`Payment successful - Reference: ${reference}, User: ${userId}, Plan: ${plan}, Email: ${customer?.email}`);
     }
 

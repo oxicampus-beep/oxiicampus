@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   Crown,
   UserCog,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 
 interface UserWithRoles {
@@ -39,6 +40,7 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -133,6 +135,36 @@ const AdminUsers = () => {
     }
   };
 
+  const handleToggleVerified = async (userItem: UserWithRoles) => {
+    setActionLoading(userItem.user_id);
+    
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_verified: !userItem.is_verified })
+        .eq("user_id", userItem.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: userItem.is_verified ? "Badge removed" : "Badge granted",
+        description: userItem.is_verified 
+          ? "Verified badge has been removed" 
+          : "User now has a verified badge",
+      });
+
+      fetchUsers();
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filteredUsers = users.filter(
     (u) =>
       u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -201,6 +233,15 @@ const AdminUsers = () => {
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate("/admin")}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </button>
+
             <div className="flex items-center justify-between mb-8">
               <h1 className="font-display text-3xl md:text-4xl font-bold">
                 <Shield className="inline-block w-8 h-8 mr-3 text-primary" />
@@ -247,7 +288,7 @@ const AdminUsers = () => {
                               {userItem.full_name || "Unnamed User"}
                             </span>
                             {userItem.is_verified && (
-                              <BadgeCheck className="w-4 h-4 text-primary" />
+                              <BadgeCheck className="w-4 h-4 text-yellow-500" />
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground font-mono">
@@ -277,8 +318,25 @@ const AdminUsers = () => {
                         ))}
                       </div>
 
-                      {/* Assign Role Buttons */}
-                      <div className="flex gap-2">
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 flex-wrap">
+                        {/* Verified Badge Toggle */}
+                        <Button
+                          size="sm"
+                          variant={userItem.is_verified ? "destructive" : "outline"}
+                          onClick={() => handleToggleVerified(userItem)}
+                          disabled={actionLoading === userItem.user_id}
+                        >
+                          {actionLoading === userItem.user_id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <>
+                              <BadgeCheck className="w-3 h-3 mr-1" />
+                              {userItem.is_verified ? "Remove Badge" : "Verify"}
+                            </>
+                          )}
+                        </Button>
+                        
                         {!userItem.roles.includes("admin") && (
                           <Button
                             size="sm"
@@ -286,7 +344,7 @@ const AdminUsers = () => {
                             onClick={() => handleAssignRole(userItem.user_id, "admin")}
                           >
                             <Shield className="w-3 h-3 mr-1" />
-                            Make Admin
+                            Admin
                           </Button>
                         )}
                         {!userItem.roles.includes("moderator") && (
@@ -296,7 +354,7 @@ const AdminUsers = () => {
                             onClick={() => handleAssignRole(userItem.user_id, "moderator")}
                           >
                             <ShieldCheck className="w-3 h-3 mr-1" />
-                            Make Mod
+                            Mod
                           </Button>
                         )}
                       </div>

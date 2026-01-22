@@ -342,16 +342,19 @@ const EditListing = () => {
                 <div className="space-y-2">
                   <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
                     <MessageCircle className="w-4 h-4" />
-                    WhatsApp Number (optional)
+                    WhatsApp Number (with 233)
                   </Label>
                   <Input
                     id="whatsappNumber"
                     type="tel"
-                    placeholder="Same as phone if empty"
+                    placeholder="e.g., 233241234567"
                     value={whatsappNumber}
                     onChange={(e) => setWhatsappNumber(e.target.value)}
+                    pattern="233[0-9]{9}"
+                    title="Enter number with country code 233 (e.g., 233241234567)"
                     className="h-12"
                   />
+                  <p className="text-xs text-muted-foreground">Enter with country code 233 (e.g., 233550617425)</p>
                 </div>
               </div>
 

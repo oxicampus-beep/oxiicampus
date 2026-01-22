@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Plan limits matching the frontend
+const PLAN_LIMITS: Record<string, number> = {
+  free: 1,
+  pro: 10,
+  premium: 50,
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -22,21 +29,21 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
+    if (userError || !user) {
+      console.error("Auth error:", userError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     const { reference } = await req.json();
 
@@ -47,6 +54,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log(`Verifying payment for user ${userId}, reference: ${reference}`);
+
     // Verify transaction with Paystack
     const paystackResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       headers: {
@@ -55,8 +64,10 @@ Deno.serve(async (req) => {
     });
 
     const paystackData = await paystackResponse.json();
+    console.log("Paystack verification response:", JSON.stringify(paystackData));
 
     if (!paystackData.status || paystackData.data.status !== "success") {
+      console.error("Payment not verified:", paystackData);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -71,8 +82,9 @@ Deno.serve(async (req) => {
 
     // Verify the payment belongs to this user
     if (metadata?.user_id !== userId) {
+      console.error(`User mismatch: expected ${userId}, got ${metadata?.user_id}`);
       return new Response(
-        JSON.stringify({ error: "Payment verification failed" }),
+        JSON.stringify({ error: "Payment verification failed - user mismatch" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -83,13 +95,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Update user profile
-    const { error: updateError } = await adminClient
+    // Calculate subscription end date (1 month from now)
+    const subscriptionEnd = new Date();
+    subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+
+    // Determine verification based on plan
+    const isPremium = plan === "premium";
+
+    // Update user profile with verified status and new limits
+    const { error: updateError } = await supabase
       .from("profiles")
       .update({
         plan: plan,
-        is_verified: plan === "premium",
-        listings_count: 0,
+        is_verified: isPremium, // Gold verified badge for premium
+        listings_count: 0, // Reset listings count for new period
+        subscription_expires_at: subscriptionEnd.toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);
@@ -102,13 +122,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // For premium users, feature all their existing listings
+    if (isPremium) {
+      const { error: featureError } = await adminClient
+        .from("listings")
+        .update({ is_featured: true })
+        .eq("user_id", userId);
+
+      if (featureError) {
+        console.error("Error featuring listings:", featureError);
+      } else {
+        console.log(`Featured all listings for premium user ${userId}`);
+      }
+    }
+
     console.log(`User ${userId} upgraded to ${plan} via manual verification`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         plan,
-        message: `Successfully upgraded to ${plan} plan!` 
+        is_verified: isPremium,
+        message: `Successfully upgraded to ${plan} plan!${isPremium ? ' You now have a verified badge and all your listings are featured!' : ''}` 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
