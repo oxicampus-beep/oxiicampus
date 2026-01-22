@@ -150,11 +150,11 @@ const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground">Roles & verification</p>
               </Card>
             </Link>
-            <Link to="/products">
+            <Link to="/admin/listings">
               <Card className="p-4 hover:shadow-purple transition-shadow cursor-pointer">
                 <ListChecks className="w-8 h-8 text-accent mb-2" />
-                <h3 className="font-semibold">View Listings</h3>
-                <p className="text-sm text-muted-foreground">Browse all listings</p>
+                <h3 className="font-semibold">Manage Listings</h3>
+                <p className="text-sm text-muted-foreground">Feature, edit, delete</p>
               </Card>
             </Link>
             <Link to="/messages">
@@ -164,11 +164,13 @@ const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground">View conversations</p>
               </Card>
             </Link>
-            <Card className="p-4 opacity-50 cursor-not-allowed">
-              <BarChart3 className="w-8 h-8 text-muted-foreground mb-2" />
-              <h3 className="font-semibold">Analytics</h3>
-              <p className="text-sm text-muted-foreground">Coming soon</p>
-            </Card>
+            <Link to="/products">
+              <Card className="p-4 hover:shadow-purple transition-shadow cursor-pointer">
+                <BarChart3 className="w-8 h-8 text-primary mb-2" />
+                <h3 className="font-semibold">Browse Listings</h3>
+                <p className="text-sm text-muted-foreground">View all products</p>
+              </Card>
+            </Link>
           </div>
 
           {/* Stats Grid */}

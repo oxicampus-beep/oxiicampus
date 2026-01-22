@@ -1,26 +1,63 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { mockProducts } from "@/data/mockProducts";
-import { Heart, Share2, Trash2, ShoppingBag } from "lucide-react";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Heart, Share2, ShoppingBag, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface FavoriteItem {
+  id: string;
+  title: string;
+  price: number;
+  images: string[];
+  university: string | null;
+}
 
 const Favorites = () => {
   const { toast } = useToast();
-  // Mock favorites (using some products for demo)
-  const [favorites, setFavorites] = useState(mockProducts.slice(1, 4));
+  const navigate = useNavigate();
+  const { favorites, removeFavorite } = useFavorites();
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFavoriteItems = async () => {
+      if (favorites.length === 0) {
+        setFavoriteItems([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("listings")
+        .select("id, title, price, images, university")
+        .in("id", favorites);
+
+      if (error) {
+        console.error("Error fetching favorites:", error);
+        setFavoriteItems([]);
+      } else {
+        setFavoriteItems(data || []);
+      }
+      setIsLoading(false);
+    };
+
+    fetchFavoriteItems();
+  }, [favorites]);
 
   const handleRemove = (id: string) => {
-    setFavorites(favorites.filter((item) => item.id !== id));
+    removeFavorite(id);
     toast({
       title: "Removed from favorites",
       description: "The item has been removed from your favorites.",
     });
   };
 
-  const handleShare = (product: typeof mockProducts[0]) => {
+  const handleShare = (product: FavoriteItem) => {
     const shareUrl = `${window.location.origin}/product/${product.id}`;
     
     if (navigator.share) {
@@ -54,10 +91,14 @@ const Favorites = () => {
             </p>
           </div>
 
-          {/* Favorites Grid */}
-          {favorites.length > 0 ? (
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : favoriteItems.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.map((product) => (
+              {favoriteItems.map((product) => (
                 <div
                   key={product.id}
                   className="bg-card rounded-2xl border border-border overflow-hidden group hover:shadow-purple transition-all duration-300"
@@ -66,7 +107,7 @@ const Favorites = () => {
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <Link to={`/product/${product.id}`}>
                       <img
-                        src={product.images[0]}
+                        src={product.images?.[0] || "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800"}
                         alt={product.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
@@ -102,7 +143,7 @@ const Favorites = () => {
                         GH₵{product.price.toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {product.university}
+                        {product.university || "Unknown"}
                       </div>
                     </div>
 
