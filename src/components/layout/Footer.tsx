@@ -100,7 +100,7 @@ const Footer = () => {
             </ul>
             <div className="mt-6">
               <p className="text-background/50 text-xs">
-                © 2024 OxiCampus. All rights reserved.
+                © 2026 OxiCampus. All rights reserved.
               </p>
             </div>
           </div>
