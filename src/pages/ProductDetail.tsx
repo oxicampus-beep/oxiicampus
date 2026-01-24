@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
+import MessageDialog from "@/components/products/MessageDialog";
 import {
   ArrowLeft,
   MapPin,
@@ -27,6 +28,7 @@ const ProductDetail = () => {
   const { listing, isLoading } = useListing(id);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -90,7 +92,7 @@ const ProductDetail = () => {
       navigate("/auth");
       return;
     }
-    navigate(`/messages?user=${listing.user_id}&listing=${listing.id}`);
+    setIsMessageDialogOpen(true);
   };
 
   const nextImage = () => {
@@ -322,6 +324,17 @@ const ProductDetail = () => {
       </main>
 
       <Footer />
+
+      {/* Message Dialog */}
+      <MessageDialog
+        isOpen={isMessageDialogOpen}
+        onClose={() => setIsMessageDialogOpen(false)}
+        sellerId={listing.user_id}
+        sellerName={listing.seller?.full_name || "Seller"}
+        sellerAvatar={listing.seller?.avatar_url}
+        listingId={listing.id}
+        listingTitle={listing.title}
+      />
     </div>
   );
 };
