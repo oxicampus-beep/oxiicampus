@@ -73,8 +73,9 @@ export const useListings = (options: UseListingsOptions = {}) => {
       
       let profilesMap: Record<string, any> = {};
       if (userIds.length > 0) {
+        // Use profiles_public view to only expose non-sensitive profile data
         const { data: profiles } = await supabase
-          .from("profiles")
+          .from("profiles_public")
           .select("user_id, full_name, avatar_url, is_verified, university")
           .in("user_id", userIds);
         
@@ -137,9 +138,11 @@ export const useListing = (id: string | undefined) => {
 
         if (data) {
           // Fetch seller profile
+          // Use profiles_public view to only expose non-sensitive profile data
+          // Phone is not included as it's sensitive - users contact via messaging
           const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, avatar_url, is_verified, university, phone")
+            .from("profiles_public")
+            .select("full_name, avatar_url, is_verified, university")
             .eq("user_id", data.user_id)
             .maybeSingle();
 
