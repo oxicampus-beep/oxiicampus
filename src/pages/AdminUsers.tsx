@@ -5,6 +5,12 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoles, AppRole } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +25,10 @@ import {
   UserCog,
   ShieldCheck,
   ArrowLeft,
+  ChevronDown,
 } from "lucide-react";
+
+type PlanType = "free" | "pro" | "premium";
 
 interface UserWithRoles {
   id: string;
@@ -165,6 +174,47 @@ const AdminUsers = () => {
     }
   };
 
+  const handleChangePlan = async (userItem: UserWithRoles, newPlan: PlanType) => {
+    if (userItem.plan === newPlan) return;
+    
+    setActionLoading(userItem.user_id);
+    
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ plan: newPlan })
+        .eq("user_id", userItem.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Plan updated",
+        description: `User plan changed to ${newPlan}`,
+      });
+
+      fetchUsers();
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const getPlanBadgeColor = (plan: string | null) => {
+    switch (plan) {
+      case "premium":
+        return "bg-yellow-500/20 text-yellow-600 border-yellow-500/30";
+      case "pro":
+        return "bg-blue-500/20 text-blue-600 border-blue-500/30";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
   const filteredUsers = users.filter(
     (u) =>
       u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -297,11 +347,44 @@ const AdminUsers = () => {
                         </div>
                       </div>
 
-                      {/* Plan Badge */}
-                      <Badge variant="outline" className="capitalize w-fit">
-                        <Crown className="w-3 h-3 mr-1" />
-                        {userItem.plan || "free"}
-                      </Badge>
+                      {/* Plan Selector */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={`capitalize w-fit gap-1 ${getPlanBadgeColor(userItem.plan)}`}
+                            disabled={actionLoading === userItem.user_id}
+                          >
+                            <Crown className="w-3 h-3" />
+                            {userItem.plan || "free"}
+                            <ChevronDown className="w-3 h-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleChangePlan(userItem, "free")}
+                            className={userItem.plan === "free" || !userItem.plan ? "bg-accent" : ""}
+                          >
+                            <Crown className="w-3 h-3 mr-2 text-muted-foreground" />
+                            Free
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleChangePlan(userItem, "pro")}
+                            className={userItem.plan === "pro" ? "bg-accent" : ""}
+                          >
+                            <Crown className="w-3 h-3 mr-2 text-blue-500" />
+                            Pro
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleChangePlan(userItem, "premium")}
+                            className={userItem.plan === "premium" ? "bg-accent" : ""}
+                          >
+                            <Crown className="w-3 h-3 mr-2 text-yellow-500" />
+                            Premium
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       {/* Current Roles */}
                       <div className="flex flex-wrap gap-2">
