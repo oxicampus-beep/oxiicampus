@@ -62,8 +62,9 @@ export const useMessages = () => {
         userIds.add(msg.receiver_id);
       });
 
+      // Use profiles_public view to only expose non-sensitive profile data
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, full_name, avatar_url")
         .in("user_id", Array.from(userIds));
 
@@ -156,8 +157,9 @@ export const useConversation = (otherUserId: string | undefined) => {
         userIds.add(msg.receiver_id);
       });
 
+      // Use profiles_public view to only expose non-sensitive profile data
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, full_name, avatar_url")
         .in("user_id", Array.from(userIds));
 

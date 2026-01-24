@@ -74,8 +74,9 @@ const AdminListings = () => {
     } else {
       // Fetch seller profiles
       const userIds = [...new Set(data?.map((l) => l.user_id) || [])];
+      // Use profiles_public view to only expose non-sensitive profile data
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, full_name, is_verified")
         .in("user_id", userIds);
 
