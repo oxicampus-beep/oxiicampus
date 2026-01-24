@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import MessageDialog from "@/components/products/MessageDialog";
+import ImageLightbox from "@/components/products/ImageLightbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ import {
   ChevronRight,
   Loader2,
   Send,
+  ZoomIn,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -54,6 +56,13 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setIsLightboxOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -157,22 +166,37 @@ const ProductDetail = () => {
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Image Gallery */}
             <div className="space-y-4">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-secondary">
+              <div
+                className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-secondary cursor-pointer group"
+                onClick={() => openLightbox(currentImageIndex)}
+              >
                 <img
                   src={images[currentImageIndex]}
                   alt={listing.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {/* Zoom Indicator */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
+                    <ZoomIn className="w-6 h-6 text-foreground" />
+                  </div>
+                </div>
                 {images.length > 1 && (
                   <>
                     <button
-                      onClick={prevImage}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevImage();
+                      }}
                       className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/50 transition-colors"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={nextImage}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextImage();
+                      }}
                       className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/50 transition-colors"
                     >
                       <ChevronRight className="w-5 h-5" />
@@ -193,7 +217,7 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 ${
                         currentImageIndex === index
                           ? "border-primary shadow-purple"
                           : "border-transparent hover:border-primary/30"
@@ -399,6 +423,15 @@ const ProductDetail = () => {
         listingTitle={listing.title}
         listingImage={images[0]}
         listingPrice={listing.price}
+      />
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        images={images}
+        initialIndex={lightboxIndex}
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        title={listing.title}
       />
     </div>
   );
