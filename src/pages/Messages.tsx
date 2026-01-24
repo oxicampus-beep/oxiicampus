@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages, useConversation } from "@/hooks/useMessages";
+import ListingTag from "@/components/products/ListingTag";
 import { 
   MessageCircle, 
   Send, 
@@ -215,37 +216,53 @@ const Messages = () => {
                           <Loader2 className="w-6 h-6 animate-spin text-primary" />
                         </div>
                       ) : (
-                        messages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={`flex ${
-                              msg.sender_id === user.id
-                                ? "justify-end"
-                                : "justify-start"
-                            }`}
-                          >
-                            <div
-                              className={`max-w-[70%] px-4 py-2 rounded-2xl ${
-                                msg.sender_id === user.id
-                                  ? "gradient-bg text-primary-foreground"
-                                  : "bg-muted"
-                              }`}
-                            >
-                              <p>{msg.content}</p>
-                              <p
-                                className={`text-xs mt-1 ${
+                        messages.map((msg) => {
+                          const showListingTag = msg.listing_id && msg.listing?.title;
+                          
+                          return (
+                            <div key={msg.id} className="space-y-1">
+                              {/* Show listing tag if message has a listing */}
+                              {showListingTag && (
+                                <div className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}>
+                                  <ListingTag
+                                    listingId={msg.listing_id!}
+                                    title={msg.listing!.title}
+                                    image={msg.listing?.images?.[0]}
+                                    compact
+                                  />
+                                </div>
+                              )}
+                              <div
+                                className={`flex ${
                                   msg.sender_id === user.id
-                                    ? "text-primary-foreground/70"
-                                    : "text-muted-foreground"
+                                    ? "justify-end"
+                                    : "justify-start"
                                 }`}
                               >
-                                {formatDistanceToNow(new Date(msg.created_at), {
-                                  addSuffix: true,
-                                })}
-                              </p>
+                                <div
+                                  className={`max-w-[70%] px-4 py-2 rounded-2xl ${
+                                    msg.sender_id === user.id
+                                      ? "gradient-bg text-primary-foreground"
+                                      : "bg-muted"
+                                  }`}
+                                >
+                                  <p>{msg.content}</p>
+                                  <p
+                                    className={`text-xs mt-1 ${
+                                      msg.sender_id === user.id
+                                        ? "text-primary-foreground/70"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    {formatDistanceToNow(new Date(msg.created_at), {
+                                      addSuffix: true,
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
 

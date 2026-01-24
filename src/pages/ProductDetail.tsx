@@ -334,6 +334,8 @@ const ProductDetail = () => {
         sellerAvatar={listing.seller?.avatar_url}
         listingId={listing.id}
         listingTitle={listing.title}
+        listingImage={images[0]}
+        listingPrice={listing.price}
       />
     </div>
   );
