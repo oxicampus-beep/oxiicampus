@@ -239,16 +239,10 @@ const Profile = () => {
         <div className="container mx-auto px-4">
           {/* Profile Header */}
           <div className="bg-card rounded-2xl border border-border overflow-hidden mb-8">
-            {/* Cover */}
-            <div className="h-32 md:h-48 gradient-bg relative">
-              <button className="absolute bottom-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-                <Camera className="w-5 h-5 text-primary-foreground" />
-              </button>
-            </div>
             
             {/* Profile Info */}
-            <div className="px-6 pb-6">
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 md:-mt-12">
+            <div className="px-6 py-6">
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between">
                 <div className="flex flex-col md:flex-row md:items-end gap-4">
                   {/* Avatar */}
                   <div className="relative">
