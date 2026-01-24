@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Loader2, User } from "lucide-react";
 import { useConversation } from "@/hooks/useMessages";
+import ListingTag from "./ListingTag";
 
 interface MessageDialogProps {
   isOpen: boolean;
@@ -16,6 +16,8 @@ interface MessageDialogProps {
   sellerAvatar?: string | null;
   listingId: string;
   listingTitle: string;
+  listingImage?: string;
+  listingPrice?: number;
 }
 
 const MessageDialog = ({
@@ -26,6 +28,8 @@ const MessageDialog = ({
   sellerAvatar,
   listingId,
   listingTitle,
+  listingImage,
+  listingPrice,
 }: MessageDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -95,7 +99,17 @@ const MessageDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-[300px] max-h-[400px] py-4 space-y-3">
+        {/* Listing Tag - shows the product being discussed */}
+        <div className="border-b border-border pb-3">
+          <ListingTag
+            listingId={listingId}
+            title={listingTitle}
+            image={listingImage}
+            price={listingPrice}
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto min-h-[250px] max-h-[350px] py-4 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -108,29 +122,41 @@ const MessageDialog = ({
           ) : (
             messages.map((msg) => {
               const isMe = msg.sender_id === user?.id;
+              const showListingTag = msg.listing_id && msg.listing?.title;
+              
               return (
-                <div
-                  key={msg.id}
-                  className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[80%] px-4 py-2 rounded-2xl ${
-                      isMe
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
-                        : "bg-muted rounded-bl-sm"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                <div key={msg.id} className="space-y-1">
+                  {/* Show listing tag if message has a listing */}
+                  {showListingTag && (
+                    <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                      <ListingTag
+                        listingId={msg.listing_id!}
+                        title={msg.listing!.title}
+                        image={msg.listing?.images?.[0]}
+                        compact
+                      />
+                    </div>
+                  )}
+                  <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`max-w-[80%] px-4 py-2 rounded-2xl ${
+                        isMe
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-muted rounded-bl-sm"
                       }`}
                     >
-                      {new Date(msg.created_at).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      <p
+                        className={`text-xs mt-1 ${
+                          isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                        }`}
+                      >
+                        {new Date(msg.created_at).toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );

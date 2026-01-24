@@ -166,11 +166,28 @@ export const useConversation = (otherUserId: string | undefined) => {
         return acc;
       }, {} as Record<string, any>);
 
+      // Get listing details for messages with listing_id
+      const listingIds = [...new Set(data?.filter(m => m.listing_id).map(m => m.listing_id) || [])];
+      let listingsMap: Record<string, any> = {};
+      
+      if (listingIds.length > 0) {
+        const { data: listings } = await supabase
+          .from("listings")
+          .select("id, title, images, price")
+          .in("id", listingIds);
+        
+        listingsMap = (listings || []).reduce((acc, l) => {
+          acc[l.id] = l;
+          return acc;
+        }, {} as Record<string, any>);
+      }
+
       // Transform messages
       const transformedMessages: Message[] = (data || []).map((msg) => ({
         ...msg,
         sender: profilesMap[msg.sender_id] || null,
         receiver: profilesMap[msg.receiver_id] || null,
+        listing: msg.listing_id ? listingsMap[msg.listing_id] || null : null,
       }));
 
       setMessages(transformedMessages);
