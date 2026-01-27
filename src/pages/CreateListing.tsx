@@ -52,15 +52,31 @@ const CreateListing = () => {
       return;
     }
 
-    // Check listing limits based on plan
-    const userPlan = profile?.plan || "free";
+    // Check subscription expiry and listing limits based on plan
+    const subscriptionExpiresAt = (profile as any)?.subscription_expires_at 
+      ? new Date((profile as any).subscription_expires_at) 
+      : null;
+    const isSubscriptionExpired = subscriptionExpiresAt && new Date() > subscriptionExpiresAt;
+    
+    // If subscription expired, treat as free plan
+    const effectivePlan = isSubscriptionExpired ? "free" : (profile?.plan || "free");
     const currentListings = profile?.listings_count || 0;
-    const limit = planLimits[userPlan] || 1;
+    const limit = planLimits[effectivePlan] || 1;
+
+    if (isSubscriptionExpired && profile?.plan !== "free") {
+      toast({
+        title: "Subscription expired",
+        description: `Your ${profile?.plan} subscription has expired. Please renew to continue with your plan benefits.`,
+        variant: "destructive",
+      });
+      navigate("/pricing");
+      return;
+    }
 
     if (currentListings >= limit) {
       toast({
         title: "Listing limit reached",
-        description: `You've reached your ${userPlan} plan limit of ${limit} listings. Upgrade to list more!`,
+        description: `You've reached your ${effectivePlan} plan limit of ${limit} listings. Upgrade to list more!`,
         variant: "destructive",
       });
       navigate("/pricing");
