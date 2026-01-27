@@ -225,11 +225,13 @@ const Profile = () => {
     : "Recently";
 
   // Subscription status
-  const subscriptionExpiresAt = (profile as any)?.subscription_expires_at 
-    ? new Date((profile as any).subscription_expires_at) 
+  const subscriptionExpiresAt = profile?.subscription_expires_at 
+    ? new Date(profile.subscription_expires_at) 
     : null;
   const isSubscriptionActive = subscriptionExpiresAt && !isPast(subscriptionExpiresAt);
-  const isExpiringSoon = subscriptionExpiresAt && !isPast(subscriptionExpiresAt) && isPast(addDays(new Date(), -7));
+  // Expiring soon = subscription is still active but expires within 7 days
+  const isExpiringSoon = subscriptionExpiresAt && !isPast(subscriptionExpiresAt) && 
+    subscriptionExpiresAt <= addDays(new Date(), 7);
 
   return (
     <div className="min-h-screen bg-background">

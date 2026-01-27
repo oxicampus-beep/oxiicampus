@@ -12,6 +12,7 @@ interface Profile {
   plan: string;
   listings_count: number;
   is_verified: boolean;
+  subscription_expires_at: string | null;
   created_at: string;
   updated_at: string;
 }

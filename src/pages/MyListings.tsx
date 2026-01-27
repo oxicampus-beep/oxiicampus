@@ -61,8 +61,13 @@ const MyListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const userPlan = profile?.plan || "free";
-  const listingsLimit = planLimits[userPlan] || 1;
+  // Check subscription expiry to determine effective plan
+  const subscriptionExpiresAt = profile?.subscription_expires_at 
+    ? new Date(profile.subscription_expires_at) 
+    : null;
+  const isSubscriptionExpired = subscriptionExpiresAt && new Date() > subscriptionExpiresAt;
+  const effectivePlan = isSubscriptionExpired ? "free" : (profile?.plan || "free");
+  const listingsLimit = planLimits[effectivePlan] || 1;
   const canAddMore = listings.length < listingsLimit;
 
   useEffect(() => {
@@ -230,7 +235,7 @@ const MyListings = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold capitalize">{userPlan} Plan</span>
+                    <span className="font-semibold capitalize">{effectivePlan} Plan</span>
                     <Badge variant="outline" className="border-primary text-primary">
                       {listings.length}/{listingsLimit} used
                     </Badge>

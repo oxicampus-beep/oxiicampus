@@ -103,11 +103,12 @@ Deno.serve(async (req) => {
     const isPremium = plan === "premium";
 
     // Update user profile with verified status and new limits
-    const { error: updateError } = await supabase
+    // IMPORTANT: Use adminClient to bypass RLS for this update
+    const { error: updateError } = await adminClient
       .from("profiles")
       .update({
         plan: plan,
-        is_verified: isPremium, // Gold verified badge for premium
+        is_verified: isPremium, // Gold verified badge for premium ONLY
         listings_count: 0, // Reset listings count for new period
         subscription_expires_at: subscriptionEnd.toISOString(),
         updated_at: new Date().toISOString(),
