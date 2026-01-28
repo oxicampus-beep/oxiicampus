@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import oxiLogo from "@/asset/logo.png";
+import ForgotPasswordDialog from "@/components/auth/ForgotPasswordDialog";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -39,6 +40,7 @@ const Auth = () => {
 
   // Animation states
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   useEffect(() => {
     setIsSignUp(searchParams.get("mode") === "signup");
@@ -330,6 +332,7 @@ const Auth = () => {
               <div className="flex justify-end">
                 <button
                   type="button"
+                  onClick={() => setShowForgotPassword(true)}
                   className="text-sm text-primary hover:underline"
                 >
                   Forgot password?
@@ -366,9 +369,15 @@ const Auth = () => {
               onClick={() => setIsSignUp(!isSignUp)}
               className="text-primary font-semibold hover:underline"
             >
-              {isSignUp ? "Sign In" : "Sign Up"}
-            </button>
-          </p>
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </button>
+        </p>
+
+        {/* Forgot Password Dialog */}
+        <ForgotPasswordDialog 
+          open={showForgotPassword} 
+          onOpenChange={setShowForgotPassword} 
+        />
         </div>
       </div>
 
