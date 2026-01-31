@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import oxiLogo from "@/asset/logo.png";
 import ForgotPasswordDialog from "@/components/auth/ForgotPasswordDialog";
+import { ghanaUniversities } from "@/data/constants";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -82,8 +83,9 @@ const Auth = () => {
         } else {
           toast({
             title: "Account created!",
-            description: "Please check your email to verify your account, or sign in if email confirmation is disabled.",
+            description: "Welcome to OxiCampus! You can now sign in to your account.",
           });
+          setIsSignUp(false);
         }
       } else {
         const { error } = await signIn(email, password);
@@ -113,16 +115,6 @@ const Auth = () => {
     }
   };
 
-  const universities = [
-    "University of Ghana",
-    "KNUST",
-    "Ashesi University",
-    "University of Cape Coast",
-    "University of Professional Studies",
-    "Regional Maritime University",
-    "Ghana Institute of Management and Public Administration",
-    "Other",
-  ];
 
   return (
     <div className="min-h-screen flex">
@@ -243,7 +235,7 @@ const Auth = () => {
                       required
                     >
                       <option value="">Select your university</option>
-                      {universities.map((uni) => (
+                      {ghanaUniversities.map((uni) => (
                         <option key={uni} value={uni}>
                           {uni}
                         </option>
