@@ -304,7 +304,6 @@ const Auth = () => {
                   onBlur={() => setFocusedField(null)}
                   className="pl-12 pr-12 h-12 rounded-xl border-2 transition-all focus:border-primary focus:shadow-purple"
                   required
-                  minLength={6}
                 />
                 <button
                   type="button"
