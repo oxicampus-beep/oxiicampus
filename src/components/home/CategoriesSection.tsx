@@ -8,53 +8,50 @@ import {
   Watch,
   ArrowRight
 } from "lucide-react";
+import { useCategoryCounts } from "@/hooks/useCategoryCounts";
 
 const categories = [
   {
     name: "Electronics",
     icon: Laptop,
-    count: 234,
     color: "from-purple-500 to-purple-700",
     description: "Laptops, phones, gadgets & more"
   },
   {
     name: "Books",
     icon: BookOpen,
-    count: 156,
     color: "from-blue-500 to-blue-700",
     description: "Textbooks, novels & study materials"
   },
   {
     name: "Services",
     icon: Wrench,
-    count: 89,
     color: "from-green-500 to-green-700",
     description: "Tutoring, design, repairs & more"
   },
   {
     name: "Clothing",
     icon: Shirt,
-    count: 178,
     color: "from-pink-500 to-pink-700",
     description: "Fashion, shoes & accessories"
   },
   {
     name: "Furniture",
     icon: Sofa,
-    count: 67,
     color: "from-orange-500 to-orange-700",
     description: "Desks, chairs & dorm essentials"
   },
   {
     name: "Accessories",
     icon: Watch,
-    count: 123,
     color: "from-accent to-gold-light",
     description: "Watches, bags & personal items"
   },
 ];
 
 const CategoriesSection = () => {
+  const { counts } = useCategoryCounts();
+
   return (
     <section className="py-20 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -87,7 +84,7 @@ const CategoriesSection = () => {
                   {category.description}
                 </p>
                 <span className="text-xs font-medium text-primary">
-                  {category.count} listings
+                  {counts[category.name] || 0} listings
                 </span>
               </div>
             </Link>
