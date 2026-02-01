@@ -1,16 +1,28 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Star, MapPin, BadgeCheck, Loader2 } from "lucide-react";
 import { useListings } from "@/hooks/useListings";
 
+// Fisher-Yates shuffle algorithm
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 const FeaturedProducts = () => {
-  const { listings, isLoading } = useListings({ limit: 6 });
+  const { listings, isLoading } = useListings({ limit: 20 });
   
-  // Filter for featured listings first, then fill with recent listings
-  const featuredListings = listings.filter((l) => l.is_featured).slice(0, 3);
-  const displayListings = featuredListings.length >= 3 
-    ? featuredListings 
-    : [...featuredListings, ...listings.filter(l => !l.is_featured)].slice(0, 3);
+  // Shuffle and pick 3 random listings on each render
+  const displayListings = useMemo(() => {
+    if (listings.length === 0) return [];
+    const shuffled = shuffleArray(listings);
+    return shuffled.slice(0, 3);
+  }, [listings]);
 
   const conditionColors: Record<string, string> = {
     new: "bg-success text-success-foreground",
