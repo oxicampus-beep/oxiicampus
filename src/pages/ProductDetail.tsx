@@ -6,6 +6,7 @@ import { useListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import MessageDialog from "@/components/products/MessageDialog";
 import ImageLightbox from "@/components/products/ImageLightbox";
+import ImageWatermark from "@/components/products/ImageWatermark";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -175,6 +176,8 @@ const ProductDetail = () => {
                   alt={listing.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {/* Watermark */}
+                <ImageWatermark sellerName={listing.seller?.full_name} size="lg" />
                 {/* Zoom Indicator */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
@@ -432,6 +435,7 @@ const ProductDetail = () => {
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}
         title={listing.title}
+        sellerName={listing.seller?.full_name}
       />
     </div>
   );
