@@ -4,6 +4,7 @@ import { MapPin, Star, BadgeCheck, Heart, Share2 } from "lucide-react";
 import { Product } from "@/data/mockProducts";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useToast } from "@/hooks/use-toast";
+import ImageWatermark from "./ImageWatermark";
 
 interface ProductCardProps {
   product: Product;
@@ -63,6 +64,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
             alt={product.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
+          
+          {/* Watermark */}
+          <ImageWatermark sellerName={product.seller?.name} size="sm" />
           
           {/* Action Buttons */}
           <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

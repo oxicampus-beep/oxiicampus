@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ImageWatermark from "./ImageWatermark";
 
 interface ImageLightboxProps {
   images: string[];
@@ -9,6 +10,7 @@ interface ImageLightboxProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  sellerName?: string;
 }
 
 const ImageLightbox = ({
@@ -17,6 +19,7 @@ const ImageLightbox = ({
   isOpen,
   onClose,
   title,
+  sellerName,
 }: ImageLightboxProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -90,21 +93,27 @@ const ImageLightbox = ({
         {/* Main Image */}
         <div
           className={cn(
-            "flex items-center justify-center w-full h-full",
+            "flex items-center justify-center w-full h-full relative",
             isZoomed ? "cursor-zoom-out overflow-auto" : "cursor-zoom-in"
           )}
           onClick={toggleZoom}
         >
-          <img
-            src={images[currentIndex]}
-            alt={title || `Image ${currentIndex + 1}`}
-            className={cn(
-              "transition-transform duration-300",
-              isZoomed
-                ? "max-w-none w-auto h-auto scale-150"
-                : "max-w-full max-h-[85vh] object-contain"
+          <div className="relative">
+            <img
+              src={images[currentIndex]}
+              alt={title || `Image ${currentIndex + 1}`}
+              className={cn(
+                "transition-transform duration-300",
+                isZoomed
+                  ? "max-w-none w-auto h-auto scale-150"
+                  : "max-w-full max-h-[85vh] object-contain"
+              )}
+            />
+            {/* Watermark on lightbox images */}
+            {!isZoomed && (
+              <ImageWatermark sellerName={sellerName} size="lg" className="text-white/15" />
             )}
-          />
+          </div>
         </div>
 
         {/* Navigation Arrows */}
