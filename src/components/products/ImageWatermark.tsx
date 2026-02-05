@@ -6,33 +6,23 @@ interface ImageWatermarkProps {
 
 const ImageWatermark = ({ sellerName, className = "", size = "md" }: ImageWatermarkProps) => {
   const sizeClasses = {
-    sm: "text-[8px] gap-0.5",
-    md: "text-[10px] gap-1",
-    lg: "text-sm gap-1.5",
+    sm: "text-sm gap-0.5",
+    md: "text-lg gap-1",
+    lg: "text-2xl gap-1.5",
   };
 
   return (
     <div className={`absolute inset-0 pointer-events-none select-none ${className}`}>
-      {/* Diagonal watermark pattern */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-        <div className={`flex flex-col items-center ${sizeClasses[size]} text-white/20 font-semibold tracking-wider rotate-[-25deg]`}>
+      {/* Centered watermark */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className={`flex flex-col items-center ${sizeClasses[size]} text-white/40 font-bold tracking-wider rotate-[-25deg] drop-shadow-lg`}>
           <span className="uppercase">OxiCampus</span>
           {sellerName && (
-            <span className="text-white/15 font-medium">
+            <span className="text-white/35 font-semibold text-[0.7em]">
               @{sellerName}
             </span>
           )}
         </div>
-      </div>
-      
-      {/* Bottom corner watermark */}
-      <div className={`absolute bottom-2 right-2 flex flex-col items-end ${sizeClasses[size]} text-white/30 font-medium`}>
-        <span className="uppercase tracking-wide drop-shadow-sm">OxiCampus</span>
-        {sellerName && (
-          <span className="text-white/25 text-[0.7em]">
-            by {sellerName}
-          </span>
-        )}
       </div>
     </div>
   );
