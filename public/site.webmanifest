@@ -1,0 +1,19 @@
+{
+  "name": "OxiCampus",
+  "short_name": "OxiCampus",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#7E69AB",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
