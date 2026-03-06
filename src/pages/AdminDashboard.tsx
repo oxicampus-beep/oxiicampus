@@ -19,6 +19,7 @@ import {
   UserCog,
   ListChecks,
   BarChart3,
+  Megaphone,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -159,16 +160,16 @@ const AdminDashboard = () => {
             </Link>
             <Link to="/messages">
               <Card className="p-4 hover:shadow-purple transition-shadow cursor-pointer">
-                <MessageCircle className="w-8 h-8 text-success mb-2" />
+                <MessageCircle className="w-8 h-8 text-green-500 mb-2" />
                 <h3 className="font-semibold">Messages</h3>
                 <p className="text-sm text-muted-foreground">View conversations</p>
               </Card>
             </Link>
-            <Link to="/products">
+            <Link to="/admin/ambassadors">
               <Card className="p-4 hover:shadow-purple transition-shadow cursor-pointer">
-                <BarChart3 className="w-8 h-8 text-primary mb-2" />
-                <h3 className="font-semibold">Browse Listings</h3>
-                <p className="text-sm text-muted-foreground">View all products</p>
+                <Megaphone className="w-8 h-8 text-primary mb-2" />
+                <h3 className="font-semibold">Ambassadors</h3>
+                <p className="text-sm text-muted-foreground">Applications & commissions</p>
               </Card>
             </Link>
           </div>

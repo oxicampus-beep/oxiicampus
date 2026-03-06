@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
 
     const { metadata } = paystackData.data;
     const plan = metadata?.plan;
+    const referralCode = metadata?.referral_code;
 
     // Verify the payment belongs to this user
     if (metadata?.user_id !== userId) {
@@ -134,6 +135,38 @@ Deno.serve(async (req) => {
         console.error("Error featuring listings:", featureError);
       } else {
         console.log(`Featured all listings for premium user ${userId}`);
+      }
+    }
+
+    // Record referral commission if referral code was used
+    if (referralCode) {
+      const { data: ambData } = await adminClient
+        .from("ambassadors")
+        .select("id, user_id")
+        .eq("referral_code", referralCode)
+        .eq("status", "approved")
+        .maybeSingle();
+
+      if (ambData && ambData.user_id !== userId) {
+        const planAmount = plan === "premium" ? 75 : 30;
+        const commission = planAmount * 0.5; // 50% commission
+
+        const { error: refError } = await adminClient
+          .from("referrals")
+          .insert({
+            ambassador_id: ambData.id,
+            buyer_id: userId,
+            package: plan,
+            amount: planAmount,
+            commission: commission,
+            status: "pending",
+          });
+
+        if (refError) {
+          console.error("Error recording referral:", refError);
+        } else {
+          console.log(`Referral recorded: ambassador ${ambData.id}, commission GH₵${commission}`);
+        }
       }
     }
 

@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import ReferralCodeDialog from "@/components/payment/ReferralCodeDialog";
 
 const plans = [
   {
@@ -70,34 +71,43 @@ const PricingSection = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [showReferralDialog, setShowReferralDialog] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const handleSelectPlan = async (planKey: string) => {
-    // Free plan - just go to signup
     if (planKey === "free") {
       navigate("/auth?mode=signup");
       return;
     }
 
-    // Check if user is logged in
     if (!user) {
       toast.error("Please sign in to upgrade your plan");
       navigate("/auth?mode=signin");
       return;
     }
 
-    // Check if already on this plan
     if (profile?.plan === planKey) {
       toast.info("You're already on this plan");
       return;
     }
 
-    setLoadingPlan(planKey);
+    // Show referral code dialog before proceeding to payment
+    setPendingPlan(planKey);
+    setShowReferralDialog(true);
+  };
+
+  const handleReferralCodeResult = async (referralCode: string | null) => {
+    setShowReferralDialog(false);
+    if (!pendingPlan || !user) return;
+
+    setLoadingPlan(pendingPlan);
 
     try {
       const { data, error } = await supabase.functions.invoke("paystack-initialize", {
         body: {
-          plan: planKey,
+          plan: pendingPlan,
           email: user.email,
+          referral_code: referralCode,
         },
       });
 
@@ -227,6 +237,11 @@ const PricingSection = () => {
             to upgrade your plan.
           </p>
         )}
+
+        <ReferralCodeDialog
+          open={showReferralDialog}
+          onClose={handleReferralCodeResult}
+        />
       </div>
     </section>
   );

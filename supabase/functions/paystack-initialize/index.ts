@@ -8,6 +8,7 @@ const corsHeaders = {
 interface PaymentRequest {
   plan: "pro" | "premium";
   email: string;
+  referral_code?: string | null;
 }
 
 const PLAN_PRICES = {
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    const { plan, email }: PaymentRequest = await req.json();
+    const { plan, email, referral_code }: PaymentRequest = await req.json();
 
     if (!plan || !["pro", "premium"].includes(plan)) {
       return new Response(
@@ -59,6 +60,25 @@ Deno.serve(async (req) => {
 
     const amount = PLAN_PRICES[plan];
     const reference = `oxicampus_${plan}_${userId}_${Date.now()}`;
+
+    // Validate referral code if provided (no self-referral)
+    let validReferralCode: string | null = null;
+    if (referral_code) {
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const { data: ambData } = await adminClient
+        .from("ambassadors")
+        .select("id, user_id, referral_code")
+        .eq("referral_code", referral_code.toUpperCase())
+        .eq("status", "approved")
+        .maybeSingle();
+
+      if (ambData && ambData.user_id !== userId) {
+        validReferralCode = referral_code.toUpperCase();
+      }
+    }
 
     // Initialize Paystack transaction
     const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -76,6 +96,7 @@ Deno.serve(async (req) => {
         metadata: {
           user_id: userId,
           plan,
+          referral_code: validReferralCode,
           custom_fields: [
             {
               display_name: "Plan",

@@ -27,6 +27,10 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminListings from "./pages/AdminListings";
 import ResetPassword from "./pages/ResetPassword";
+import Ambassadors from "./pages/Ambassadors";
+import AmbassadorApplication from "./pages/AmbassadorApplication";
+import AmbassadorDashboard from "./pages/AmbassadorDashboard";
+import AdminAmbassadors from "./pages/AdminAmbassadors";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 const queryClient = new QueryClient();
@@ -63,6 +67,10 @@ const App = () => (
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/listings" element={<AdminListings />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/ambassadors" element={<Ambassadors />} />
+              <Route path="/ambassador-apply" element={<AmbassadorApplication />} />
+              <Route path="/ambassador-dashboard" element={<AmbassadorDashboard />} />
+              <Route path="/admin/ambassadors" element={<AdminAmbassadors />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
