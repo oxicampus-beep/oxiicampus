@@ -29,6 +29,7 @@ const Auth = () => {
   const { toast } = useToast();
   
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
+  const [isAmbassador, setIsAmbassador] = useState(searchParams.get("type") === "ambassador");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,12 +46,29 @@ const Auth = () => {
 
   useEffect(() => {
     setIsSignUp(searchParams.get("mode") === "signup");
+    setIsAmbassador(searchParams.get("type") === "ambassador");
   }, [searchParams]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in - check ambassador status
   useEffect(() => {
     if (user) {
-      navigate("/");
+      // Check if user is an ambassador and redirect accordingly
+      const checkAmbassador = async () => {
+        const { data } = await (await import("@/integrations/supabase/client")).supabase
+          .from("ambassadors")
+          .select("status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (data?.status === "approved") {
+          navigate("/ambassador-dashboard");
+        } else if (data?.status === "pending") {
+          navigate("/ambassador-dashboard");
+        } else {
+          navigate("/");
+        }
+      };
+      checkAmbassador();
     }
   }, [user, navigate]);
 
@@ -83,8 +101,18 @@ const Auth = () => {
         } else {
           toast({
             title: "Account created!",
-            description: "Welcome to OxiCampus! You can now sign in to your account.",
+            description: isAmbassador 
+              ? "Now complete your ambassador application." 
+              : "Welcome to OxiCampus! You can now sign in to your account.",
           });
+          if (isAmbassador) {
+            // Sign in and redirect to application
+            const { error: signInError } = await signIn(email, password);
+            if (!signInError) {
+              navigate("/ambassador-apply");
+              return;
+            }
+          }
           setIsSignUp(false);
         }
       } else {
