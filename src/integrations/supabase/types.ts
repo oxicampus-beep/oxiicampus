@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ambassadors: {
+        Row: {
+          created_at: string
+          id: string
+          momo_name: string
+          momo_network: string
+          momo_number: string
+          referral_code: string | null
+          status: string
+          university: string
+          updated_at: string
+          user_id: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          momo_name: string
+          momo_network: string
+          momo_number: string
+          referral_code?: string | null
+          status?: string
+          university: string
+          updated_at?: string
+          user_id: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          momo_name?: string
+          momo_network?: string
+          momo_number?: string
+          referral_code?: string | null
+          status?: string
+          university?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           category: string
@@ -154,6 +196,47 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          ambassador_id: string
+          amount: number
+          buyer_id: string
+          commission: number
+          created_at: string
+          id: string
+          package: string
+          status: string
+        }
+        Insert: {
+          ambassador_id: string
+          amount: number
+          buyer_id: string
+          commission: number
+          created_at?: string
+          id?: string
+          package: string
+          status?: string
+        }
+        Update: {
+          ambassador_id?: string
+          amount?: number
+          buyer_id?: string
+          commission?: number
+          created_at?: string
+          id?: string
+          package?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_ambassador_id_fkey"
+            columns: ["ambassador_id"]
+            isOneToOne: false
+            referencedRelation: "ambassadors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -203,6 +286,7 @@ export type Database = {
       }
     }
     Functions: {
+      generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
