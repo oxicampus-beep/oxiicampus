@@ -161,11 +161,13 @@ const Auth = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-              {isSignUp ? "Create your account" : "Welcome back"}
+              {isSignUp 
+                ? (isAmbassador ? "Become an Ambassador" : "Create your account") 
+                : "Welcome back"}
             </h1>
             <p className="text-muted-foreground">
               {isSignUp
-                ? "Start selling to fellow students today"
+                ? (isAmbassador ? "Create an account to apply as a Campus Ambassador" : "Start selling to fellow students today")
                 : "Sign in to manage your listings"}
             </p>
           </div>
