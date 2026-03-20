@@ -314,6 +314,9 @@ const AdminAmbassadors = () => {
                 <TabsTrigger value="commissions">
                   Commissions {pendingReferrals.length > 0 && `(${pendingReferrals.length})`}
                 </TabsTrigger>
+                <TabsTrigger value="withdrawals">
+                  Withdrawals {pendingWithdrawals.length > 0 && `(${pendingWithdrawals.length})`}
+                </TabsTrigger>
               </TabsList>
 
               {/* Applications Tab */}
