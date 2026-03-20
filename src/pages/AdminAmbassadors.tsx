@@ -516,6 +516,76 @@ const AdminAmbassadors = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Withdrawals Tab */}
+              <TabsContent value="withdrawals">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5" />
+                      Withdrawal Requests
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {withdrawalsList.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">No withdrawal requests yet</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Ambassador</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>MoMo Number</TableHead>
+                            <TableHead>Network</TableHead>
+                            <TableHead>MoMo Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {withdrawalsList.map((w) => (
+                            <TableRow key={w.id}>
+                              <TableCell>{new Date(w.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell className="font-medium">{w.ambassador_name || "Unknown"}</TableCell>
+                              <TableCell className="font-semibold">GH₵{Number(w.amount).toFixed(2)}</TableCell>
+                              <TableCell>{w.momo_number}</TableCell>
+                              <TableCell>{w.momo_network}</TableCell>
+                              <TableCell>{w.momo_name}</TableCell>
+                              <TableCell>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                                  w.status === "completed"
+                                    ? "bg-green-500/20 text-green-600"
+                                    : "bg-yellow-500/20 text-yellow-600"
+                                }`}>
+                                  {w.status}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {w.status === "pending" && (
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleMarkWithdrawalCompleted(w.id)}
+                                    disabled={actionLoading === w.id}
+                                  >
+                                    {actionLoading === w.id ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                    )}
+                                    Confirm Paid
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           )}
         </div>
