@@ -213,6 +213,23 @@ const AdminAmbassadors = () => {
     }
   };
 
+  const handleMarkWithdrawalCompleted = async (withdrawalId: string) => {
+    setActionLoading(withdrawalId);
+    try {
+      const { error } = await supabase
+        .from("withdrawals")
+        .update({ status: "completed" })
+        .eq("id", withdrawalId);
+      if (error) throw error;
+      toast({ title: "Withdrawal marked as completed" });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (authLoading || rolesLoading) {
     return (
       <div className="min-h-screen bg-background">
