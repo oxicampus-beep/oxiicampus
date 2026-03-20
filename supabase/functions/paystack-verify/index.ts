@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       .from("profiles")
       .update({
         plan: plan,
-        is_verified: isPremium, // Gold verified badge for premium ONLY
+        is_verified: isPremium || isPro, // Both Pro and Premium get verified
         listings_count: 0, // Reset listings count for new period
         subscription_expires_at: subscriptionEnd.toISOString(),
         updated_at: new Date().toISOString(),
