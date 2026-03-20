@@ -8,8 +8,8 @@ const corsHeaders = {
 // Plan limits matching the frontend
 const PLAN_LIMITS: Record<string, number> = {
   free: 1,
-  pro: 10,
-  premium: 50,
+  pro: 3,
+  premium: 6,
 };
 
 Deno.serve(async (req) => {
@@ -100,8 +100,9 @@ Deno.serve(async (req) => {
     const subscriptionEnd = new Date();
     subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
 
-    // Determine verification based on plan
+    // Determine verification based on plan — both Pro and Premium get verified, but only Premium gets golden badge
     const isPremium = plan === "premium";
+    const isPro = plan === "pro";
 
     // Update user profile with verified status and new limits
     // IMPORTANT: Use adminClient to bypass RLS for this update
@@ -109,7 +110,7 @@ Deno.serve(async (req) => {
       .from("profiles")
       .update({
         plan: plan,
-        is_verified: isPremium, // Gold verified badge for premium ONLY
+        is_verified: isPremium || isPro, // Both Pro and Premium get verified
         listings_count: 0, // Reset listings count for new period
         subscription_expires_at: subscriptionEnd.toISOString(),
         updated_at: new Date().toISOString(),
@@ -148,7 +149,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (ambData && ambData.user_id !== userId) {
-        const planAmount = plan === "premium" ? 75 : 30;
+        const planAmount = plan === "premium" ? 30 : 10;
         const commission = planAmount * 0.5; // 50% commission
 
         const { error: refError } = await adminClient

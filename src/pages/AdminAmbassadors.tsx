@@ -13,7 +13,7 @@ import { useRoles } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Shield, Loader2, CheckCircle, XCircle, Ban, DollarSign, Users,
+  Shield, Loader2, CheckCircle, XCircle, Ban, DollarSign, Users, Wallet,
 } from "lucide-react";
 
 interface AmbassadorRow {
@@ -44,6 +44,19 @@ interface ReferralRow {
   ambassador_name?: string;
 }
 
+interface WithdrawalRow {
+  id: string;
+  ambassador_id: string;
+  user_id: string;
+  amount: number;
+  momo_number: string;
+  momo_network: string;
+  momo_name: string;
+  status: string;
+  created_at: string;
+  ambassador_name?: string;
+}
+
 const AdminAmbassadors = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
@@ -51,6 +64,7 @@ const AdminAmbassadors = () => {
   const { toast } = useToast();
   const [ambassadors, setAmbassadors] = useState<AmbassadorRow[]>([]);
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
+  const [withdrawalsList, setWithdrawalsList] = useState<WithdrawalRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -100,6 +114,23 @@ const AdminAmbassadors = () => {
       setReferrals(enrichedRefs);
     } else {
       setReferrals(refs || []);
+    }
+
+    // Fetch withdrawals
+    const { data: wds } = await supabase
+      .from("withdrawals")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (wds && wds.length > 0 && ambs) {
+      const ambMap = new Map((ambs as any[]).map((a) => [a.id, a]));
+      const enrichedWds = wds.map((w: any) => {
+        const amb = ambMap.get(w.ambassador_id);
+        return { ...w, ambassador_name: amb?.momo_name || "Unknown" };
+      });
+      setWithdrawalsList(enrichedWds);
+    } else {
+      setWithdrawalsList(wds || []);
     }
 
     setIsLoading(false);
@@ -182,6 +213,23 @@ const AdminAmbassadors = () => {
     }
   };
 
+  const handleMarkWithdrawalCompleted = async (withdrawalId: string) => {
+    setActionLoading(withdrawalId);
+    try {
+      const { error } = await supabase
+        .from("withdrawals")
+        .update({ status: "completed" })
+        .eq("id", withdrawalId);
+      if (error) throw error;
+      toast({ title: "Withdrawal marked as completed" });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (authLoading || rolesLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -211,6 +259,7 @@ const AdminAmbassadors = () => {
   const pendingAmbs = ambassadors.filter((a) => a.status === "pending");
   const approvedAmbs = ambassadors.filter((a) => a.status === "approved");
   const pendingReferrals = referrals.filter((r) => r.status === "pending");
+  const pendingWithdrawals = withdrawalsList.filter((w) => w.status === "pending");
 
   return (
     <div className="min-h-screen bg-background">
@@ -264,6 +313,9 @@ const AdminAmbassadors = () => {
                 <TabsTrigger value="ambassadors">Active Ambassadors</TabsTrigger>
                 <TabsTrigger value="commissions">
                   Commissions {pendingReferrals.length > 0 && `(${pendingReferrals.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="withdrawals">
+                  Withdrawals {pendingWithdrawals.length > 0 && `(${pendingWithdrawals.length})`}
                 </TabsTrigger>
               </TabsList>
 
@@ -453,6 +505,76 @@ const AdminAmbassadors = () => {
                                       <CheckCircle className="w-3 h-3 mr-1" />
                                     )}
                                     Mark Paid
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Withdrawals Tab */}
+              <TabsContent value="withdrawals">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5" />
+                      Withdrawal Requests
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {withdrawalsList.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">No withdrawal requests yet</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Ambassador</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>MoMo Number</TableHead>
+                            <TableHead>Network</TableHead>
+                            <TableHead>MoMo Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {withdrawalsList.map((w) => (
+                            <TableRow key={w.id}>
+                              <TableCell>{new Date(w.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell className="font-medium">{w.ambassador_name || "Unknown"}</TableCell>
+                              <TableCell className="font-semibold">GH₵{Number(w.amount).toFixed(2)}</TableCell>
+                              <TableCell>{w.momo_number}</TableCell>
+                              <TableCell>{w.momo_network}</TableCell>
+                              <TableCell>{w.momo_name}</TableCell>
+                              <TableCell>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                                  w.status === "completed"
+                                    ? "bg-green-500/20 text-green-600"
+                                    : "bg-yellow-500/20 text-yellow-600"
+                                }`}>
+                                  {w.status}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {w.status === "pending" && (
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleMarkWithdrawalCompleted(w.id)}
+                                    disabled={actionLoading === w.id}
+                                  >
+                                    {actionLoading === w.id ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                    )}
+                                    Confirm Paid
                                   </Button>
                                 )}
                               </TableCell>

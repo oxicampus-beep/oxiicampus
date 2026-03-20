@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Users, DollarSign, Clock, Copy, CheckCircle, Megaphone, AlertCircle,
+  Loader2, Users, DollarSign, Clock, Copy, CheckCircle, Megaphone, AlertCircle, Wallet,
 } from "lucide-react";
 
 interface AmbassadorData {
@@ -192,6 +192,16 @@ const AmbassadorDashboard = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Withdraw Button */}
+          <div className="mb-8">
+            <Link to="/ambassador-withdrawals">
+              <Button variant="outline" size="lg">
+                <Wallet className="w-5 h-5 mr-2" />
+                View Withdrawals
+              </Button>
+            </Link>
+          </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -31,6 +31,7 @@ import Ambassadors from "./pages/Ambassadors";
 import AmbassadorApplication from "./pages/AmbassadorApplication";
 import AmbassadorDashboard from "./pages/AmbassadorDashboard";
 import AdminAmbassadors from "./pages/AdminAmbassadors";
+import AmbassadorWithdrawals from "./pages/AmbassadorWithdrawals";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/ambassadors" element={<Ambassadors />} />
               <Route path="/ambassador-apply" element={<AmbassadorApplication />} />
               <Route path="/ambassador-dashboard" element={<AmbassadorDashboard />} />
+              <Route path="/ambassador-withdrawals" element={<AmbassadorWithdrawals />} />
               <Route path="/admin/ambassadors" element={<AdminAmbassadors />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
