@@ -193,6 +193,16 @@ const AmbassadorDashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Withdraw Button */}
+          <div className="mb-8">
+            <Link to="/ambassador-withdrawals">
+              <Button variant="outline" size="lg">
+                <Wallet className="w-5 h-5 mr-2" />
+                View Withdrawals
+              </Button>
+            </Link>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="p-4">
