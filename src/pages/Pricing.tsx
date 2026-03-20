@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     question: "What happens if I exceed my listing limit?",
-    answer: "You'll be prompted to upgrade to a higher plan to continue posting new listings. Your existing listings will remain active.",
+    answer: "You'll be prompted to upgrade to a higher plan to continue posting new listings. Free gets 1, Pro gets 3, and Premium gets 6 listings per month.",
   },
   {
     question: "What does 'Featured Listings' mean?",
