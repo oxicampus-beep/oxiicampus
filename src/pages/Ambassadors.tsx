@@ -19,12 +19,12 @@ const benefits = [
   {
     icon: DollarSign,
     title: "50% Commission",
-    description: "Earn 50% of every purchase made using your referral code. GH₵15 for Pro, GH₵37.50 for Premium.",
+    description: "Earn 50% of every purchase made using your referral code. GH₵5 for Pro, GH₵15 for Premium.",
   },
   {
     icon: Clock,
     title: "Fast Payouts",
-    description: "Receive your commission via Mobile Money within 48 hours of confirmed purchases.",
+    description: "Request withdrawals every Friday via Mobile Money. Money received within 24 hours.",
   },
   {
     icon: Share2,
