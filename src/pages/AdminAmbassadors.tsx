@@ -116,6 +116,23 @@ const AdminAmbassadors = () => {
       setReferrals(refs || []);
     }
 
+    // Fetch withdrawals
+    const { data: wds } = await supabase
+      .from("withdrawals")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (wds && wds.length > 0 && ambs) {
+      const ambMap = new Map((ambs as any[]).map((a) => [a.id, a]));
+      const enrichedWds = wds.map((w: any) => {
+        const amb = ambMap.get(w.ambassador_id);
+        return { ...w, ambassador_name: amb?.momo_name || "Unknown" };
+      });
+      setWithdrawalsList(enrichedWds);
+    } else {
+      setWithdrawalsList(wds || []);
+    }
+
     setIsLoading(false);
   };
 
