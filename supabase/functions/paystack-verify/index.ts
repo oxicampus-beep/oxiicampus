@@ -8,8 +8,8 @@ const corsHeaders = {
 // Plan limits matching the frontend
 const PLAN_LIMITS: Record<string, number> = {
   free: 1,
-  pro: 10,
-  premium: 50,
+  pro: 3,
+  premium: 6,
 };
 
 Deno.serve(async (req) => {
