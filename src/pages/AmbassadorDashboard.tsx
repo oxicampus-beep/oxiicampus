@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Users, DollarSign, Clock, Copy, CheckCircle, Megaphone, AlertCircle,
+  Loader2, Users, DollarSign, Clock, Copy, CheckCircle, Megaphone, AlertCircle, Wallet,
 } from "lucide-react";
 
 interface AmbassadorData {
