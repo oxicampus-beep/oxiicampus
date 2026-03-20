@@ -154,34 +154,34 @@ const Ambassadors = () => {
               <Card className="p-8 border-2 border-primary/30">
                 <h3 className="font-display text-2xl font-bold mb-2">Pro Plan Referral</h3>
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="font-display text-4xl font-bold gradient-text">GH₵15</span>
+                  <span className="font-display text-4xl font-bold gradient-text">GH₵5</span>
                   <span className="text-muted-foreground">per referral</span>
                 </div>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-primary" />
-                    Plan costs GH₵30
+                    Plan costs GH₵10
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-primary" />
-                    You earn 50% = GH₵15
+                    You earn 50% = GH₵5
                   </li>
                 </ul>
               </Card>
               <Card className="p-8 border-2 border-accent/30">
                 <h3 className="font-display text-2xl font-bold mb-2">Premium Plan Referral</h3>
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="font-display text-4xl font-bold text-accent">GH₵37.50</span>
+                  <span className="font-display text-4xl font-bold text-accent">GH₵15</span>
                   <span className="text-muted-foreground">per referral</span>
                 </div>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-accent" />
-                    Plan costs GH₵75
+                    Plan costs GH₵30
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-accent" />
-                    You earn 50% = GH₵37.50
+                    You earn 50% = GH₵15
                   </li>
                 </ul>
               </Card>

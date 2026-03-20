@@ -12,8 +12,8 @@ interface PaymentRequest {
 }
 
 const PLAN_PRICES = {
-  pro: 3000, // 30 GHC in pesewas
-  premium: 7500, // 75 GHC in pesewas
+  pro: 1000, // 10 GHC in pesewas
+  premium: 3000, // 30 GHC in pesewas
 };
 
 Deno.serve(async (req) => {

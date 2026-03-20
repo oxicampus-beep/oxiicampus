@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (ambData && ambData.user_id !== userId) {
-        const planAmount = plan === "premium" ? 75 : 30;
+        const planAmount = plan === "premium" ? 30 : 10;
         const commission = planAmount * 0.5; // 50% commission
 
         const { error: refError } = await adminClient

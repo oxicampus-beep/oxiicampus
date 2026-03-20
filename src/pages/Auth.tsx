@@ -129,7 +129,7 @@ const Auth = () => {
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
-          navigate("/");
+          // Don't navigate here — the useEffect will handle redirect based on ambassador status
         }
       }
     } catch (error: any) {
