@@ -64,6 +64,7 @@ const AdminAmbassadors = () => {
   const { toast } = useToast();
   const [ambassadors, setAmbassadors] = useState<AmbassadorRow[]>([]);
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
+  const [withdrawalsList, setWithdrawalsList] = useState<WithdrawalRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
