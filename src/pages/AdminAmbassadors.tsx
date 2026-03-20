@@ -44,6 +44,19 @@ interface ReferralRow {
   ambassador_name?: string;
 }
 
+interface WithdrawalRow {
+  id: string;
+  ambassador_id: string;
+  user_id: string;
+  amount: number;
+  momo_number: string;
+  momo_network: string;
+  momo_name: string;
+  status: string;
+  created_at: string;
+  ambassador_name?: string;
+}
+
 const AdminAmbassadors = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
