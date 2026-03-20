@@ -71,6 +71,7 @@ const App = () => (
               <Route path="/ambassadors" element={<Ambassadors />} />
               <Route path="/ambassador-apply" element={<AmbassadorApplication />} />
               <Route path="/ambassador-dashboard" element={<AmbassadorDashboard />} />
+              <Route path="/ambassador-withdrawals" element={<AmbassadorWithdrawals />} />
               <Route path="/admin/ambassadors" element={<AdminAmbassadors />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
