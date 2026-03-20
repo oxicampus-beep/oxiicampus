@@ -259,6 +259,7 @@ const AdminAmbassadors = () => {
   const pendingAmbs = ambassadors.filter((a) => a.status === "pending");
   const approvedAmbs = ambassadors.filter((a) => a.status === "approved");
   const pendingReferrals = referrals.filter((r) => r.status === "pending");
+  const pendingWithdrawals = withdrawalsList.filter((w) => w.status === "pending");
 
   return (
     <div className="min-h-screen bg-background">
