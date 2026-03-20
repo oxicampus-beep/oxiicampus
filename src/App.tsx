@@ -31,6 +31,7 @@ import Ambassadors from "./pages/Ambassadors";
 import AmbassadorApplication from "./pages/AmbassadorApplication";
 import AmbassadorDashboard from "./pages/AmbassadorDashboard";
 import AdminAmbassadors from "./pages/AdminAmbassadors";
+import AmbassadorWithdrawals from "./pages/AmbassadorWithdrawals";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 const queryClient = new QueryClient();
