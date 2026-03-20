@@ -258,6 +258,53 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          ambassador_id: string
+          amount: number
+          created_at: string
+          id: string
+          momo_name: string
+          momo_network: string
+          momo_number: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ambassador_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          momo_name: string
+          momo_network: string
+          momo_number: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ambassador_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          momo_name?: string
+          momo_network?: string
+          momo_number?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_ambassador_id_fkey"
+            columns: ["ambassador_id"]
+            isOneToOne: false
+            referencedRelation: "ambassadors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       profiles_public: {
