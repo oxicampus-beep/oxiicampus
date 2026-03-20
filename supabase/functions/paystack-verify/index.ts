@@ -100,8 +100,9 @@ Deno.serve(async (req) => {
     const subscriptionEnd = new Date();
     subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
 
-    // Determine verification based on plan
+    // Determine verification based on plan — both Pro and Premium get verified, but only Premium gets golden badge
     const isPremium = plan === "premium";
+    const isPro = plan === "pro";
 
     // Update user profile with verified status and new limits
     // IMPORTANT: Use adminClient to bypass RLS for this update
