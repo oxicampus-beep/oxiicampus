@@ -13,7 +13,7 @@ import { useRoles } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Shield, Loader2, CheckCircle, XCircle, Ban, DollarSign, Users,
+  Shield, Loader2, CheckCircle, XCircle, Ban, DollarSign, Users, Wallet,
 } from "lucide-react";
 
 interface AmbassadorRow {
