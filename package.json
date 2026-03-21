@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preinstall": "node preinstall.js"
+    "preinstall": "node preinstall.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
