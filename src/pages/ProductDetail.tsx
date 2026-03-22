@@ -312,16 +312,18 @@ const ProductDetail = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <Button
-                    variant="whatsapp"
-                    onClick={handleWhatsApp}
-                    className="w-full h-11"
-                    disabled={!listing.whatsapp_number && !listing.phone_number}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    WhatsApp
-                  </Button>
+                <div className={`grid ${listing.seller?.plan && listing.seller.plan !== 'free' ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
+                  {listing.seller?.plan && listing.seller.plan !== 'free' && (
+                    <Button
+                      variant="whatsapp"
+                      onClick={handleWhatsApp}
+                      className="w-full h-11"
+                      disabled={!listing.whatsapp_number && !listing.phone_number}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </Button>
+                  )}
                   <Button
                     variant="call"
                     onClick={handleCall}

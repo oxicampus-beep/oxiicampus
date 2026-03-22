@@ -17,7 +17,6 @@ const plans = [
     features: [
       "1 listing per month",
       "Basic listing visibility",
-      "Direct WhatsApp contact",
       "Direct call button",
       "Standard support",
     ],

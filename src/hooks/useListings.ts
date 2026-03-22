@@ -21,6 +21,7 @@ export interface Listing {
     avatar_url: string | null;
     is_verified: boolean | null;
     university: string | null;
+    plan: string | null;
   } | null;
 }
 
@@ -29,6 +30,9 @@ interface UseListingsOptions {
   university?: string;
   search?: string;
   limit?: number;
+  featuredOnly?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export const useListings = (options: UseListingsOptions = {}) => {
@@ -58,6 +62,18 @@ export const useListings = (options: UseListingsOptions = {}) => {
 
       if (options.search) {
         query = query.ilike("title", `%${options.search}%`);
+      }
+
+      if (options.featuredOnly) {
+        query = query.eq("is_featured", true);
+      }
+
+      if (options.minPrice !== undefined) {
+        query = query.gte("price", options.minPrice);
+      }
+
+      if (options.maxPrice !== undefined) {
+        query = query.lte("price", options.maxPrice);
       }
 
       if (options.limit) {
@@ -93,6 +109,7 @@ export const useListings = (options: UseListingsOptions = {}) => {
           avatar_url: profilesMap[listing.user_id].avatar_url,
           is_verified: profilesMap[listing.user_id].is_verified,
           university: profilesMap[listing.user_id].university,
+          plan: null,
         } : null,
       }));
 
@@ -107,7 +124,7 @@ export const useListings = (options: UseListingsOptions = {}) => {
 
   useEffect(() => {
     fetchListings();
-  }, [options.category, options.university, options.search, options.limit]);
+  }, [options.category, options.university, options.search, options.limit, options.featuredOnly, options.minPrice, options.maxPrice]);
 
   return { listings, isLoading, error, refetch: fetchListings };
 };
@@ -137,12 +154,10 @@ export const useListing = (id: string | undefined) => {
         if (queryError) throw queryError;
 
         if (data) {
-          // Fetch seller profile
-          // Use profiles_public view to only expose non-sensitive profile data
-          // Phone is not included as it's sensitive - users contact via messaging
+          // Fetch seller profile with plan info for WhatsApp visibility
           const { data: profile } = await supabase
-            .from("profiles_public")
-            .select("full_name, avatar_url, is_verified, university")
+            .from("profiles")
+            .select("full_name, avatar_url, is_verified, university, plan")
             .eq("user_id", data.user_id)
             .maybeSingle();
 
@@ -153,6 +168,7 @@ export const useListing = (id: string | undefined) => {
               avatar_url: profile.avatar_url,
               is_verified: profile.is_verified,
               university: profile.university,
+              plan: profile.plan,
             } : null,
           });
         }

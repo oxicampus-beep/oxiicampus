@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { useListings } from "@/hooks/useListings";
 import { categories } from "@/data/constants";
 import { ghanaUniversities } from "@/data/constants";
@@ -14,11 +15,14 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedUniversity, setSelectedUniversity] = useState("All Universities");
   const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
 
   const { listings, isLoading } = useListings({
     category: selectedCategory,
     university: selectedUniversity,
     search: searchQuery,
+    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+    maxPrice: priceRange[1] < 10000 ? priceRange[1] : undefined,
   });
 
   // Transform listings to match ProductCard expected format
@@ -81,10 +85,12 @@ const Products = () => {
               <SlidersHorizontal className="w-5 h-5 mr-2" />
               Filters
               {(selectedCategory !== "All" ||
-                selectedUniversity !== "All Universities") && (
+                selectedUniversity !== "All Universities" ||
+                priceRange[0] > 0 || priceRange[1] < 10000) && (
                 <span className="ml-2 w-5 h-5 rounded-full gradient-bg text-primary-foreground text-xs flex items-center justify-center">
                   {(selectedCategory !== "All" ? 1 : 0) +
-                    (selectedUniversity !== "All Universities" ? 1 : 0)}
+                    (selectedUniversity !== "All Universities" ? 1 : 0) +
+                    (priceRange[0] > 0 || priceRange[1] < 10000 ? 1 : 0)}
                 </span>
               )}
             </Button>
@@ -99,6 +105,7 @@ const Products = () => {
                   onClick={() => {
                     setSelectedCategory("All");
                     setSelectedUniversity("All Universities");
+                    setPriceRange([0, 10000]);
                   }}
                   className="text-sm text-primary hover:underline"
                 >
@@ -106,7 +113,7 @@ const Products = () => {
                 </button>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 {/* Categories */}
                 <div>
                   <label className="block text-sm font-medium mb-3">
@@ -150,13 +157,35 @@ const Products = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">
+                    Price Range
+                  </label>
+                  <div className="space-y-4">
+                    <Slider
+                      min={0}
+                      max={10000}
+                      step={50}
+                      value={priceRange}
+                      onValueChange={(value) => setPriceRange(value as [number, number])}
+                      className="w-full"
+                    />
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>GH₵{priceRange[0].toLocaleString()}</span>
+                      <span>GH₵{priceRange[1].toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* Active Filters */}
           {(selectedCategory !== "All" ||
-            selectedUniversity !== "All Universities") && (
+            selectedUniversity !== "All Universities" ||
+            priceRange[0] > 0 || priceRange[1] < 10000) && (
             <div className="flex flex-wrap gap-2 mb-6">
               {selectedCategory !== "All" && (
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm">
@@ -170,6 +199,14 @@ const Products = () => {
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm">
                   {selectedUniversity}
                   <button onClick={() => setSelectedUniversity("All Universities")}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              )}
+              {(priceRange[0] > 0 || priceRange[1] < 10000) && (
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm">
+                  GH₵{priceRange[0].toLocaleString()} - GH₵{priceRange[1].toLocaleString()}
+                  <button onClick={() => setPriceRange([0, 10000])}>
                     <X className="w-4 h-4" />
                   </button>
                 </span>
