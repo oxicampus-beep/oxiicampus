@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,19 @@ import { Loader2, Tag, CheckCircle, XCircle } from "lucide-react";
 interface ReferralCodeDialogProps {
   open: boolean;
   onClose: (referralCode: string | null) => void;
+  planName?: string;
+  planPrice?: number;
 }
 
-const ReferralCodeDialog = ({ open, onClose }: ReferralCodeDialogProps) => {
+const PAYSTACK_FEE_RATE = 0.0195; // 1.95%
+
+const ReferralCodeDialog = ({ open, onClose, planName, planPrice }: ReferralCodeDialogProps) => {
   const [code, setCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<"valid" | "invalid" | null>(null);
+
+  const paystackFee = planPrice ? Math.ceil(planPrice * PAYSTACK_FEE_RATE * 100) / 100 : 0;
+  const totalAmount = planPrice ? planPrice + paystackFee : 0;
 
   const handleValidate = async () => {
     if (!code.trim()) return;
@@ -24,18 +31,14 @@ const ReferralCodeDialog = ({ open, onClose }: ReferralCodeDialogProps) => {
     setValidationResult(null);
 
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("ambassadors")
         .select("id, referral_code, status")
         .eq("referral_code", code.trim().toUpperCase())
         .eq("status", "approved")
         .maybeSingle();
 
-      if (data) {
-        setValidationResult("valid");
-      } else {
-        setValidationResult("invalid");
-      }
+      setValidationResult(data ? "valid" : "invalid");
     } catch {
       setValidationResult("invalid");
     } finally {
@@ -55,20 +58,20 @@ const ReferralCodeDialog = ({ open, onClose }: ReferralCodeDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={() => onClose(null)}>
-      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)] mx-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)] p-5 sm:p-6 gap-4">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Tag className="w-5 h-5 text-primary flex-shrink-0" />
             <span>Do you have a referral code?</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             If a Campus Ambassador shared a code with you, enter it below. This is optional.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="referral-code">Referral Code</Label>
+            <Label htmlFor="referral-code" className="text-sm font-medium">Referral Code</Label>
             <div className="flex gap-2">
               <Input
                 id="referral-code"
@@ -83,9 +86,10 @@ const ReferralCodeDialog = ({ open, onClose }: ReferralCodeDialogProps) => {
               />
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleValidate}
                 disabled={!code.trim() || isValidating}
-                className="flex-shrink-0"
+                className="flex-shrink-0 px-3"
               >
                 {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
               </Button>
@@ -101,9 +105,27 @@ const ReferralCodeDialog = ({ open, onClose }: ReferralCodeDialogProps) => {
               </p>
             )}
           </div>
+
+          {planName && planPrice && (
+            <div className="rounded-lg border bg-muted/50 p-3 space-y-1.5 text-sm">
+              <p className="font-semibold text-foreground">Payment Summary</p>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{planName} Plan</span>
+                <span>GH₵{planPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Transaction fee</span>
+                <span>GH₵{paystackFee.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-1.5 flex justify-between font-semibold">
+                <span>Total</span>
+                <span>GH₵{totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
           <Button variant="ghost" onClick={handleSkip} className="w-full sm:w-auto">
             Continue without code
           </Button>
@@ -115,7 +137,7 @@ const ReferralCodeDialog = ({ open, onClose }: ReferralCodeDialogProps) => {
           >
             Apply Code & Continue
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

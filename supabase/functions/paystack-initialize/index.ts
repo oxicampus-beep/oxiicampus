@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const amount = PLAN_PRICES[plan];
+    const amount = calculateTotalWithFees(PLAN_BASE_PRICES[plan]);
     const reference = `oxicampus_${plan}_${userId}_${Date.now()}`;
 
     // Validate referral code if provided (no self-referral)

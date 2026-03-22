@@ -239,6 +239,8 @@ const PricingSection = () => {
         <ReferralCodeDialog
           open={showReferralDialog}
           onClose={handleReferralCodeResult}
+          planName={pendingPlan ? plans.find(p => p.planKey === pendingPlan)?.name : undefined}
+          planPrice={pendingPlan ? Number(plans.find(p => p.planKey === pendingPlan)?.price) : undefined}
         />
       </div>
     </section>
