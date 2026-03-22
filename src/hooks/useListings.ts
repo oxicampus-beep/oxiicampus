@@ -29,6 +29,9 @@ interface UseListingsOptions {
   university?: string;
   search?: string;
   limit?: number;
+  featuredOnly?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export const useListings = (options: UseListingsOptions = {}) => {

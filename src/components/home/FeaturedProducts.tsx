@@ -15,9 +15,9 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 const FeaturedProducts = () => {
-  const { listings, isLoading } = useListings({ limit: 20 });
+  const { listings, isLoading } = useListings({ limit: 20, featuredOnly: true });
   
-  // Shuffle and pick 3 random listings on each render
+  // Pick up to 3 featured listings randomly
   const displayListings = useMemo(() => {
     if (listings.length === 0) return [];
     const shuffled = shuffleArray(listings);
