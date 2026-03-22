@@ -184,7 +184,8 @@ const Products = () => {
 
           {/* Active Filters */}
           {(selectedCategory !== "All" ||
-            selectedUniversity !== "All Universities") && (
+            selectedUniversity !== "All Universities" ||
+            priceRange[0] > 0 || priceRange[1] < 10000) && (
             <div className="flex flex-wrap gap-2 mb-6">
               {selectedCategory !== "All" && (
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm">
@@ -198,6 +199,14 @@ const Products = () => {
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm">
                   {selectedUniversity}
                   <button onClick={() => setSelectedUniversity("All Universities")}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              )}
+              {(priceRange[0] > 0 || priceRange[1] < 10000) && (
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm">
+                  GH₵{priceRange[0].toLocaleString()} - GH₵{priceRange[1].toLocaleString()}
+                  <button onClick={() => setPriceRange([0, 10000])}>
                     <X className="w-4 h-4" />
                   </button>
                 </span>
