@@ -63,6 +63,18 @@ export const useListings = (options: UseListingsOptions = {}) => {
         query = query.ilike("title", `%${options.search}%`);
       }
 
+      if (options.featuredOnly) {
+        query = query.eq("is_featured", true);
+      }
+
+      if (options.minPrice !== undefined) {
+        query = query.gte("price", options.minPrice);
+      }
+
+      if (options.maxPrice !== undefined) {
+        query = query.lte("price", options.maxPrice);
+      }
+
       if (options.limit) {
         query = query.limit(options.limit);
       }
