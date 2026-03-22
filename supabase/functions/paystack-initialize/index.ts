@@ -11,10 +11,17 @@ interface PaymentRequest {
   referral_code?: string | null;
 }
 
-const PLAN_PRICES = {
+const PLAN_BASE_PRICES = {
   pro: 1000, // 10 GHC in pesewas
   premium: 3000, // 30 GHC in pesewas
 };
+
+const PAYSTACK_FEE_RATE = 0.0195; // 1.95%
+
+function calculateTotalWithFees(basePesewas: number): number {
+  const fee = Math.ceil(basePesewas * PAYSTACK_FEE_RATE);
+  return basePesewas + fee;
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
