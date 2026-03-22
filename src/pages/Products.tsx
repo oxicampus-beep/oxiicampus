@@ -15,11 +15,14 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedUniversity, setSelectedUniversity] = useState("All Universities");
   const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
 
   const { listings, isLoading } = useListings({
     category: selectedCategory,
     university: selectedUniversity,
     search: searchQuery,
+    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+    maxPrice: priceRange[1] < 10000 ? priceRange[1] : undefined,
   });
 
   // Transform listings to match ProductCard expected format
