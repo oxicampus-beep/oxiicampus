@@ -85,10 +85,12 @@ const Products = () => {
               <SlidersHorizontal className="w-5 h-5 mr-2" />
               Filters
               {(selectedCategory !== "All" ||
-                selectedUniversity !== "All Universities") && (
+                selectedUniversity !== "All Universities" ||
+                priceRange[0] > 0 || priceRange[1] < 10000) && (
                 <span className="ml-2 w-5 h-5 rounded-full gradient-bg text-primary-foreground text-xs flex items-center justify-center">
                   {(selectedCategory !== "All" ? 1 : 0) +
-                    (selectedUniversity !== "All Universities" ? 1 : 0)}
+                    (selectedUniversity !== "All Universities" ? 1 : 0) +
+                    (priceRange[0] > 0 || priceRange[1] < 10000 ? 1 : 0)}
                 </span>
               )}
             </Button>
