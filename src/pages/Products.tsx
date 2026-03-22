@@ -103,6 +103,7 @@ const Products = () => {
                   onClick={() => {
                     setSelectedCategory("All");
                     setSelectedUniversity("All Universities");
+                    setPriceRange([0, 10000]);
                   }}
                   className="text-sm text-primary hover:underline"
                 >
