@@ -111,7 +111,7 @@ const Products = () => {
                 </button>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 {/* Categories */}
                 <div>
                   <label className="block text-sm font-medium mb-3">
@@ -153,6 +153,27 @@ const Products = () => {
                         {uni}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">
+                    Price Range
+                  </label>
+                  <div className="space-y-4">
+                    <Slider
+                      min={0}
+                      max={10000}
+                      step={50}
+                      value={priceRange}
+                      onValueChange={(value) => setPriceRange(value as [number, number])}
+                      className="w-full"
+                    />
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>GH₵{priceRange[0].toLocaleString()}</span>
+                      <span>GH₵{priceRange[1].toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               </div>
