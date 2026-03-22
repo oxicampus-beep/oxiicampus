@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { useListings } from "@/hooks/useListings";
 import { categories } from "@/data/constants";
 import { ghanaUniversities } from "@/data/constants";
