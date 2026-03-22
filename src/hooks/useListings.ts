@@ -122,7 +122,7 @@ export const useListings = (options: UseListingsOptions = {}) => {
 
   useEffect(() => {
     fetchListings();
-  }, [options.category, options.university, options.search, options.limit]);
+  }, [options.category, options.university, options.search, options.limit, options.featuredOnly, options.minPrice, options.maxPrice]);
 
   return { listings, isLoading, error, refetch: fetchListings };
 };
