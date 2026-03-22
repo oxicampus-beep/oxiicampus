@@ -154,12 +154,10 @@ export const useListing = (id: string | undefined) => {
         if (queryError) throw queryError;
 
         if (data) {
-          // Fetch seller profile
-          // Use profiles_public view to only expose non-sensitive profile data
-          // Phone is not included as it's sensitive - users contact via messaging
+          // Fetch seller profile with plan info for WhatsApp visibility
           const { data: profile } = await supabase
-            .from("profiles_public")
-            .select("full_name, avatar_url, is_verified, university")
+            .from("profiles")
+            .select("full_name, avatar_url, is_verified, university, plan")
             .eq("user_id", data.user_id)
             .maybeSingle();
 
@@ -170,6 +168,7 @@ export const useListing = (id: string | undefined) => {
               avatar_url: profile.avatar_url,
               is_verified: profile.is_verified,
               university: profile.university,
+              plan: profile.plan,
             } : null,
           });
         }
