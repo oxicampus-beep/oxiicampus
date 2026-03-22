@@ -109,6 +109,7 @@ export const useListings = (options: UseListingsOptions = {}) => {
           avatar_url: profilesMap[listing.user_id].avatar_url,
           is_verified: profilesMap[listing.user_id].is_verified,
           university: profilesMap[listing.user_id].university,
+          plan: null,
         } : null,
       }));
 
