@@ -21,6 +21,7 @@ export interface Listing {
     avatar_url: string | null;
     is_verified: boolean | null;
     university: string | null;
+    plan: string | null;
   } | null;
 }
 
