@@ -28,7 +28,7 @@ import {
   ChevronDown,
   Megaphone,
 } from "lucide-react";
-import AmbassadorInfoDialog from "@/components/admin/AmbassadorInfoDialog";
+
 
 type PlanType = "free" | "pro" | "premium";
 
