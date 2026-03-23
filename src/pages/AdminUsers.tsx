@@ -313,7 +313,7 @@ const AdminUsers = () => {
                                 className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30"
                               >
                                 <Megaphone className="w-2.5 h-2.5 mr-0.5" />
-                                Ambassador{userItem.ambassador_status === "pending" ? " (Pending)" : ""}
+                                Ambassador{userItem.ambassador_status === "pending" || userItem.ambassador_status === "pending_setup" ? " (Pending)" : ""}
                               </Badge>
                             )}
                           </div>
