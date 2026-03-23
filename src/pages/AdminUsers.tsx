@@ -407,7 +407,8 @@ const AdminUsers = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setAmbassadorDialogUser(userItem)}
+                            onClick={() => handleMakeAmbassador(userItem)}
+                            disabled={actionLoading === userItem.user_id}
                           >
                             <Megaphone className="w-3 h-3 mr-1" />
                             Make Amb
@@ -422,17 +423,6 @@ const AdminUsers = () => {
           </div>
         </div>
       </div>
-
-      {/* Ambassador Info Dialog */}
-      {ambassadorDialogUser && (
-        <AmbassadorInfoDialog
-          open={!!ambassadorDialogUser}
-          onClose={() => setAmbassadorDialogUser(null)}
-          userId={ambassadorDialogUser.user_id}
-          userName={ambassadorDialogUser.full_name}
-          onSuccess={fetchUsers}
-        />
-      )}
 
       <Footer />
     </div>
