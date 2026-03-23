@@ -94,9 +94,10 @@ const PricingSection = () => {
     setShowReferralDialog(true);
   };
 
-  const handleReferralCodeResult = async (referralCode: string | null) => {
+  const handleReferralCodeResult = async (referralCode: string | null | undefined) => {
     setShowReferralDialog(false);
-    if (!pendingPlan || !user) return;
+    // undefined means dialog was dismissed (X button / overlay click) — don't proceed
+    if (referralCode === undefined || !pendingPlan || !user) return;
 
     setLoadingPlan(pendingPlan);
 

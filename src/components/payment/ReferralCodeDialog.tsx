@@ -10,7 +10,7 @@ import { Loader2, Tag, CheckCircle, XCircle } from "lucide-react";
 
 interface ReferralCodeDialogProps {
   open: boolean;
-  onClose: (referralCode: string | null) => void;
+  onClose: (referralCode: string | null | undefined) => void;
   planName?: string;
   planPrice?: number;
 }
@@ -57,7 +57,7 @@ const ReferralCodeDialog = ({ open, onClose, planName, planPrice }: ReferralCode
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => onClose(null)}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(undefined); }}>
       <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)] p-5 sm:p-6 gap-4">
         <DialogHeader className="space-y-2">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
