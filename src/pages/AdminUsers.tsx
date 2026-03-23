@@ -54,7 +54,7 @@ const AdminUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [ambassadorDialogUser, setAmbassadorDialogUser] = useState<UserWithRoles | null>(null);
+  
 
   const fetchUsers = async () => {
     setIsLoading(true);
