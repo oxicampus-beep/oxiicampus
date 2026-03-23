@@ -10,7 +10,7 @@ import { Loader2, Tag, CheckCircle, XCircle } from "lucide-react";
 
 interface ReferralCodeDialogProps {
   open: boolean;
-  onClose: (referralCode: string | null) => void;
+  onClose: (referralCode: string | null | undefined) => void;
   planName?: string;
   planPrice?: number;
 }
