@@ -151,6 +151,32 @@ const AdminUsers = () => {
     }
   };
 
+  const handleMakeAmbassador = async (userItem: UserWithRoles) => {
+    setActionLoading(userItem.user_id);
+    try {
+      // Insert with pending_setup status — user will fill details on their next login
+      const { error } = await supabase.from("ambassadors").insert({
+        user_id: userItem.user_id,
+        university: "_pending",
+        whatsapp: "_pending",
+        momo_number: "_pending",
+        momo_network: "_pending",
+        momo_name: "_pending",
+        status: "pending_setup",
+      });
+      if (error) throw error;
+      toast({
+        title: "Ambassador invite sent",
+        description: `${userItem.full_name || "User"} will be prompted to complete setup on their next login.`,
+      });
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleRemoveAmbassador = async (userItem: UserWithRoles) => {
     setActionLoading(userItem.user_id);
     try {
