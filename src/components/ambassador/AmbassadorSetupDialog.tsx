@@ -12,15 +12,14 @@ import { Loader2, Megaphone, GraduationCap, Phone, User, Banknote } from "lucide
 
 const momoNetworks = ["MTN", "Vodafone", "AirtelTigo"];
 
-interface AmbassadorInfoDialogProps {
+interface AmbassadorSetupDialogProps {
   open: boolean;
-  onClose: () => void;
   userId: string;
   userName: string | null;
-  onSuccess: () => void;
+  onComplete: () => void;
 }
 
-const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: AmbassadorInfoDialogProps) => {
+const AmbassadorSetupDialog = ({ open, userId, userName, onComplete }: AmbassadorSetupDialogProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,25 +43,28 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
       const { data: codeData } = await supabase.rpc("generate_referral_code");
       const code = codeData as string;
 
-      const { error } = await supabase.from("ambassadors").insert({
-        user_id: userId,
-        university: formData.university,
-        whatsapp: formData.whatsapp,
-        momo_number: formData.momoNumber,
-        momo_network: formData.momoNetwork,
-        momo_name: formData.momoName,
-        status: "approved",
-        referral_code: code,
-      });
+      // Update the existing pending_setup ambassador record
+      const { error } = await supabase
+        .from("ambassadors")
+        .update({
+          university: formData.university,
+          whatsapp: formData.whatsapp,
+          momo_number: formData.momoNumber,
+          momo_network: formData.momoNetwork,
+          momo_name: formData.momoName,
+          status: "approved",
+          referral_code: code,
+        })
+        .eq("user_id", userId)
+        .eq("status", "pending_setup");
 
       if (error) throw error;
 
       toast({
-        title: "Ambassador created",
-        description: `${userName || "User"} is now an ambassador with code: ${code}`,
+        title: "🎉 You're now an Ambassador!",
+        description: `Your referral code is: ${code}. Visit your ambassador dashboard to start earning.`,
       });
-      onSuccess();
-      onClose();
+      onComplete();
     } catch (err: any) {
       toast({
         title: "Error",
@@ -75,31 +77,35 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)] p-5 sm:p-6 gap-4 max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent
+        className="sm:max-w-md w-[calc(100vw-2rem)] p-5 sm:p-6 gap-4 max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader className="space-y-2">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Megaphone className="w-5 h-5 text-primary flex-shrink-0" />
-            <span>Make {userName || "User"} an Ambassador</span>
+            <span>Welcome, Ambassador {userName || ""}! 🎉</span>
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Fill in the required ambassador details for this user.
+            You've been selected as a Campus Ambassador! Complete the form below to activate your account and start earning commissions.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amb-university">University</Label>
+            <Label htmlFor="setup-university">University</Label>
             <div className="relative">
               <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
               <select
-                id="amb-university"
+                id="setup-university"
                 value={formData.university}
                 onChange={(e) => handleChange("university", e.target.value)}
                 className="w-full pl-10 h-10 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
-                <option value="">Select university</option>
+                <option value="">Select your university</option>
                 {ghanaUniversities.map((uni) => (
                   <option key={uni} value={uni}>{uni}</option>
                 ))}
@@ -108,11 +114,11 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amb-whatsapp">WhatsApp Number</Label>
+            <Label htmlFor="setup-whatsapp">WhatsApp Number</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="amb-whatsapp"
+                id="setup-whatsapp"
                 type="tel"
                 value={formData.whatsapp}
                 onChange={(e) => handleChange("whatsapp", e.target.value)}
@@ -124,11 +130,11 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amb-momoNumber">Mobile Money Number</Label>
+            <Label htmlFor="setup-momoNumber">Mobile Money Number</Label>
             <div className="relative">
               <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="amb-momoNumber"
+                id="setup-momoNumber"
                 type="tel"
                 value={formData.momoNumber}
                 onChange={(e) => handleChange("momoNumber", e.target.value)}
@@ -140,9 +146,9 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amb-momoNetwork">Network</Label>
+            <Label htmlFor="setup-momoNetwork">Network</Label>
             <select
-              id="amb-momoNetwork"
+              id="setup-momoNetwork"
               value={formData.momoNetwork}
               onChange={(e) => handleChange("momoNetwork", e.target.value)}
               className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -156,11 +162,11 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amb-momoName">Name on MoMo</Label>
+            <Label htmlFor="setup-momoName">Name on MoMo</Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="amb-momoName"
+                id="setup-momoName"
                 value={formData.momoName}
                 onChange={(e) => handleChange("momoName", e.target.value)}
                 placeholder="Name registered on MoMo"
@@ -170,22 +176,17 @@ const AmbassadorInfoDialog = ({ open, onClose, userId, userName, onSuccess }: Am
             </div>
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={onClose} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button type="submit" variant="hero" disabled={isLoading} className="w-full sm:w-auto">
-              {isLoading ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
-              ) : (
-                "Create Ambassador"
-              )}
-            </Button>
-          </div>
+          <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Activating...</>
+            ) : (
+              "Activate My Ambassador Account"
+            )}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default AmbassadorInfoDialog;
+export default AmbassadorSetupDialog;

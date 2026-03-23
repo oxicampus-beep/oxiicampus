@@ -28,7 +28,7 @@ import {
   ChevronDown,
   Megaphone,
 } from "lucide-react";
-import AmbassadorInfoDialog from "@/components/admin/AmbassadorInfoDialog";
+
 
 type PlanType = "free" | "pro" | "premium";
 
@@ -54,7 +54,7 @@ const AdminUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [ambassadorDialogUser, setAmbassadorDialogUser] = useState<UserWithRoles | null>(null);
+  
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -143,6 +143,32 @@ const AdminUsers = () => {
       const { error } = await supabase.from("profiles").update({ plan: newPlan }).eq("user_id", userItem.user_id);
       if (error) throw error;
       toast({ title: "Plan updated", description: `User plan changed to ${newPlan}` });
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMakeAmbassador = async (userItem: UserWithRoles) => {
+    setActionLoading(userItem.user_id);
+    try {
+      // Insert with pending_setup status — user will fill details on their next login
+      const { error } = await supabase.from("ambassadors").insert({
+        user_id: userItem.user_id,
+        university: "_pending",
+        whatsapp: "_pending",
+        momo_number: "_pending",
+        momo_network: "_pending",
+        momo_name: "_pending",
+        status: "pending_setup",
+      });
+      if (error) throw error;
+      toast({
+        title: "Ambassador invite sent",
+        description: `${userItem.full_name || "User"} will be prompted to complete setup on their next login.`,
+      });
       fetchUsers();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -287,7 +313,7 @@ const AdminUsers = () => {
                                 className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30"
                               >
                                 <Megaphone className="w-2.5 h-2.5 mr-0.5" />
-                                Ambassador{userItem.ambassador_status === "pending" ? " (Pending)" : ""}
+                                Ambassador{userItem.ambassador_status === "pending" || userItem.ambassador_status === "pending_setup" ? " (Pending)" : ""}
                               </Badge>
                             )}
                           </div>
@@ -381,7 +407,8 @@ const AdminUsers = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setAmbassadorDialogUser(userItem)}
+                            onClick={() => handleMakeAmbassador(userItem)}
+                            disabled={actionLoading === userItem.user_id}
                           >
                             <Megaphone className="w-3 h-3 mr-1" />
                             Make Amb
@@ -396,17 +423,6 @@ const AdminUsers = () => {
           </div>
         </div>
       </div>
-
-      {/* Ambassador Info Dialog */}
-      {ambassadorDialogUser && (
-        <AmbassadorInfoDialog
-          open={!!ambassadorDialogUser}
-          onClose={() => setAmbassadorDialogUser(null)}
-          userId={ambassadorDialogUser.user_id}
-          userName={ambassadorDialogUser.full_name}
-          onSuccess={fetchUsers}
-        />
-      )}
 
       <Footer />
     </div>

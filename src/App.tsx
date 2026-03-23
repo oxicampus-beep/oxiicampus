@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { AmbassadorSetupProvider } from "@/contexts/AmbassadorSetupContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -41,6 +42,7 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <FavoritesProvider>
+          <AmbassadorSetupProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -77,6 +79,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </AmbassadorSetupProvider>
         </FavoritesProvider>
       </AuthProvider>
     </TooltipProvider>
