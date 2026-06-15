@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, History, Smartphone, Radio, Signal, Wifi,
-  UserPlus, Sparkles, Store, Package, ShoppingCart, Banknote, Code2, Settings, AlertCircle, Shield
+  UserPlus, Sparkles, Store, ShoppingCart, Banknote, Code2, Settings, AlertCircle, Shield, Users, BarChart3
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -29,7 +29,6 @@ const services = [
 
 const store = [
   { title: "My Store", url: "/dashboard/store", icon: Store },
-  { title: "Store Packages", url: "/dashboard/store/packages", icon: Package },
   { title: "Store Orders", url: "/dashboard/store/orders", icon: ShoppingCart },
   { title: "Store Withdrawal", url: "/dashboard/store/withdrawal", icon: Banknote },
 ];
@@ -88,7 +87,12 @@ export function AppSidebar() {
         {renderGroup("Services", services)}
         {renderGroup("Store", store)}
         {renderGroup("Account", account)}
-        {isAdmin && renderGroup("Admin", [{ title: "Manage Packages", url: "/admin/packages", icon: Shield }])}
+        {isAdmin && renderGroup("Admin", [
+          { title: "Overview", url: "/admin/overview", icon: BarChart3 },
+          { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
+          { title: "Users", url: "/admin/users", icon: Users },
+          { title: "Manage Packages", url: "/admin/packages", icon: Shield },
+        ])}
       </SidebarContent>
     </Sidebar>
   );

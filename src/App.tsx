@@ -16,13 +16,16 @@ import BuyTelecel from "@/pages/BuyTelecel";
 import AFA from "@/pages/AFA";
 import ExtraServices from "@/pages/ExtraServices";
 import MyStore from "@/pages/MyStore";
-import StorePackages from "@/pages/StorePackages";
 import StoreOrders from "@/pages/StoreOrders";
 import StoreWithdrawal from "@/pages/StoreWithdrawal";
 import DeveloperAPI from "@/pages/DeveloperAPI";
 import SettingsPage from "@/pages/SettingsPage";
 import ReportIssue from "@/pages/ReportIssue";
 import AdminPackages from "@/pages/AdminPackages";
+import AdminOverview from "@/pages/AdminOverview";
+import AdminOrders from "@/pages/AdminOrders";
+import AdminUsers from "@/pages/AdminUsers";
+import Storefront from "@/pages/Storefront";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/auth" replace />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/store/:slug" element={<Storefront />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Overview />} />
               <Route path="wallet" element={<WalletPage />} />
@@ -48,7 +52,7 @@ const App = () => (
               <Route path="afa" element={<AFA />} />
               <Route path="extras" element={<ExtraServices />} />
               <Route path="store" element={<MyStore />} />
-              <Route path="store/packages" element={<StorePackages />} />
+              <Route path="store/packages" element={<Navigate to="/dashboard/store" replace />} />
               <Route path="store/orders" element={<StoreOrders />} />
               <Route path="store/withdrawal" element={<StoreWithdrawal />} />
               <Route path="developer" element={<DeveloperAPI />} />
@@ -56,6 +60,10 @@ const App = () => (
               <Route path="report" element={<ReportIssue />} />
             </Route>
             <Route path="/admin" element={<DashboardLayout />}>
+              <Route index element={<Navigate to="/admin/overview" replace />} />
+              <Route path="overview" element={<AdminOverview />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="packages" element={<AdminPackages />} />
             </Route>
             <Route path="*" element={<NotFound />} />
