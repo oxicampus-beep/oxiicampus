@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { labelFor } from "@/components/data/BuyDataDialog";
+import { groupByNetwork, sortByNetworkThenSize } from "@/lib/networks";
 
 export default function AdminPackages() {
   const { isAdmin, loading } = useIsAdmin();
@@ -18,8 +20,8 @@ export default function AdminPackages() {
   const VALIDITY = "Non expiry";
 
   const load = async () => {
-    const { data } = await supabase.from("data_packages").select("*").order("network").order("size_gb");
-    setItems(data ?? []);
+    const { data } = await supabase.from("data_packages").select("*");
+    setItems(sortByNetworkThenSize(data ?? []));
   };
   useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
 
@@ -44,11 +46,13 @@ export default function AdminPackages() {
   const toggle = async (p: any) => { await supabase.from("data_packages").update({ active: !p.active }).eq("id", p.id); load(); };
   const remove = async (id: string) => { await supabase.from("data_packages").delete().eq("id", id); load(); };
 
+  const grouped = groupByNetwork(items);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
-        <p className="text-muted-foreground mt-1">Set user and agent base prices. All bundles are non-expiring.</p>
+        <p className="text-muted-foreground mt-1">Set user and agent base prices. All bundles are non-expiring. MTN is listed first.</p>
       </div>
 
       <Card className="p-6">
@@ -72,25 +76,34 @@ export default function AdminPackages() {
         </form>
       </Card>
 
-      <Card className="p-0 overflow-hidden">
-        {items.length === 0 ? <div className="p-10 text-center text-muted-foreground">No packages.</div> :
-          <ul className="divide-y divide-border">
-            {items.map(p => (
-              <li key={p.id} className="p-4 flex justify-between items-center gap-4">
-                <div>
-                  <div className="font-semibold">{p.size_gb}GB · {p.network}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">
-                    Users: ₵{Number(p.user_price).toFixed(2)} · Agent base: ₵{Number(p.agent_price).toFixed(2)} · {VALIDITY}
+      {items.length === 0 ? (
+        <Card className="p-10 text-center text-muted-foreground">No packages.</Card>
+      ) : (
+        grouped.map(group => (
+          <Card key={group.network} className="p-0 overflow-hidden">
+            <div className="px-4 py-3 bg-secondary/50 border-b border-border flex items-center justify-between">
+              <h2 className="font-display font-semibold">{group.label}</h2>
+              <span className="text-xs text-muted-foreground">{group.items.length} bundle{group.items.length !== 1 ? "s" : ""}</span>
+            </div>
+            <ul className="divide-y divide-border">
+              {group.items.map(p => (
+                <li key={p.id} className="p-4 flex justify-between items-center gap-4">
+                  <div>
+                    <div className="font-semibold">{p.size_gb}GB · {labelFor(p.network)}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Users: ₵{Number(p.user_price).toFixed(2)} · Agent base: ₵{Number(p.agent_price).toFixed(2)} · {VALIDITY}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Switch checked={p.active} onCheckedChange={() => toggle(p)} />
-                  <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-              </li>
-            ))}
-          </ul>}
-      </Card>
+                  <div className="flex items-center gap-3">
+                    <Switch checked={p.active} onCheckedChange={() => toggle(p)} />
+                    <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

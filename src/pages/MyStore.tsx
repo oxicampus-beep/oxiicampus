@@ -16,6 +16,13 @@ import { getStoreUrl, slugify, whatsappLink } from "@/lib/store";
 import { labelFor } from "@/components/data/BuyDataDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  groupByNetwork,
+  networksPresent,
+  sortByNetworkThenSize,
+  NETWORK_OPTIONS,
+} from "@/lib/networks";
 
 type CatalogPkg = {
   id: string;
@@ -61,7 +68,7 @@ export default function MyStore() {
 
   const [createForm, setCreateForm] = useState({ name: "", whatsapp: "" });
   const [editForm, setEditForm] = useState({ name: "", whatsapp: "" });
-  const [pkgForm, setPkgForm] = useState({ data_package_id: "", sell_price: "" });
+  const [pkgForm, setPkgForm] = useState({ data_package_id: "", sell_price: "", network: "mtn" });
 
   const load = async () => {
     if (!user) return;
@@ -82,8 +89,8 @@ export default function MyStore() {
       orders: orders?.length ?? 0,
       revenue: (orders ?? []).reduce((sum, o) => sum + Number(o.price), 0),
     });
-    setPackages((pkgs ?? []) as StorePkg[]);
-    setCatalog((catalogPkgs ?? []) as CatalogPkg[]);
+    setPackages(sortByNetworkThenSize((pkgs ?? []) as StorePkg[]));
+    setCatalog(sortByNetworkThenSize((catalogPkgs ?? []) as CatalogPkg[]));
     setLoading(false);
   };
 
@@ -92,7 +99,15 @@ export default function MyStore() {
   const sellPrice = Number(pkgForm.sell_price);
   const profit = sellPrice > 0 && baseCost > 0 ? sellPrice - baseCost : 0;
   const addedCatalogIds = new Set(packages.map(p => p.data_package_id).filter(Boolean));
-  const availableCatalog = catalog.filter(c => !addedCatalogIds.has(c.id));
+  const catalogAvailable = catalog.filter(c => !addedCatalogIds.has(c.id));
+  const availableNetworks = networksPresent(catalogAvailable);
+  const activePkgNetwork = availableNetworks.includes(pkgForm.network)
+    ? pkgForm.network
+    : (availableNetworks[0] ?? "mtn");
+  const availableCatalog = sortByNetworkThenSize(
+    catalogAvailable.filter(c => c.network === activePkgNetwork)
+  );
+  const listedByNetwork = groupByNetwork(packages);
 
   useEffect(() => { load(); }, [user]);
 
@@ -167,7 +182,7 @@ export default function MyStore() {
     });
     if (error) return toast.error(error.message);
     toast.success("Package listed on your store");
-    setPkgForm({ data_package_id: "", sell_price: "" });
+    setPkgForm({ data_package_id: "", sell_price: "", network: pkgForm.network });
     load();
   };
 
@@ -343,7 +358,7 @@ export default function MyStore() {
         </p>
 
         <Card className="p-6">
-          {availableCatalog.length === 0 ? (
+          {availableNetworks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
               {catalog.length === 0
                 ? "No platform bundles available yet. Ask admin to add packages."
@@ -351,18 +366,32 @@ export default function MyStore() {
             </p>
           ) : (
             <form onSubmit={addPackage} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Network</Label>
+                <Tabs
+                  value={activePkgNetwork}
+                  onValueChange={v => setPkgForm({ network: v, data_package_id: "", sell_price: "" })}
+                >
+                  <TabsList className="flex flex-wrap h-auto gap-1 bg-secondary/60 p-1">
+                    {NETWORK_OPTIONS.filter(n => availableNetworks.includes(n.id)).map(n => (
+                      <TabsTrigger key={n.id} value={n.id} className="text-xs sm:text-sm">{n.label}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Platform bundle</Label>
                   <Select
                     value={pkgForm.data_package_id}
-                    onValueChange={v => setPkgForm({ data_package_id: v, sell_price: "" })}
+                    onValueChange={v => setPkgForm({ ...pkgForm, data_package_id: v, sell_price: "" })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Select bundle…" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={availableCatalog.length ? "Select bundle…" : "No bundles for this network"} /></SelectTrigger>
                     <SelectContent>
                       {availableCatalog.map(c => (
                         <SelectItem key={c.id} value={c.id}>
-                          {catalogLabel(c)} — base ₵{Number(c.agent_price).toFixed(2)}
+                          {c.size_gb}GB — base ₵{Number(c.agent_price).toFixed(2)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -402,7 +431,7 @@ export default function MyStore() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full font-semibold" disabled={!selectedCatalog}>
+              <Button type="submit" className="w-full font-semibold" disabled={!selectedCatalog || availableCatalog.length === 0}>
                 List on my store
               </Button>
             </form>
@@ -413,27 +442,36 @@ export default function MyStore() {
           {packages.length === 0 ? (
             <div className="p-10 text-center text-muted-foreground">No packages listed yet — add your first bundle above.</div>
           ) : (
-            <ul className="divide-y divide-border">
-              {packages.map(p => {
-                const cost = Number(p.cost_price ?? 0);
-                const sell = Number(p.price);
-                const pProfit = cost > 0 ? sell - cost : null;
-                return (
-                  <li key={p.id} className="p-4 flex justify-between items-center gap-4">
-                    <div>
-                      <div className="font-semibold">{p.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Base ₵{cost.toFixed(2)} · Sell ₵{sell.toFixed(2)}
-                        {pProfit !== null && <> · Profit <span className="text-primary font-medium">₵{pProfit.toFixed(2)}</span></>}
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="divide-y divide-border">
+              {listedByNetwork.map(group => (
+                <div key={group.network}>
+                  <div className="px-4 py-2.5 bg-secondary/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label}
+                  </div>
+                  <ul>
+                    {group.items.map(p => {
+                      const cost = Number(p.cost_price ?? 0);
+                      const sell = Number(p.price);
+                      const pProfit = cost > 0 ? sell - cost : null;
+                      return (
+                        <li key={p.id} className="p-4 flex justify-between items-center gap-4 border-t border-border/50">
+                          <div>
+                            <div className="font-semibold">{p.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {p.size_gb}GB · Base ₵{cost.toFixed(2)} · Sell ₵{sell.toFixed(2)}
+                              {pProfit !== null && <> · Profit <span className="text-primary font-medium">₵{pProfit.toFixed(2)}</span></>}
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
           )}
         </Card>
       </div>
