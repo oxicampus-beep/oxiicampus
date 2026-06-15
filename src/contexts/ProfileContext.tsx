@@ -25,7 +25,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (!user) { setProfile(null); setLoading(false); return; }
-    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    let { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if (!data) {
+      const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
+      if (rpcErr) {
+        await supabase.from("profiles").insert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name ?? null,
+          phone: user.user_metadata?.phone ?? null,
+          email: user.email ?? null,
+        });
+      }
+      ({ data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle());
+    }
     setProfile(data as Profile | null);
     setLoading(false);
   }, [user]);

@@ -444,6 +444,10 @@ export type Database = {
         Args: { p_name: string; p_whatsapp: string; p_slug: string }
         Returns: string
       }
+      ensure_user_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
