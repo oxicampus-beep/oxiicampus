@@ -2,8 +2,27 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import Auth from "@/pages/Auth";
+import Overview from "@/pages/Overview";
+import WalletPage from "@/pages/WalletPage";
+import Transactions from "@/pages/Transactions";
+import BuyMTN from "@/pages/BuyMTN";
+import BuyATIshare from "@/pages/BuyATIshare";
+import BuyATBigTime from "@/pages/BuyATBigTime";
+import BuyTelecel from "@/pages/BuyTelecel";
+import AFA from "@/pages/AFA";
+import ExtraServices from "@/pages/ExtraServices";
+import MyStore from "@/pages/MyStore";
+import StorePackages from "@/pages/StorePackages";
+import StoreOrders from "@/pages/StoreOrders";
+import StoreWithdrawal from "@/pages/StoreWithdrawal";
+import DeveloperAPI from "@/pages/DeveloperAPI";
+import SettingsPage from "@/pages/SettingsPage";
+import ReportIssue from "@/pages/ReportIssue";
+import AdminPackages from "@/pages/AdminPackages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -14,10 +33,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/auth" replace />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<Overview />} />
+              <Route path="wallet" element={<WalletPage />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="buy/mtn" element={<BuyMTN />} />
+              <Route path="buy/at-ishare" element={<BuyATIshare />} />
+              <Route path="buy/at-bigtime" element={<BuyATBigTime />} />
+              <Route path="buy/telecel" element={<BuyTelecel />} />
+              <Route path="afa" element={<AFA />} />
+              <Route path="extras" element={<ExtraServices />} />
+              <Route path="store" element={<MyStore />} />
+              <Route path="store/packages" element={<StorePackages />} />
+              <Route path="store/orders" element={<StoreOrders />} />
+              <Route path="store/withdrawal" element={<StoreWithdrawal />} />
+              <Route path="developer" element={<DeveloperAPI />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="report" element={<ReportIssue />} />
+            </Route>
+            <Route path="/admin" element={<DashboardLayout />}>
+              <Route path="packages" element={<AdminPackages />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
