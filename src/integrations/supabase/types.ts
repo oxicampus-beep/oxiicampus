@@ -14,16 +14,395 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      afa_registrations: {
+        Row: {
+          created_at: string
+          dob: string
+          full_name: string
+          id: string
+          id_number: string
+          network: Database["public"]["Enums"]["network_type"]
+          phone: string
+          region: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dob: string
+          full_name: string
+          id?: string
+          id_number: string
+          network: Database["public"]["Enums"]["network_type"]
+          phone: string
+          region?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dob?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          network?: Database["public"]["Enums"]["network_type"]
+          phone?: string
+          region?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_keys: {
+        Row: {
+          active: boolean
+          api_key: string
+          created_at: string
+          id: string
+          label: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          api_key?: string
+          created_at?: string
+          id?: string
+          label: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          api_key?: string
+          created_at?: string
+          id?: string
+          label?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      data_orders: {
+        Row: {
+          created_at: string
+          id: string
+          network: Database["public"]["Enums"]["network_type"]
+          package_id: string | null
+          price: number
+          recipient_phone: string
+          size_gb: number
+          status: Database["public"]["Enums"]["order_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          network: Database["public"]["Enums"]["network_type"]
+          package_id?: string | null
+          price: number
+          recipient_phone: string
+          size_gb: number
+          status?: Database["public"]["Enums"]["order_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          network?: Database["public"]["Enums"]["network_type"]
+          package_id?: string | null
+          price?: number
+          recipient_phone?: string
+          size_gb?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "data_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_packages: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          network: Database["public"]["Enums"]["network_type"]
+          price: number
+          size_gb: number
+          updated_at: string
+          validity: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          network: Database["public"]["Enums"]["network_type"]
+          price: number
+          size_gb: number
+          updated_at?: string
+          validity?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          network?: Database["public"]["Enums"]["network_type"]
+          price?: number
+          size_gb?: number
+          updated_at?: string
+          validity?: string
+        }
+        Relationships: []
+      }
+      issues: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          wallet_balance: number
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+          wallet_balance?: number
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          wallet_balance?: number
+        }
+        Relationships: []
+      }
+      store_orders: {
+        Row: {
+          created_at: string
+          customer_phone: string
+          id: string
+          package_id: string | null
+          price: number
+          status: Database["public"]["Enums"]["order_status"]
+          store_owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_phone: string
+          id?: string
+          package_id?: string | null
+          price: number
+          status?: Database["public"]["Enums"]["order_status"]
+          store_owner_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_phone?: string
+          id?: string
+          package_id?: string | null
+          price?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          store_owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "store_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_packages: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          network: Database["public"]["Enums"]["network_type"]
+          price: number
+          size_gb: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          network: Database["public"]["Enums"]["network_type"]
+          price: number
+          size_gb: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          network?: Database["public"]["Enums"]["network_type"]
+          price?: number
+          size_gb?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      store_withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          momo_network: string
+          momo_number: string
+          status: Database["public"]["Enums"]["order_status"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          momo_network: string
+          momo_number: string
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          momo_network?: string
+          momo_number?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          created_at: string
+          description: string | null
+          id: string
+          meta: Json | null
+          status: Database["public"]["Enums"]["tx_status"]
+          type: Database["public"]["Enums"]["tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          meta?: Json | null
+          status?: Database["public"]["Enums"]["tx_status"]
+          type: Database["public"]["Enums"]["tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          meta?: Json | null
+          status?: Database["public"]["Enums"]["tx_status"]
+          type?: Database["public"]["Enums"]["tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      network_type:
+        | "mtn"
+        | "airteltigo_ishare"
+        | "airteltigo_bigtime"
+        | "telecel"
+      order_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "refunded"
+      tx_status: "pending" | "success" | "failed"
+      tx_type: "topup" | "purchase" | "refund" | "withdrawal" | "store_credit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +529,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      network_type: [
+        "mtn",
+        "airteltigo_ishare",
+        "airteltigo_bigtime",
+        "telecel",
+      ],
+      order_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "refunded",
+      ],
+      tx_status: ["pending", "success", "failed"],
+      tx_type: ["topup", "purchase", "refund", "withdrawal", "store_credit"],
+    },
   },
 } as const
