@@ -17,7 +17,14 @@ const networkAccent: Record<string, string> = {
 };
 
 type StoreRow = { id: string; user_id: string; name: string; whatsapp: string; slug: string };
-type Pkg = { id: string; name: string; network: string; size_gb: number; price: number };
+type Pkg = {
+  id: string;
+  name: string;
+  network: string;
+  size_gb: number;
+  price: number;
+  validity?: string;
+};
 
 export default function Storefront() {
   const { slug } = useParams<{ slug: string }>();
@@ -37,12 +44,19 @@ export default function Storefront() {
       setStore(s);
       const { data: pkgs } = await supabase
         .from("store_packages")
-        .select("id, name, network, size_gb, price")
+        .select("id, name, network, size_gb, price, data_packages(validity)")
         .eq("user_id", s.user_id)
         .eq("active", true)
         .order("network")
         .order("size_gb");
-      setPackages(pkgs ?? []);
+      setPackages((pkgs ?? []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        network: p.network,
+        size_gb: p.size_gb,
+        price: p.price,
+        validity: p.data_packages?.validity ?? "Non expiry",
+      })));
       setLoading(false);
     })();
   }, [slug]);
@@ -119,7 +133,10 @@ export default function Storefront() {
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{labelFor(p.network)}</div>
                 <div className="text-2xl font-display font-black mt-1">{p.name}</div>
                 <div className="flex items-end justify-between mt-4">
-                  <span className="text-3xl font-bold">{p.size_gb}<span className="text-base ml-0.5">GB</span></span>
+                  <div>
+                    <span className="text-3xl font-bold">{p.size_gb}<span className="text-base ml-0.5">GB</span></span>
+                    {p.validity && <div className="text-xs text-muted-foreground mt-1">{p.validity}</div>}
+                  </div>
                   <span className="text-xl font-bold text-primary">₵{Number(p.price).toFixed(2)}</span>
                 </div>
               </button>

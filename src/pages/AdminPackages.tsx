@@ -14,7 +14,8 @@ import { Trash2 } from "lucide-react";
 export default function AdminPackages() {
   const { isAdmin, loading } = useIsAdmin();
   const [items, setItems] = useState<any[]>([]);
-  const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "", validity: "30 days" });
+  const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "" });
+  const VALIDITY = "Non expiry";
 
   const load = async () => {
     const { data } = await supabase.from("data_packages").select("*").order("network").order("size_gb");
@@ -32,11 +33,11 @@ export default function AdminPackages() {
       size_gb: Number(f.size_gb),
       user_price: Number(f.user_price),
       agent_price: Number(f.agent_price),
-      validity: f.validity,
+      validity: VALIDITY,
     });
     if (error) return toast.error(error.message);
     toast.success("Package created");
-    setF({ network: "mtn", size_gb: "", user_price: "", agent_price: "", validity: "30 days" });
+    setF({ network: "mtn", size_gb: "", user_price: "", agent_price: "" });
     load();
   };
 
@@ -47,11 +48,11 @@ export default function AdminPackages() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
-        <p className="text-muted-foreground mt-1">Set separate prices for regular users and agents (store owners).</p>
+        <p className="text-muted-foreground mt-1">Set user and agent base prices. All bundles are non-expiring.</p>
       </div>
 
       <Card className="p-6">
-        <form onSubmit={create} className="grid sm:grid-cols-6 gap-3 items-end">
+        <form onSubmit={create} className="grid sm:grid-cols-5 gap-3 items-end">
           <div>
             <Label>Network</Label>
             <Select value={f.network} onValueChange={v => setF({ ...f, network: v })}>
@@ -66,8 +67,7 @@ export default function AdminPackages() {
           </div>
           <div><Label>Size (GB)</Label><Input type="number" step="0.1" required value={f.size_gb} onChange={e => setF({ ...f, size_gb: e.target.value })} /></div>
           <div><Label>User price (₵)</Label><Input type="number" step="0.01" required value={f.user_price} onChange={e => setF({ ...f, user_price: e.target.value })} /></div>
-          <div><Label>Agent price (₵)</Label><Input type="number" step="0.01" required value={f.agent_price} onChange={e => setF({ ...f, agent_price: e.target.value })} /></div>
-          <div><Label>Validity</Label><Input value={f.validity} onChange={e => setF({ ...f, validity: e.target.value })} /></div>
+          <div><Label>Agent base (₵)</Label><Input type="number" step="0.01" required value={f.agent_price} onChange={e => setF({ ...f, agent_price: e.target.value })} /></div>
           <Button type="submit" className="font-semibold">Add</Button>
         </form>
       </Card>
@@ -80,7 +80,7 @@ export default function AdminPackages() {
                 <div>
                   <div className="font-semibold">{p.size_gb}GB · {p.network}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    Users: ₵{Number(p.user_price).toFixed(2)} · Agents: ₵{Number(p.agent_price).toFixed(2)} · {p.validity}
+                    Users: ₵{Number(p.user_price).toFixed(2)} · Agent base: ₵{Number(p.agent_price).toFixed(2)} · {VALIDITY}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

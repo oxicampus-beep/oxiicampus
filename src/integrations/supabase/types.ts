@@ -315,7 +315,9 @@ export type Database = {
       store_packages: {
         Row: {
           active: boolean
+          cost_price: number | null
           created_at: string
+          data_package_id: string | null
           id: string
           name: string
           network: Database["public"]["Enums"]["network_type"]
@@ -326,7 +328,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          cost_price?: number | null
           created_at?: string
+          data_package_id?: string | null
           id?: string
           name: string
           network: Database["public"]["Enums"]["network_type"]
@@ -337,7 +341,9 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          cost_price?: number | null
           created_at?: string
+          data_package_id?: string | null
           id?: string
           name?: string
           network?: Database["public"]["Enums"]["network_type"]
@@ -346,7 +352,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "store_packages_data_package_id_fkey"
+            columns: ["data_package_id"]
+            isOneToOne: false
+            referencedRelation: "data_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_withdrawals: {
         Row: {

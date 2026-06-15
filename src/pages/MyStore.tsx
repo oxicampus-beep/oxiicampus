@@ -17,11 +17,33 @@ import { labelFor } from "@/components/data/BuyDataDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { Badge } from "@/components/ui/badge";
 
+type CatalogPkg = {
+  id: string;
+  network: string;
+  size_gb: number;
+  agent_price: number;
+  validity: string;
+};
+
+function catalogLabel(p: { size_gb: number; network: string }) {
+  return `${p.size_gb}GB · ${labelFor(p.network)}`;
+}
+
 type StoreRow = {
   id: string;
   name: string;
   whatsapp: string;
   slug: string;
+};
+
+type StorePkg = {
+  id: string;
+  name: string;
+  network: string;
+  size_gb: number;
+  price: number;
+  cost_price: number | null;
+  data_package_id: string | null;
 };
 
 export default function MyStore() {
@@ -33,22 +55,24 @@ export default function MyStore() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ packages: 0, orders: 0, revenue: 0 });
-  const [packages, setPackages] = useState<any[]>([]);
+  const [packages, setPackages] = useState<StorePkg[]>([]);
+  const [catalog, setCatalog] = useState<CatalogPkg[]>([]);
   const [activation, setActivation] = useState({ enabled: false, fee: 0 });
 
   const [createForm, setCreateForm] = useState({ name: "", whatsapp: "" });
   const [editForm, setEditForm] = useState({ name: "", whatsapp: "" });
-  const [pkgForm, setPkgForm] = useState({ name: "", network: "mtn", size_gb: "", price: "" });
+  const [pkgForm, setPkgForm] = useState({ data_package_id: "", sell_price: "" });
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data: s }, { count: pCount }, { data: orders }, { data: pkgs }, { data: settings }] = await Promise.all([
+    const [{ data: s }, { count: pCount }, { data: orders }, { data: pkgs }, { data: settings }, { data: catalogPkgs }] = await Promise.all([
       supabase.from("stores").select("id, name, whatsapp, slug").eq("user_id", user.id).maybeSingle(),
       supabase.from("store_packages").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("store_orders").select("price").eq("store_owner_id", user.id),
       supabase.from("store_packages").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("platform_settings").select("store_activation_enabled, store_activation_fee").eq("id", 1).maybeSingle(),
+      supabase.from("data_packages").select("id, network, size_gb, agent_price, validity").eq("active", true).order("network").order("size_gb"),
     ]);
     setStore(s ?? null);
     if (s) setEditForm({ name: s.name, whatsapp: s.whatsapp });
@@ -58,9 +82,17 @@ export default function MyStore() {
       orders: orders?.length ?? 0,
       revenue: (orders ?? []).reduce((sum, o) => sum + Number(o.price), 0),
     });
-    setPackages(pkgs ?? []);
+    setPackages((pkgs ?? []) as StorePkg[]);
+    setCatalog((catalogPkgs ?? []) as CatalogPkg[]);
     setLoading(false);
   };
+
+  const selectedCatalog = catalog.find(c => c.id === pkgForm.data_package_id);
+  const baseCost = selectedCatalog ? Number(selectedCatalog.agent_price) : 0;
+  const sellPrice = Number(pkgForm.sell_price);
+  const profit = sellPrice > 0 && baseCost > 0 ? sellPrice - baseCost : 0;
+  const addedCatalogIds = new Set(packages.map(p => p.data_package_id).filter(Boolean));
+  const availableCatalog = catalog.filter(c => !addedCatalogIds.has(c.id));
 
   useEffect(() => { load(); }, [user]);
 
@@ -120,17 +152,22 @@ export default function MyStore() {
 
   const addPackage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !selectedCatalog) return toast.error("Select a platform bundle.");
+    const sell = Number(pkgForm.sell_price);
+    if (!sell || sell <= 0) return toast.error("Enter a valid sell price.");
+    if (sell < baseCost) return toast.error(`Sell price must be at least ₵${baseCost.toFixed(2)} (your base cost).`);
     const { error } = await supabase.from("store_packages").insert({
       user_id: user.id,
-      name: pkgForm.name,
-      network: pkgForm.network as any,
-      size_gb: Number(pkgForm.size_gb),
-      price: Number(pkgForm.price),
+      data_package_id: selectedCatalog.id,
+      name: catalogLabel(selectedCatalog),
+      network: selectedCatalog.network as any,
+      size_gb: selectedCatalog.size_gb,
+      cost_price: baseCost,
+      price: sell,
     });
     if (error) return toast.error(error.message);
-    toast.success("Package added to your store");
-    setPkgForm({ name: "", network: "mtn", size_gb: "", price: "" });
+    toast.success("Package listed on your store");
+    setPkgForm({ data_package_id: "", sell_price: "" });
     load();
   };
 
@@ -301,48 +338,101 @@ export default function MyStore() {
           <Package className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-display font-semibold">Store Packages</h2>
         </div>
-        <p className="text-sm text-muted-foreground -mt-2">Add bundles that appear on your public store page.</p>
+        <p className="text-sm text-muted-foreground -mt-2">
+          Pick admin bundles at agent base price, add your profit, and list on your store website.
+        </p>
 
         <Card className="p-6">
-          <form onSubmit={addPackage} className="grid sm:grid-cols-5 gap-3 items-end">
-            <div className="sm:col-span-2">
-              <Label>Package Name</Label>
-              <Input required value={pkgForm.name} onChange={e => setPkgForm({ ...pkgForm, name: e.target.value })} placeholder="MTN 1GB Daily" />
-            </div>
-            <div>
-              <Label>Network</Label>
-              <Select value={pkgForm.network} onValueChange={v => setPkgForm({ ...pkgForm, network: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mtn">MTN</SelectItem>
-                  <SelectItem value="airteltigo_ishare">AT iShare</SelectItem>
-                  <SelectItem value="airteltigo_bigtime">AT BigTime</SelectItem>
-                  <SelectItem value="telecel">Telecel</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Size (GB)</Label><Input type="number" step="0.1" required value={pkgForm.size_gb} onChange={e => setPkgForm({ ...pkgForm, size_gb: e.target.value })} /></div>
-            <div><Label>Price (₵)</Label><Input type="number" step="0.01" required value={pkgForm.price} onChange={e => setPkgForm({ ...pkgForm, price: e.target.value })} /></div>
-            <Button type="submit" className="sm:col-span-5 font-semibold">Add to Store</Button>
-          </form>
+          {availableCatalog.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              {catalog.length === 0
+                ? "No platform bundles available yet. Ask admin to add packages."
+                : "You've listed all available platform bundles."}
+            </p>
+          ) : (
+            <form onSubmit={addPackage} className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Platform bundle</Label>
+                  <Select
+                    value={pkgForm.data_package_id}
+                    onValueChange={v => setPkgForm({ data_package_id: v, sell_price: "" })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select bundle…" /></SelectTrigger>
+                    <SelectContent>
+                      {availableCatalog.map(c => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {catalogLabel(c)} — base ₵{Number(c.agent_price).toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Your sell price (₵)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={baseCost || 0.01}
+                    required
+                    disabled={!selectedCatalog}
+                    placeholder={selectedCatalog ? `Min ₵${baseCost.toFixed(2)}` : "Select a bundle first"}
+                    value={pkgForm.sell_price}
+                    onChange={e => setPkgForm({ ...pkgForm, sell_price: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {selectedCatalog && (
+                <div className="rounded-lg bg-secondary/50 p-4 grid sm:grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <div className="text-muted-foreground text-xs">Base cost (agent price)</div>
+                    <div className="font-bold">₵{baseCost.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-xs">Your profit</div>
+                    <div className={`font-bold ${profit > 0 ? "text-primary" : profit < 0 ? "text-destructive" : ""}`}>
+                      {pkgForm.sell_price ? `₵${profit.toFixed(2)}` : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-xs">Validity</div>
+                    <div className="font-medium">{selectedCatalog.validity}</div>
+                  </div>
+                </div>
+              )}
+
+              <Button type="submit" className="w-full font-semibold" disabled={!selectedCatalog}>
+                List on my store
+              </Button>
+            </form>
+          )}
         </Card>
 
         <Card className="p-0 overflow-hidden">
           {packages.length === 0 ? (
-            <div className="p-10 text-center text-muted-foreground">No packages yet — add your first bundle above.</div>
+            <div className="p-10 text-center text-muted-foreground">No packages listed yet — add your first bundle above.</div>
           ) : (
             <ul className="divide-y divide-border">
-              {packages.map(p => (
-                <li key={p.id} className="p-4 flex justify-between items-center gap-4">
-                  <div>
-                    <div className="font-semibold">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">{p.size_gb}GB · {labelFor(p.network)} · ₵{Number(p.price).toFixed(2)}</div>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </li>
-              ))}
+              {packages.map(p => {
+                const cost = Number(p.cost_price ?? 0);
+                const sell = Number(p.price);
+                const pProfit = cost > 0 ? sell - cost : null;
+                return (
+                  <li key={p.id} className="p-4 flex justify-between items-center gap-4">
+                    <div>
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Base ₵{cost.toFixed(2)} · Sell ₵{sell.toFixed(2)}
+                        {pProfit !== null && <> · Profit <span className="text-primary font-medium">₵{pProfit.toFixed(2)}</span></>}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Card>
