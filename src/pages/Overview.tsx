@@ -3,12 +3,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Wallet, ShoppingBag, History, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useIsAgent } from "@/hooks/useIsAgent";
 
 export default function Overview() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { isAgent } = useIsAgent();
   const [stats, setStats] = useState({ orders: 0, spent: 0, recent: [] as any[] });
 
   useEffect(() => {
@@ -27,8 +30,13 @@ export default function Overview() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl md:text-4xl font-display font-bold">Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋</h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening in your ByteBoss account.</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-3xl md:text-4xl font-display font-bold">Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋</h1>
+          <Badge variant={isAgent ? "default" : "secondary"}>{isAgent ? "Agent" : "User"}</Badge>
+        </div>
+        <p className="text-muted-foreground mt-1">
+          {isAgent ? "You're an agent — you get lower prices on data bundles." : "Top up your wallet to buy data, or create a store to become an agent."}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

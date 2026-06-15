@@ -92,6 +92,7 @@ export function AppSidebar() {
           { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
           { title: "Users", url: "/admin/users", icon: Users },
           { title: "Manage Packages", url: "/admin/packages", icon: Shield },
+          { title: "Settings", url: "/admin/settings", icon: Settings },
         ])}
       </SidebarContent>
     </Sidebar>

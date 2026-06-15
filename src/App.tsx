@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Auth from "@/pages/Auth";
 import Overview from "@/pages/Overview";
@@ -25,6 +26,7 @@ import AdminPackages from "@/pages/AdminPackages";
 import AdminOverview from "@/pages/AdminOverview";
 import AdminOrders from "@/pages/AdminOrders";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminSettings from "@/pages/AdminSettings";
 import Storefront from "@/pages/Storefront";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +39,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ProfileProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/auth" replace />} />
             <Route path="/auth" element={<Auth />} />
@@ -64,10 +67,12 @@ const App = () => (
               <Route path="overview" element={<AdminOverview />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="settings" element={<AdminSettings />} />
               <Route path="packages" element={<AdminPackages />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ProfileProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

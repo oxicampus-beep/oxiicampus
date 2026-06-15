@@ -14,7 +14,7 @@ import { Trash2 } from "lucide-react";
 export default function AdminPackages() {
   const { isAdmin, loading } = useIsAdmin();
   const [items, setItems] = useState<any[]>([]);
-  const [f, setF] = useState({ network: "mtn", size_gb: "", price: "", validity: "30 days" });
+  const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "", validity: "30 days" });
 
   const load = async () => {
     const { data } = await supabase.from("data_packages").select("*").order("network").order("size_gb");
@@ -28,10 +28,16 @@ export default function AdminPackages() {
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase.from("data_packages").insert({
-      network: f.network as any, size_gb: Number(f.size_gb), price: Number(f.price), validity: f.validity,
+      network: f.network as any,
+      size_gb: Number(f.size_gb),
+      user_price: Number(f.user_price),
+      agent_price: Number(f.agent_price),
+      validity: f.validity,
     });
     if (error) return toast.error(error.message);
-    toast.success("Package created"); setF({ network: "mtn", size_gb: "", price: "", validity: "30 days" }); load();
+    toast.success("Package created");
+    setF({ network: "mtn", size_gb: "", user_price: "", agent_price: "", validity: "30 days" });
+    load();
   };
 
   const toggle = async (p: any) => { await supabase.from("data_packages").update({ active: !p.active }).eq("id", p.id); load(); };
@@ -39,11 +45,13 @@ export default function AdminPackages() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
-        <p className="text-muted-foreground mt-1">Admin: create and edit data packages for all networks.</p></div>
+      <div>
+        <h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
+        <p className="text-muted-foreground mt-1">Set separate prices for regular users and agents (store owners).</p>
+      </div>
 
       <Card className="p-6">
-        <form onSubmit={create} className="grid sm:grid-cols-5 gap-3 items-end">
+        <form onSubmit={create} className="grid sm:grid-cols-6 gap-3 items-end">
           <div>
             <Label>Network</Label>
             <Select value={f.network} onValueChange={v => setF({ ...f, network: v })}>
@@ -57,7 +65,8 @@ export default function AdminPackages() {
             </Select>
           </div>
           <div><Label>Size (GB)</Label><Input type="number" step="0.1" required value={f.size_gb} onChange={e => setF({ ...f, size_gb: e.target.value })} /></div>
-          <div><Label>Price (₵)</Label><Input type="number" step="0.01" required value={f.price} onChange={e => setF({ ...f, price: e.target.value })} /></div>
+          <div><Label>User price (₵)</Label><Input type="number" step="0.01" required value={f.user_price} onChange={e => setF({ ...f, user_price: e.target.value })} /></div>
+          <div><Label>Agent price (₵)</Label><Input type="number" step="0.01" required value={f.agent_price} onChange={e => setF({ ...f, agent_price: e.target.value })} /></div>
           <div><Label>Validity</Label><Input value={f.validity} onChange={e => setF({ ...f, validity: e.target.value })} /></div>
           <Button type="submit" className="font-semibold">Add</Button>
         </form>
@@ -70,7 +79,9 @@ export default function AdminPackages() {
               <li key={p.id} className="p-4 flex justify-between items-center gap-4">
                 <div>
                   <div className="font-semibold">{p.size_gb}GB · {p.network}</div>
-                  <div className="text-xs text-muted-foreground">₵{Number(p.price).toFixed(2)} · {p.validity}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    Users: ₵{Number(p.user_price).toFixed(2)} · Agents: ₵{Number(p.agent_price).toFixed(2)} · {p.validity}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Switch checked={p.active} onCheckedChange={() => toggle(p)} />

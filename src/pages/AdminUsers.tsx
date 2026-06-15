@@ -19,6 +19,7 @@ type UserRow = {
   wallet_balance: number;
   created_at: string;
   isAdmin: boolean;
+  isAgent: boolean;
   orderCount: number;
   totalSpent: number;
 };
@@ -31,14 +32,16 @@ function AdminUsersContent() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles, error: pErr }, { data: roles }, { data: orders }] = await Promise.all([
+    const [{ data: profiles, error: pErr }, { data: roles }, { data: orders }, { data: stores }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
       supabase.from("data_orders").select("user_id, price"),
+      supabase.from("stores").select("user_id"),
     ]);
     if (pErr) { toast.error(pErr.message); setLoading(false); return; }
 
     const adminIds = new Set((roles ?? []).map(r => r.user_id));
+    const agentIds = new Set((stores ?? []).map(s => s.user_id));
     const orderStats: Record<string, { count: number; spent: number }> = {};
     (orders ?? []).forEach(o => {
       if (!orderStats[o.user_id]) orderStats[o.user_id] = { count: 0, spent: 0 };
@@ -54,6 +57,7 @@ function AdminUsersContent() {
       wallet_balance: Number(p.wallet_balance),
       created_at: p.created_at,
       isAdmin: adminIds.has(p.id),
+      isAgent: agentIds.has(p.id),
       orderCount: orderStats[p.id]?.count ?? 0,
       totalSpent: orderStats[p.id]?.spent ?? 0,
     })));
@@ -117,7 +121,8 @@ function AdminUsersContent() {
                   <TableHead>Orders</TableHead>
                   <TableHead>Spent</TableHead>
                   <TableHead>Joined</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Admin</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -134,10 +139,17 @@ function AdminUsersContent() {
                     <TableCell className="text-primary font-medium">{formatCurrency(u.totalSpent)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
                     <TableCell>
+                      {u.isAgent ? (
+                        <Badge className="bg-primary/20 text-primary border-primary/30">Agent</Badge>
+                      ) : (
+                        <Badge variant="secondary">User</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {u.isAdmin ? (
                         <Badge className="gap-1"><Shield className="h-3 w-3" /> Admin</Badge>
                       ) : (
-                        <Badge variant="secondary">User</Badge>
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">

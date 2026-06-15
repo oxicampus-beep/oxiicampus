@@ -14,6 +14,8 @@ import {
 import { Link } from "react-router-dom";
 import { getStoreUrl, slugify, whatsappLink } from "@/lib/store";
 import { labelFor } from "@/components/data/BuyDataDialog";
+import { useProfile } from "@/hooks/useProfile";
+import { Badge } from "@/components/ui/badge";
 
 type StoreRow = {
   id: string;
@@ -24,6 +26,7 @@ type StoreRow = {
 
 export default function MyStore() {
   const { user } = useAuth();
+  const { profile, refresh: refreshProfile } = useProfile();
   const [store, setStore] = useState<StoreRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -31,6 +34,7 @@ export default function MyStore() {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ packages: 0, orders: 0, revenue: 0 });
   const [packages, setPackages] = useState<any[]>([]);
+  const [activation, setActivation] = useState({ enabled: false, fee: 0 });
 
   const [createForm, setCreateForm] = useState({ name: "", whatsapp: "" });
   const [editForm, setEditForm] = useState({ name: "", whatsapp: "" });
@@ -39,14 +43,16 @@ export default function MyStore() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data: s }, { count: pCount }, { data: orders }, { data: pkgs }] = await Promise.all([
+    const [{ data: s }, { count: pCount }, { data: orders }, { data: pkgs }, { data: settings }] = await Promise.all([
       supabase.from("stores").select("id, name, whatsapp, slug").eq("user_id", user.id).maybeSingle(),
       supabase.from("store_packages").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("store_orders").select("price").eq("store_owner_id", user.id),
       supabase.from("store_packages").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("platform_settings").select("store_activation_enabled, store_activation_fee").eq("id", 1).maybeSingle(),
     ]);
     setStore(s ?? null);
     if (s) setEditForm({ name: s.name, whatsapp: s.whatsapp });
+    if (settings) setActivation({ enabled: settings.store_activation_enabled, fee: Number(settings.store_activation_fee) });
     setStats({
       packages: pCount ?? 0,
       orders: orders?.length ?? 0,
@@ -63,17 +69,20 @@ export default function MyStore() {
     if (!user) return;
     if (!createForm.name.trim()) return toast.error("Enter a store name.");
     if (!createForm.whatsapp.trim()) return toast.error("Enter a WhatsApp support number.");
+    if (activation.enabled && Number(profile?.wallet_balance ?? 0) < activation.fee) {
+      return toast.error(`Insufficient wallet balance. Top up ₵${activation.fee.toFixed(2)} to activate your store.`);
+    }
     setCreating(true);
     const slug = slugify(createForm.name);
-    const { error } = await supabase.from("stores").insert({
-      user_id: user.id,
-      name: createForm.name.trim(),
-      whatsapp: createForm.whatsapp.trim(),
-      slug,
+    const { error } = await supabase.rpc("create_store", {
+      p_name: createForm.name.trim(),
+      p_whatsapp: createForm.whatsapp.trim(),
+      p_slug: slug,
     });
     setCreating(false);
     if (error) return toast.error(error.message);
-    toast.success("Your store is live!");
+    toast.success("Your store is live! You're now an agent with agent pricing.");
+    await refreshProfile();
     load();
   };
 
@@ -144,9 +153,21 @@ export default function MyStore() {
           </div>
           <h1 className="text-3xl md:text-4xl font-display font-bold">Create Your Store</h1>
           <p className="text-muted-foreground mt-2">
-            Set up your mini website to resell data under your own brand. Share the link with customers anywhere.
+            Set up your mini website to resell data under your own brand. Once created, you become an agent with lower data prices.
           </p>
         </div>
+
+        {activation.enabled && activation.fee > 0 && (
+          <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
+            <p className="text-sm">
+              Store activation fee: <span className="font-bold text-primary">₵{activation.fee.toFixed(2)}</span>
+              {" "}— deducted from your wallet. Balance: ₵{Number(profile?.wallet_balance ?? 0).toFixed(2)}
+              {Number(profile?.wallet_balance ?? 0) < activation.fee && (
+                <> · <Link to="/dashboard/wallet" className="text-primary underline">Top up wallet</Link></>
+              )}
+            </p>
+          </Card>
+        )}
 
         <Card className="p-6 sm:p-8 border-primary/20">
           <form onSubmit={createStore} className="space-y-5">
@@ -174,7 +195,9 @@ export default function MyStore() {
             </div>
             <Button type="submit" disabled={creating} className="w-full h-11 font-semibold gap-2">
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Create My Store
+              {activation.enabled && activation.fee > 0
+                ? `Create Store · Pay ₵${activation.fee.toFixed(2)}`
+                : "Create My Store (Free)"}
             </Button>
           </form>
         </Card>
@@ -189,8 +212,11 @@ export default function MyStore() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold">{store.name}</h1>
-          <p className="text-muted-foreground mt-1">Manage your mini store, packages, and share your link.</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-3xl md:text-4xl font-display font-bold">{store.name}</h1>
+            <Badge>Agent</Badge>
+          </div>
+          <p className="text-muted-foreground mt-1">Manage your mini store, packages, and share your link. You get agent pricing on data purchases.</p>
         </div>
         {!editing ? (
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setEditing(true)}>

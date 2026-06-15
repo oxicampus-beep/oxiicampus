@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type Pkg = { id: string; network: any; size_gb: number; price: number; validity: string };
 
@@ -29,18 +31,15 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
     if (!user) return;
     if (insufficient) return toast.error("Insufficient wallet balance. Top up first.");
     setLoading(true);
-    const newBal = +(balance - Number(pkg.price)).toFixed(2);
-    const { error: pErr } = await supabase.from("profiles").update({ wallet_balance: newBal }).eq("id", user.id);
-    if (pErr) { setLoading(false); return toast.error(pErr.message); }
-    await supabase.from("transactions").insert({
-      user_id: user.id, type: "purchase", amount: -Number(pkg.price), balance_after: newBal,
-      description: `${pkg.size_gb}GB ${labelFor(pkg.network)} → ${phone}`, status: "success",
-    });
-    await supabase.from("data_orders").insert({
-      user_id: user.id, package_id: pkg.id, network: pkg.network,
-      size_gb: pkg.size_gb, price: pkg.price, recipient_phone: phone, status: "completed",
+    const { error } = await supabase.rpc("purchase_data_package", {
+      p_package_id: pkg.id,
+      p_recipient_phone: phone,
     });
     setLoading(false);
+    if (error) {
+      if (error.message.includes("Insufficient")) return toast.error("Insufficient wallet balance. Top up first.");
+      return toast.error(error.message);
+    }
     toast.success("Purchase successful!");
     await refresh();
     onOpenChange(false);
@@ -75,10 +74,16 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
               <Row k="Amount" v={`₵${Number(pkg.price).toFixed(2)}`} highlight />
               <Row k="Wallet balance" v={`₵${balance.toFixed(2)}`} />
             </div>
-            {insufficient && <p className="text-destructive text-sm">Insufficient wallet balance. Top up to continue.</p>}
+            {insufficient && (
+              <p className="text-destructive text-sm">
+                Insufficient balance.{" "}
+                <Link to="/dashboard/wallet" className="underline font-medium" onClick={() => onOpenChange(false)}>Top up wallet</Link>
+              </p>
+            )}
             <DialogFooter>
               <Button variant="ghost" onClick={() => setStep("enter")}>Back</Button>
-              <Button disabled={loading || insufficient} onClick={handlePay} className="font-semibold">
+              <Button disabled={loading || insufficient} onClick={handlePay} className="font-semibold gap-2">
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {loading ? "Processing…" : `Pay ₵${Number(pkg.price).toFixed(2)}`}
               </Button>
             </DialogFooter>
