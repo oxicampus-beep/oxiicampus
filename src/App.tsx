@@ -27,6 +27,7 @@ import AdminOverview from "@/pages/AdminOverview";
 import AdminOrders from "@/pages/AdminOrders";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminSettings from "@/pages/AdminSettings";
+import AdminAnnouncements from "@/pages/AdminAnnouncements";
 import Storefront from "@/pages/Storefront";
 import NotFound from "./pages/NotFound";
 
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="users" element={<AdminUsers />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="packages" element={<AdminPackages />} />
+              <Route path="notifications" element={<AdminAnnouncements />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

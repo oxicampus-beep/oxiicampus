@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, History, Smartphone, Radio, Signal, Wifi,
-  UserPlus, Sparkles, Store, ShoppingCart, Banknote, Code2, Settings, AlertCircle, Shield, Users, BarChart3
+  UserPlus, Sparkles, Store, ShoppingCart, Banknote, Code2, Settings, AlertCircle, Shield, Users, BarChart3, Bell
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -92,6 +92,7 @@ export function AppSidebar() {
           { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
           { title: "Users", url: "/admin/users", icon: Users },
           { title: "Manage Packages", url: "/admin/packages", icon: Shield },
+          { title: "Notifications", url: "/admin/notifications", icon: Bell },
           { title: "Settings", url: "/admin/settings", icon: Settings },
         ])}
       </SidebarContent>

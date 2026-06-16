@@ -235,6 +235,71 @@ export type Database = {
         }
         Relationships: []
       }
+      announcement_dismissals: {
+        Row: {
+          announcement_id: string
+          dismissed_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          dismissed_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          dismissed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_dismissals_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "platform_announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_announcements: {
+        Row: {
+          active: boolean
+          audience: Database["public"]["Enums"]["announcement_audience"]
+          body: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          severity: Database["public"]["Enums"]["announcement_severity"]
+          starts_at: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          audience?: Database["public"]["Enums"]["announcement_audience"]
+          body: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          severity?: Database["public"]["Enums"]["announcement_severity"]
+          starts_at?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          audience?: Database["public"]["Enums"]["announcement_audience"]
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          severity?: Database["public"]["Enums"]["announcement_severity"]
+          starts_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           id: number
@@ -498,6 +563,8 @@ export type Database = {
       }
     }
     Enums: {
+      announcement_audience: "all" | "users" | "agents"
+      announcement_severity: "info" | "warning" | "urgent"
       app_role: "admin" | "user"
       network_type:
         | "mtn"
@@ -639,6 +706,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      announcement_audience: ["all", "users", "agents"],
+      announcement_severity: ["info", "warning", "urgent"],
       app_role: ["admin", "user"],
       network_type: [
         "mtn",

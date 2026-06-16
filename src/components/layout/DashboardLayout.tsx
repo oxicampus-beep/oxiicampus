@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import AnnouncementPopup from "@/components/notifications/AnnouncementPopup";
 import { Button } from "@/components/ui/button";
 import { LogOut, Wallet } from "lucide-react";
 
@@ -36,6 +37,7 @@ export default function DashboardLayout() {
           <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
             <Outlet />
           </main>
+          <AnnouncementPopup />
         </div>
       </div>
     </SidebarProvider>
