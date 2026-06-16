@@ -1,10 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  fetchSwiftPlans,
-  matchSwiftPackageId,
-  mapSwiftStatusToOrder,
-  purchaseSwiftData,
-} from "../_shared/swiftdata.ts";
+import { fulfillOrder, adminClient } from "../_shared/fulfill-order.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,11 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("SWIFTDATA_API_KEY");
-    if (!apiKey) {
-      return json({ success: false, error: "SWIFTDATA_API_KEY not configured" }, 500);
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -38,15 +28,15 @@ Deno.serve(async (req) => {
     const { order_id } = await req.json();
     if (!order_id) return json({ success: false, error: "order_id required" }, 400);
 
-    const admin = createClient(supabaseUrl, serviceKey);
+    const admin = adminClient();
 
-    const { data: order, error: orderErr } = await admin
+    const { data: order } = await admin
       .from("data_orders")
-      .select("*, data_packages(swift_package_id, size_gb, network)")
+      .select("user_id")
       .eq("id", order_id)
       .single();
 
-    if (orderErr || !order) return json({ success: false, error: "Order not found" }, 404);
+    if (!order) return json({ success: false, error: "Order not found" }, 404);
 
     const { data: roleRow } = await admin
       .from("user_roles")
@@ -55,71 +45,21 @@ Deno.serve(async (req) => {
       .eq("role", "admin")
       .maybeSingle();
 
-    const isAdmin = !!roleRow;
-    if (order.user_id !== user.id && !isAdmin) {
+    if (order.user_id !== user.id && !roleRow) {
       return json({ success: false, error: "Forbidden" }, 403);
     }
 
-    if (order.status === "completed" && order.provider_order_id) {
-      return json({ success: true, message: "Already fulfilled", order_id, status: order.status });
-    }
-
-    const pkg = order.data_packages as { swift_package_id?: string; size_gb: number; network: string } | null;
-    if (!pkg) return json({ success: false, error: "Linked package not found" }, 400);
-
-    const plans = await fetchSwiftPlans(apiKey);
-    const swiftPackageId = matchSwiftPackageId(
-      order.network,
-      Number(order.size_gb),
-      plans,
-      pkg.swift_package_id,
-    );
-
-    if (!swiftPackageId) {
-      await admin.from("data_orders").update({
-        status: "failed",
-        provider_error: "No matching SwiftData plan. Sync plans in admin or set swift_package_id.",
-      }).eq("id", order_id);
-      return json({
-        success: false,
-        error: "No matching SwiftData plan for this bundle. Ask admin to sync SwiftData plans.",
-      }, 422);
-    }
-
-    const swiftRes = await purchaseSwiftData(apiKey, {
-      package_id: swiftPackageId,
-      phone: order.recipient_phone,
-      request_id: order_id,
-    });
-
-    if (!swiftRes.success) {
-      await admin.from("data_orders").update({
-        status: "failed",
-        provider_error: swiftRes.error || swiftRes.message || "SwiftData purchase failed",
-        provider_status: swiftRes.status ?? "failed",
-      }).eq("id", order_id);
-      return json({ success: false, error: swiftRes.error || "SwiftData purchase failed" }, 502);
-    }
-
-    const mappedStatus = mapSwiftStatusToOrder(swiftRes.status);
-
-    await admin.from("data_orders").update({
-      status: mappedStatus,
-      provider_order_id: swiftRes.order_id ?? null,
-      provider_status: swiftRes.status ?? null,
-      provider_error: null,
-    }).eq("id", order_id);
-
-    if (!pkg.swift_package_id) {
-      await admin.from("data_packages").update({ swift_package_id: swiftPackageId }).eq("id", order.package_id);
+    const result = await fulfillOrder(admin, order_id);
+    if (!result.success) {
+      return json({ success: false, error: result.error }, result.status);
     }
 
     return json({
       success: true,
-      order_id,
-      provider_order_id: swiftRes.order_id,
-      status: mappedStatus,
-      swift_status: swiftRes.status,
+      order_id: result.order_id,
+      provider_order_id: result.provider_order_id,
+      status: result.status,
+      swift_status: result.provider_status,
     });
   } catch (e) {
     console.error(e);

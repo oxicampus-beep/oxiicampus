@@ -29,6 +29,7 @@ import AdminUsers from "@/pages/AdminUsers";
 import AdminSettings from "@/pages/AdminSettings";
 import AdminAnnouncements from "@/pages/AdminAnnouncements";
 import Storefront from "@/pages/Storefront";
+import ApiDocs from "@/pages/ApiDocs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/auth" replace />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="/store/:slug" element={<Storefront />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Overview />} />

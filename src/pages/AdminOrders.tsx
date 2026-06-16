@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -191,7 +192,9 @@ function AdminOrdersContent() {
                     </TableCell>
                     <TableCell className="text-xs max-w-[140px]">
                       {o.provider_order_id ? (
-                        <span className="font-mono truncate block" title={o.provider_order_id}>{o.provider_order_id.slice(0, 8)}…</span>
+                        <span className="font-mono truncate block" title={o.provider_order_id}>
+                          {o.provider_order_id.length > 8 ? `${o.provider_order_id.slice(0, 8)}…` : o.provider_order_id}
+                        </span>
                       ) : o.provider_error ? (
                         <span className="text-destructive truncate block" title={o.provider_error}>{o.provider_error}</span>
                       ) : (

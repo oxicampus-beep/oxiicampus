@@ -4,6 +4,7 @@ import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import AnnouncementPopup from "@/components/notifications/AnnouncementPopup";
+import OrderTrackerFab from "@/components/orders/OrderTrackerFab";
 import { Button } from "@/components/ui/button";
 import { LogOut, Wallet } from "lucide-react";
 
@@ -38,6 +39,7 @@ export default function DashboardLayout() {
             <Outlet />
           </main>
           <AnnouncementPopup />
+          <OrderTrackerFab />
         </div>
       </div>
     </SidebarProvider>

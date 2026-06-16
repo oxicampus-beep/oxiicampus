@@ -553,9 +553,28 @@ export type Database = {
         Args: { _user_id?: string }
         Returns: boolean
       }
+      api_purchase_data_package: {
+        Args: { p_package_id: string; p_recipient_phone: string; p_user_id: string }
+        Returns: string
+      }
       purchase_data_package: {
         Args: { p_package_id: string; p_recipient_phone: string }
         Returns: string
+      }
+      track_orders_by_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          contact_phone: string
+          created_at: string
+          network: string
+          order_id: string
+          order_type: string
+          price: number
+          size_gb: number
+          status: Database["public"]["Enums"]["order_status"]
+          store_name: string
+          updated_at: string
+        }[]
       }
       wallet_topup: {
         Args: { p_amount: number }

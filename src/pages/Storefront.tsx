@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Store, Wifi } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
 import StoreBuyDialog from "@/components/store/StoreBuyDialog";
+import OrderTrackerFab from "@/components/orders/OrderTrackerFab";
 import { whatsappLink } from "@/lib/store";
 import { NETWORK_OPTIONS, networksPresent, sortByNetworkThenSize } from "@/lib/networks";
 
@@ -180,6 +181,7 @@ export default function Storefront() {
         open={buyOpen}
         onOpenChange={setBuyOpen}
       />
+      <OrderTrackerFab />
     </div>
   );
 }
