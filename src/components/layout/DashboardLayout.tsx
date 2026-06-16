@@ -6,7 +6,8 @@ import { useProfile } from "@/hooks/useProfile";
 import AnnouncementPopup from "@/components/notifications/AnnouncementPopup";
 import OrderTrackerFab from "@/components/orders/OrderTrackerFab";
 import { Button } from "@/components/ui/button";
-import { LogOut, Wallet } from "lucide-react";
+import { LogOut, Wallet, Trophy } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function DashboardLayout() {
   const { user, loading, signOut } = useAuth();
@@ -26,6 +27,13 @@ export default function DashboardLayout() {
               <span className="font-display font-semibold text-lg hidden md:inline">Dashboard</span>
             </div>
             <div className="flex items-center gap-2 md:gap-4">
+              <Link
+                to="/dashboard/rewards"
+                className="flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 hover:bg-amber-500/15 transition-colors"
+              >
+                <Trophy className="h-4 w-4 text-amber-500" />
+                <span className="font-bold text-sm md:text-base">{Number(profile?.points_balance ?? 0)} pts</span>
+              </Link>
               <div className="flex items-center gap-2 rounded-full bg-primary/10 border border-primary/30 px-3 py-1.5">
                 <Wallet className="h-4 w-4 text-primary" />
                 <span className="font-bold text-sm md:text-base">₵{Number(profile?.wallet_balance ?? 0).toFixed(2)}</span>

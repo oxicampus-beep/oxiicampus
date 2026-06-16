@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +38,14 @@ function FieldGroup({
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const referralCode = useMemo(() => searchParams.get("ref")?.trim().toUpperCase() ?? "", [searchParams]);
+
   useEffect(() => { if (user) navigate("/dashboard", { replace: true }); }, [user, navigate]);
+  useEffect(() => {
+    if (referralCode) localStorage.setItem("byteboss_ref", referralCode);
+  }, [referralCode]);
 
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
@@ -56,18 +62,27 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true);
+    const ref = referralCode || localStorage.getItem("byteboss_ref") || "";
     const { error } = await supabase.auth.signUp({
       email: signup.email,
       password: signup.password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name: signup.full_name, phone: signup.phone },
+        data: {
+          full_name: signup.full_name,
+          phone: signup.phone,
+          ...(ref ? { referral_code: ref } : {}),
+        },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Account created! Signing you in…");
     await supabase.auth.signInWithPassword({ email: signup.email, password: signup.password });
+    if (ref) {
+      await supabase.rpc("apply_referral_on_signup", { p_referral_code: ref });
+      localStorage.removeItem("byteboss_ref");
+    }
     navigate("/dashboard");
   };
 
@@ -151,6 +166,11 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="signup" className="mt-0 focus-visible:outline-none">
+              {referralCode && (
+                <p className="text-sm text-primary mb-4 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2">
+                  You were referred! Your friend earns bonus points when you sign up.
+                </p>
+              )}
               <form onSubmit={handleSignUp} className="space-y-4">
                 <FieldGroup label="Full Name" icon={User} delay="animation-delay-300">
                   <Input

@@ -4,7 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, ShoppingBag, History, ArrowUpRight } from "lucide-react";
+import { Wallet, ShoppingBag, History, ArrowUpRight, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsAgent } from "@/hooks/useIsAgent";
 
@@ -39,8 +39,9 @@ export default function Overview() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Wallet} label="Wallet Balance" value={`₵${Number(profile?.wallet_balance ?? 0).toFixed(2)}`} accent />
+        <StatCard icon={Trophy} label="Reward Points" value={`${Number(profile?.points_balance ?? 0)}`} link="/dashboard/rewards" />
         <StatCard icon={ShoppingBag} label="Total Orders" value={stats.orders.toString()} />
         <StatCard icon={History} label="Total Spent" value={`₵${stats.spent.toFixed(2)}`} />
       </div>
@@ -72,12 +73,15 @@ export default function Overview() {
   );
 }
 
-const StatCard = ({ icon: Icon, label, value, accent }: any) => (
-  <Card className={`p-6 ${accent ? "border-primary/40 bg-primary/5" : ""}`}>
-    <div className="flex items-center gap-3 mb-3">
-      <div className={`h-10 w-10 rounded-lg grid place-items-center ${accent ? "bg-primary text-primary-foreground" : "bg-secondary"}`}><Icon className="h-5 w-5" /></div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-    </div>
-    <div className="text-3xl font-display font-bold">{value}</div>
-  </Card>
-);
+const StatCard = ({ icon: Icon, label, value, accent, link }: any) => {
+  const inner = (
+    <Card className={`p-6 ${accent ? "border-primary/40 bg-primary/5" : ""} ${link ? "hover:border-primary/30 transition-colors" : ""}`}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`h-10 w-10 rounded-lg grid place-items-center ${accent ? "bg-primary text-primary-foreground" : "bg-secondary"}`}><Icon className="h-5 w-5" /></div>
+        <div className="text-sm text-muted-foreground">{label}</div>
+      </div>
+      <div className="text-3xl font-display font-bold">{value}</div>
+    </Card>
+  );
+  return link ? <Link to={link}>{inner}</Link> : inner;
+};

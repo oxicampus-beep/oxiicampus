@@ -16,6 +16,7 @@ import BuyATBigTime from "@/pages/BuyATBigTime";
 import BuyTelecel from "@/pages/BuyTelecel";
 import AFA from "@/pages/AFA";
 import ExtraServices from "@/pages/ExtraServices";
+import Rewards from "@/pages/Rewards";
 import MyStore from "@/pages/MyStore";
 import StoreOrders from "@/pages/StoreOrders";
 import StoreWithdrawal from "@/pages/StoreWithdrawal";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="buy/telecel" element={<BuyTelecel />} />
               <Route path="afa" element={<AFA />} />
               <Route path="extras" element={<ExtraServices />} />
+              <Route path="rewards" element={<Rewards />} />
               <Route path="store" element={<MyStore />} />
               <Route path="store/packages" element={<Navigate to="/dashboard/store" replace />} />
               <Route path="store/orders" element={<StoreOrders />} />

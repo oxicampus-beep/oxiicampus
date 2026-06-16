@@ -211,7 +211,11 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          last_spin_at: string | null
           phone: string | null
+          points_balance: number
+          referral_code: string | null
+          referred_by: string | null
           updated_at: string
           wallet_balance: number
         }
@@ -220,7 +224,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          last_spin_at?: string | null
           phone?: string | null
+          points_balance?: number
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           wallet_balance?: number
         }
@@ -229,11 +237,160 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          last_spin_at?: string | null
           phone?: string | null
+          points_balance?: number
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           wallet_balance?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      points_ledger: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          meta: Json
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          meta?: Json
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          meta?: Json
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spin_wheel_spins: {
+        Row: {
+          claimed: boolean
+          created_at: string
+          data_gb: number | null
+          data_order_id: string | null
+          id: string
+          network: Database["public"]["Enums"]["network_type"] | null
+          points_awarded: number | null
+          prize_type: string
+          recipient_phone: string | null
+          segment: number
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean
+          created_at?: string
+          data_gb?: number | null
+          data_order_id?: string | null
+          id?: string
+          network?: Database["public"]["Enums"]["network_type"] | null
+          points_awarded?: number | null
+          prize_type: string
+          recipient_phone?: string | null
+          segment: number
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean
+          created_at?: string
+          data_gb?: number | null
+          data_order_id?: string | null
+          id?: string
+          network?: Database["public"]["Enums"]["network_type"] | null
+          points_awarded?: number | null
+          prize_type?: string
+          recipient_phone?: string | null
+          segment?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_wheel_spins_data_order_id_fkey"
+            columns: ["data_order_id"]
+            isOneToOne: false
+            referencedRelation: "data_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spin_wheel_spins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_referrals: {
+        Row: {
+          created_at: string
+          id: string
+          points_awarded: number
+          referred_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          referred_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          referred_user_id?: string
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       announcement_dismissals: {
         Row: {
@@ -556,6 +713,33 @@ export type Database = {
       api_purchase_data_package: {
         Args: { p_package_id: string; p_recipient_phone: string; p_user_id: string }
         Returns: string
+      }
+      apply_referral_on_signup: {
+        Args: { p_referral_code: string }
+        Returns: boolean
+      }
+      claim_spin_data_prize: {
+        Args: {
+          p_network: Database["public"]["Enums"]["network_type"]
+          p_recipient_phone: string
+          p_spin_id: string
+        }
+        Returns: string
+      }
+      get_rewards_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      redeem_points_for_data: {
+        Args: {
+          p_network: Database["public"]["Enums"]["network_type"]
+          p_recipient_phone: string
+        }
+        Returns: string
+      }
+      spin_wheel: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       purchase_data_package: {
         Args: { p_package_id: string; p_recipient_phone: string }

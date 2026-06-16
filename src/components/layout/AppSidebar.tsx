@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, History, Smartphone, Radio, Signal, Wifi,
-  UserPlus, Sparkles, Store, ShoppingCart, Banknote, Code2, Settings, AlertCircle, Shield, Users, BarChart3, Bell
+  UserPlus, Sparkles, Store, ShoppingCart, Banknote, Code2, Settings, AlertCircle, Shield, Users, BarChart3, Bell, Trophy
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -12,6 +12,7 @@ import { useIsAdmin } from "@/hooks/useRoles";
 const main = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Wallet", url: "/dashboard/wallet", icon: Wallet },
+  { title: "Rewards", url: "/dashboard/rewards", icon: Trophy },
   { title: "Transaction History", url: "/dashboard/transactions", icon: History },
 ];
 

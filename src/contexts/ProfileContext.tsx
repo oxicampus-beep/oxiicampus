@@ -8,6 +8,9 @@ type Profile = {
   phone: string | null;
   email?: string | null;
   wallet_balance: number;
+  points_balance?: number;
+  referral_code?: string | null;
+  last_spin_at?: string | null;
 };
 
 type ProfileContextValue = {
