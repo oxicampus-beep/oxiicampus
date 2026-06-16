@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Search, Radio } from "lucide-react";
+import { Search, Radio, RotateCw, Loader2 } from "lucide-react";
 import { formatCurrency, formatDate, labelFor, statusBadgeClass } from "@/lib/admin";
 
 type Order = {
@@ -19,6 +19,9 @@ type Order = {
   size_gb: number;
   recipient_phone: string;
   created_at: string;
+  provider_order_id?: string | null;
+  provider_error?: string | null;
+  provider_status?: string | null;
   userName?: string | null;
   userPhone?: string | null;
   userEmail?: string | null;
@@ -31,6 +34,7 @@ function AdminOrdersContent() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [live, setLive] = useState(false);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   const enrich = (raw: Order[], profiles: { id: string; full_name: string | null; phone: string | null; email: string | null }[]) => {
     const map = Object.fromEntries(profiles.map(p => [p.id, p]));
@@ -79,6 +83,16 @@ function AdminOrdersContent() {
     if (error) return toast.error(error.message);
     toast.success("Order status updated");
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  };
+
+  const retryFulfillment = async (orderId: string) => {
+    setRetryingId(orderId);
+    const { data, error } = await supabase.functions.invoke("fulfill-data-order", { body: { order_id: orderId } });
+    setRetryingId(null);
+    if (error) return toast.error(error.message);
+    if (!data?.success) return toast.error(data?.error ?? "Fulfillment failed");
+    toast.success(data.status === "completed" ? "Order fulfilled" : "Sent to SwiftData for processing");
+    load();
   };
 
   const filtered = orders.filter(o => {
@@ -145,7 +159,9 @@ function AdminOrdersContent() {
                   <TableHead>Recipient</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Provider</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -173,7 +189,30 @@ function AdminOrdersContent() {
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell className="text-xs max-w-[140px]">
+                      {o.provider_order_id ? (
+                        <span className="font-mono truncate block" title={o.provider_order_id}>{o.provider_order_id.slice(0, 8)}…</span>
+                      ) : o.provider_error ? (
+                        <span className="text-destructive truncate block" title={o.provider_error}>{o.provider_error}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(o.created_at)}</TableCell>
+                    <TableCell>
+                      {(o.status === "processing" || o.status === "failed") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={retryingId === o.id}
+                          onClick={() => retryFulfillment(o.id)}
+                          title="Retry SwiftData fulfillment"
+                        >
+                          {retryingId === o.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

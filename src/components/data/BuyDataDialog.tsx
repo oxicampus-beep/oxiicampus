@@ -31,16 +31,28 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
     if (!user) return;
     if (insufficient) return toast.error("Insufficient wallet balance. Top up first.");
     setLoading(true);
-    const { error } = await supabase.rpc("purchase_data_package", {
+    const { data: orderId, error } = await supabase.rpc("purchase_data_package", {
       p_package_id: pkg.id,
       p_recipient_phone: phone,
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       if (error.message.includes("Insufficient")) return toast.error("Insufficient wallet balance. Top up first.");
       return toast.error(error.message);
     }
-    toast.success("Purchase successful!");
+
+    const { data: fulfill, error: fulfillErr } = await supabase.functions.invoke("fulfill-data-order", {
+      body: { order_id: orderId },
+    });
+    setLoading(false);
+
+    if (fulfillErr || !fulfill?.success) {
+      toast.warning(fulfill?.error ?? "Order placed. Data delivery is pending — we'll retry shortly.");
+    } else if (fulfill.status === "completed") {
+      toast.success("Purchase successful! Data has been delivered.");
+    } else {
+      toast.success("Purchase successful! Your data is being delivered.");
+    }
     await refresh();
     onOpenChange(false);
     onSuccess?.();

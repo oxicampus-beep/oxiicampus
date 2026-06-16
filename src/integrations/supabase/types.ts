@@ -87,6 +87,10 @@ export type Database = {
           network: Database["public"]["Enums"]["network_type"]
           package_id: string | null
           price: number
+          provider_error: string | null
+          provider_order_id: string | null
+          provider_reference: string | null
+          provider_status: string | null
           recipient_phone: string
           size_gb: number
           status: Database["public"]["Enums"]["order_status"]
@@ -99,6 +103,10 @@ export type Database = {
           network: Database["public"]["Enums"]["network_type"]
           package_id?: string | null
           price: number
+          provider_error?: string | null
+          provider_order_id?: string | null
+          provider_reference?: string | null
+          provider_status?: string | null
           recipient_phone: string
           size_gb: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -111,6 +119,10 @@ export type Database = {
           network?: Database["public"]["Enums"]["network_type"]
           package_id?: string | null
           price?: number
+          provider_error?: string | null
+          provider_order_id?: string | null
+          provider_reference?: string | null
+          provider_status?: string | null
           recipient_phone?: string
           size_gb?: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -135,6 +147,7 @@ export type Database = {
           id: string
           network: Database["public"]["Enums"]["network_type"]
           size_gb: number
+          swift_package_id: string | null
           updated_at: string
           user_price: number
           validity: string
@@ -146,6 +159,7 @@ export type Database = {
           id?: string
           network: Database["public"]["Enums"]["network_type"]
           size_gb: number
+          swift_package_id?: string | null
           updated_at?: string
           user_price: number
           validity?: string
@@ -157,6 +171,7 @@ export type Database = {
           id?: string
           network?: Database["public"]["Enums"]["network_type"]
           size_gb?: number
+          swift_package_id?: string | null
           updated_at?: string
           user_price?: number
           validity?: string

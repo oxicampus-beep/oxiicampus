@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.subscription-reminder]
 verify_jwt = false
+
+[functions.fulfill-data-order]
+verify_jwt = true
+
+[functions.sync-swift-plans]
+verify_jwt = true

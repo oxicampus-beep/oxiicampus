@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
 import { groupByNetwork, sortByNetworkThenSize } from "@/lib/networks";
 
 export default function AdminPackages() {
   const { isAdmin, loading } = useIsAdmin();
   const [items, setItems] = useState<any[]>([]);
+  const [syncing, setSyncing] = useState(false);
   const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "" });
   const VALIDITY = "Non expiry";
 
@@ -46,13 +47,29 @@ export default function AdminPackages() {
   const toggle = async (p: any) => { await supabase.from("data_packages").update({ active: !p.active }).eq("id", p.id); load(); };
   const remove = async (id: string) => { await supabase.from("data_packages").delete().eq("id", id); load(); };
 
+  const syncSwiftPlans = async () => {
+    setSyncing(true);
+    const { data, error } = await supabase.functions.invoke("sync-swift-plans");
+    setSyncing(false);
+    if (error) return toast.error(error.message);
+    if (!data?.success) return toast.error(data?.error ?? "Sync failed");
+    toast.success(`SwiftData plans synced — ${data.packages_updated ?? 0} package(s) mapped`);
+    load();
+  };
+
   const grouped = groupByNetwork(items);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
-        <p className="text-muted-foreground mt-1">Set user and agent base prices. All bundles are non-expiring. MTN is listed first.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
+          <p className="text-muted-foreground mt-1">Set user and agent base prices. Sync SwiftData plan IDs before going live.</p>
+        </div>
+        <Button variant="outline" onClick={syncSwiftPlans} disabled={syncing} className="gap-2 shrink-0">
+          {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          Sync SwiftData plans
+        </Button>
       </div>
 
       <Card className="p-6">
@@ -92,6 +109,8 @@ export default function AdminPackages() {
                     <div className="font-semibold">{p.size_gb}GB · {labelFor(p.network)}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       Users: ₵{Number(p.user_price).toFixed(2)} · Agent base: ₵{Number(p.agent_price).toFixed(2)} · {VALIDITY}
+                      {p.swift_package_id && <> · Swift: <span className="font-mono">{p.swift_package_id}</span></>}
+                      {!p.swift_package_id && <> · <span className="text-amber-600">No SwiftData plan mapped</span></>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
