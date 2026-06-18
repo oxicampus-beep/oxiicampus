@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, Zap } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import StoreThemeToggle from "@/components/store/StoreThemeToggle";
+import { useStoreTheme } from "@/components/store/StoreThemeProvider";
+import { cn } from "@/lib/utils";
 
 type Props = {
   storeName: string;
@@ -11,60 +13,70 @@ type Props = {
 
 export default function StoreHeader({ storeName, onTrackOrder }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isDark } = useStoreTheme();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md">
+    <header
+      className={cn(
+        "sticky top-0 z-30 border-b backdrop-blur-md",
+        isDark ? "border-white/10 bg-zinc-950/90" : "border-zinc-200/80 bg-white/90",
+      )}
+    >
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
-        <Link to="/auth" className="flex items-center gap-2 min-w-0 group">
-          <div className="h-8 w-8 rounded-lg bg-zinc-900 grid place-items-center shrink-0">
-            <Zap className="h-4 w-4 text-[#FFCC00]" />
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={cn(
+              "h-9 w-9 rounded-xl grid place-items-center font-black text-lg shrink-0",
+              isDark ? "bg-primary text-primary-foreground" : "bg-zinc-900 text-[#FFCC00]",
+            )}
+          >
+            {storeName.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0 leading-tight">
-            <span className="text-sm font-bold text-zinc-900">ByteBoss</span>
-            <span className="hidden sm:inline text-zinc-400 mx-1.5">·</span>
-            <span className="hidden sm:inline text-sm font-semibold text-zinc-600 truncate">{storeName}</span>
-          </div>
-        </Link>
+          <span className={cn("font-display font-bold truncate", isDark ? "text-white" : "text-zinc-900")}>
+            {storeName}
+          </span>
+        </div>
 
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden md:flex items-center gap-1">
           {onTrackOrder && (
-            <Button variant="ghost" size="sm" className="text-zinc-600" onClick={onTrackOrder}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isDark ? "text-zinc-300 hover:text-white" : "text-zinc-600"}
+              onClick={onTrackOrder}
+            >
               Track order
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="text-zinc-600" asChild>
-            <Link to="/auth?mode=signup">Create account</Link>
-          </Button>
-          <Button size="sm" className="bg-zinc-900 hover:bg-zinc-800 text-white font-semibold" asChild>
-            <Link to="/auth">Log in</Link>
-          </Button>
+          <StoreThemeToggle />
         </nav>
 
-        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden text-zinc-700">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-72">
-            <SheetHeader>
-              <SheetTitle className="text-left font-display">{storeName}</SheetTitle>
-            </SheetHeader>
-            <nav className="flex flex-col gap-2 mt-6">
-              {onTrackOrder && (
-                <Button variant="outline" className="justify-start" onClick={() => { onTrackOrder(); setMenuOpen(false); }}>
-                  Track order
-                </Button>
-              )}
-              <Button variant="outline" className="justify-start" asChild>
-                <Link to="/auth?mode=signup" onClick={() => setMenuOpen(false)}>Create account</Link>
+        <div className="flex md:hidden items-center gap-1">
+          <StoreThemeToggle />
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className={isDark ? "text-zinc-300" : "text-zinc-700"}>
+                <Menu className="h-5 w-5" />
               </Button>
-              <Button className="justify-start bg-zinc-900" asChild>
-                <Link to="/auth" onClick={() => setMenuOpen(false)}>Log in</Link>
-              </Button>
-            </nav>
-          </SheetContent>
-        </Sheet>
+            </SheetTrigger>
+            <SheetContent side="right" className={cn("w-72", isDark && "bg-zinc-900 border-white/10")}>
+              <SheetHeader>
+                <SheetTitle className="text-left font-display">{storeName}</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-2 mt-6">
+                {onTrackOrder && (
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => { onTrackOrder(); setMenuOpen(false); }}
+                  >
+                    Track order
+                  </Button>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

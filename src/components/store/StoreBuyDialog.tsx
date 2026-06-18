@@ -9,6 +9,8 @@ import { Clock, Loader2, MessageCircle } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
 import { whatsappLink } from "@/lib/store";
 import NetworkBadge from "@/components/store/NetworkBadge";
+import { useStoreTheme } from "@/components/store/StoreThemeProvider";
+import { cn } from "@/lib/utils";
 
 type Pkg = {
   id: string;
@@ -33,6 +35,7 @@ export default function StoreBuyDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { isDark } = useStoreTheme();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,37 +63,48 @@ export default function StoreBuyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white text-zinc-900 border-zinc-200">
+      <DialogContent
+        className={cn(
+          "sm:max-w-md",
+          isDark ? "bg-zinc-900 text-zinc-100 border-white/10" : "bg-white text-zinc-900 border-zinc-200",
+        )}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <NetworkBadge network={pkg.network} />
-            <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+            <span className={cn("inline-flex items-center gap-1 text-xs", isDark ? "text-zinc-400" : "text-zinc-500")}>
               <Clock className="h-3.5 w-3.5" /> 1–5 min delivery
             </span>
           </div>
           <DialogTitle className="text-2xl font-display">
             {pkg.size_gb}GB · {labelFor(pkg.network)}
           </DialogTitle>
-          <DialogDescription className="text-zinc-500">
+          <DialogDescription className={isDark ? "text-zinc-400" : "text-zinc-500"}>
             GH₵ {Number(pkg.price).toFixed(2)} · Pay by Mobile Money via WhatsApp
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label className="text-zinc-700">Recipient phone number</Label>
+            <Label className={isDark ? "text-zinc-300" : "text-zinc-700"}>Recipient phone number</Label>
             <Input
               placeholder="0241234567"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="bg-white border-zinc-200"
+              className={isDark ? "bg-zinc-800 border-white/10" : "bg-white border-zinc-200"}
             />
           </div>
-          <p className="text-xs text-zinc-500">
+          <p className={cn("text-xs", isDark ? "text-zinc-400" : "text-zinc-500")}>
             You'll be redirected to WhatsApp to confirm and pay with {storeName}.
           </p>
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-200">Cancel</Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className={isDark ? "border-white/10" : "border-zinc-200"}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleOrder}
             disabled={loading}
