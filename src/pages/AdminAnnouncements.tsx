@@ -11,8 +11,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Bell, Loader2, Send } from "lucide-react";
+import { Bell, Loader2, Send, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/admin";
 
 type Announcement = {
@@ -32,6 +43,7 @@ function AdminAnnouncementsContent() {
   const { user } = useAuth();
   const [items, setItems] = useState<Announcement[]>([]);
   const [sending, setSending] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     body: "",
@@ -71,17 +83,31 @@ function AdminAnnouncementsContent() {
   };
 
   const toggleActive = async (item: Announcement) => {
+    const next = !item.active;
     const { error } = await supabase
       .from("platform_announcements")
-      .update({ active: !item.active })
+      .update({ active: next })
       .eq("id", item.id);
     if (error) return toast.error(error.message);
+    toast.success(next ? "Notification is live — eligible users will see it." : "Notification turned off — it will no longer appear.");
+    load();
+  };
+
+  const remove = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await supabase.from("platform_announcements").delete().eq("id", id);
+    setDeletingId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Notification deleted.");
     load();
   };
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Notifications" description="Send popup messages to users, agents, or everyone on the platform." />
+      <AdminPageHeader
+        title="Notifications"
+        description="Send popup messages to users, agents, or everyone. Turn off or delete to hide them immediately."
+      />
 
       <Card className="p-6">
         <form onSubmit={send} className="space-y-4">
@@ -153,6 +179,7 @@ function AdminAnnouncementsContent() {
       <Card className="p-0 overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
           <h2 className="font-display font-semibold">Sent notifications</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Off or deleted notifications are hidden from users. Turn on to show again to users who have not dismissed it.</p>
         </div>
         {items.length === 0 ? (
           <div className="p-10 text-center text-muted-foreground">No notifications sent yet.</div>
@@ -164,13 +191,14 @@ function AdminAnnouncementsContent() {
                   <TableHead>Title</TableHead>
                   <TableHead>Audience</TableHead>
                   <TableHead>Priority</TableHead>
-                  <TableHead>Active</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Sent</TableHead>
+                  <TableHead className="w-[80px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map(item => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id} className={!item.active ? "opacity-60" : undefined}>
                     <TableCell>
                       <div className="font-medium max-w-[200px] truncate">{item.title}</div>
                       <div className="text-xs text-muted-foreground max-w-[240px] truncate">{item.body}</div>
@@ -182,9 +210,42 @@ function AdminAnnouncementsContent() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Switch checked={item.active} onCheckedChange={() => toggleActive(item)} />
+                      <div className="flex items-center gap-2">
+                        <Switch checked={item.active} onCheckedChange={() => toggleActive(item)} />
+                        <span className="text-xs text-muted-foreground">{item.active ? "On" : "Off"}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(item.created_at)}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={deletingId === item.id}>
+                            {deletingId === item.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete notification?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This permanently removes &quot;{item.title}&quot; and it will no longer appear for any user.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => remove(item.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

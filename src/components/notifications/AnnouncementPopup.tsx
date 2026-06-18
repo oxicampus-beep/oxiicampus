@@ -13,6 +13,7 @@ type Announcement = {
   severity: "info" | "warning" | "urgent";
   audience: "all" | "users" | "agents";
   created_at: string;
+  active?: boolean;
 };
 
 const severityStyles = {
@@ -42,23 +43,14 @@ export default function AnnouncementPopup() {
   const [dismissing, setDismissing] = useState(false);
   const current = queue[0] ?? null;
 
-  const enqueue = useCallback((items: Announcement[]) => {
-    if (items.length === 0) return;
-    setQueue(prev => {
-      const seen = new Set(prev.map(a => a.id));
-      const next = items.filter(a => !seen.has(a.id));
-      return next.length ? [...prev, ...next] : prev;
-    });
-  }, []);
-
   const load = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("platform_announcements")
       .select("id, title, body, severity, audience, created_at")
       .order("created_at", { ascending: true });
-    enqueue((data ?? []) as Announcement[]);
-  }, [user, enqueue]);
+    setQueue((data ?? []) as Announcement[]);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -69,12 +61,47 @@ export default function AnnouncementPopup() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "platform_announcements" },
-        payload => enqueue([payload.new as Announcement]),
+        payload => {
+          const row = payload.new as Announcement & { active?: boolean };
+          if (row.active === false) return;
+          setQueue(prev => (prev.some(a => a.id === row.id) ? prev : [...prev, row]));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "platform_announcements" },
+        payload => {
+          const row = payload.new as Announcement & { active: boolean };
+          if (!row.active) {
+            setQueue(prev => prev.filter(a => a.id !== row.id));
+            return;
+          }
+          setQueue(prev => {
+            if (prev.some(a => a.id === row.id)) return prev;
+            return [...prev, row].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+            );
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "platform_announcements" },
+        payload => {
+          const id = (payload.old as { id: string }).id;
+          setQueue(prev => prev.filter(a => a.id !== id));
+        },
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [user, load, enqueue]);
+    const onFocus = () => { load(); };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [user, load]);
 
   const dismiss = async () => {
     if (!current || !user) return;

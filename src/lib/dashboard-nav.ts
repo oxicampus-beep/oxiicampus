@@ -41,6 +41,7 @@ export const buyDataNav: DashboardNavItem[] = [
 
 export const servicesNav: DashboardNavItem[] = [
   { label: "Utility Bills", to: "/dashboard/utilities", icon: Zap },
+  { label: "Result & Admission", to: "/dashboard/result-checker", icon: GraduationCap },
   { label: "AFA Registration", to: "/dashboard/afa", icon: UserPlus, badge: "new" },
   { label: "Extra Services", to: "/dashboard/extras", icon: Sparkles },
   { label: "Rewards & Spin", to: "/dashboard/rewards", icon: Trophy },
@@ -65,7 +66,6 @@ export const agentToolsNav: DashboardNavItem[] = [
   { label: "Agent Leaderboard", to: "/dashboard/leaderboard", icon: BarChart3, agentOnly: true },
   { label: "Bulk Disbursement", to: "/dashboard/bulk", icon: Send, agentOnly: true },
   { label: "WhatsApp Bot", to: "/dashboard/whatsapp-bot", icon: Bot, agentOnly: true },
-  { label: "Result Checker", to: "/dashboard/result-checker", icon: GraduationCap, agentOnly: true },
 ];
 
 export const dashboardNavGroups = (isAgent: boolean): DashboardNavGroup[] => {

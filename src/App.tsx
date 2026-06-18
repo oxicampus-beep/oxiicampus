@@ -30,6 +30,7 @@ import AdminPnL from "@/pages/admin/AdminPnL";
 import AdminCreditManagement from "@/pages/admin/AdminCreditManagement";
 import AdminBroadcast from "@/pages/admin/AdminBroadcast";
 import AdminBanners from "@/pages/admin/AdminBanners";
+import AdminResultCheckers from "@/pages/admin/AdminResultCheckers";
 import AdminTickets from "@/pages/admin/AdminTickets";
 import AdminEngagement from "@/pages/admin/AdminEngagement";
 import AdminSecurity from "@/pages/admin/AdminSecurity";
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="orders" element={<AdminOrders />} />
               <Route path="mashup-orders" element={<AdminMashUpOrders />} />
               <Route path="packages" element={<AdminPackages />} />
+              <Route path="result-checkers" element={<AdminResultCheckers />} />
               <Route path="promotions" element={<AdminPromotions />} />
               <Route path="wallet-topup" element={<AdminWalletTopup />} />
               <Route path="withdrawals" element={<AdminWithdrawals />} />

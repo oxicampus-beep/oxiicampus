@@ -26,7 +26,9 @@ export default function NotificationsInbox() {
       if (!error && data) setItems(data as InboxItem[]);
       else {
         const { data: fallback } = await supabase.from("platform_announcements")
-          .select("id, title, body, severity, created_at").order("created_at", { ascending: false });
+          .select("id, title, body, severity, created_at")
+          .eq("active", true)
+          .order("created_at", { ascending: false });
         setItems((fallback ?? []).map(a => ({ ...a, is_read: false })));
       }
       setLoading(false);

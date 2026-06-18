@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity, ArrowLeftRight, Award, Banknote, BarChart3, Bell, Bot, Brain,
-  Code2, CreditCard, DollarSign, FileText, Flag, Image, Key, Layers, LayoutDashboard,
+  Code2, CreditCard, DollarSign, FileText, Flag, GraduationCap, Image, Key, Layers, LayoutDashboard,
   Lock, MessageCircle, MessageSquare, Network, Package, Radio, ScrollText, Server,
   Settings, Shield, ShoppingBag, Sparkles, Tag, TrendingUp, UserPlus, Users, Wallet, Zap,
 } from "lucide-react";
@@ -26,6 +26,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: "Orders", icon: ShoppingBag, path: "/admin/orders" },
       { label: "Mash Up Orders", icon: Layers, path: "/admin/mashup-orders" },
       { label: "Packages", icon: Package, path: "/admin/packages" },
+      { label: "Result & Admission", icon: GraduationCap, path: "/admin/result-checkers" },
       { label: "Promo Codes", icon: Tag, path: "/admin/promotions" },
       { label: "Wallet Top-Up", icon: Wallet, path: "/admin/wallet-topup" },
       { label: "Withdrawals", icon: Banknote, path: "/admin/withdrawals" },

@@ -601,30 +601,42 @@ export type Database = {
       result_checker_products: {
         Row: {
           active: boolean
+          agent_price: number
+          category: Database["public"]["Enums"]["exam_product_category"]
           created_at: string
           description: string | null
           id: string
           name: string
           price: number
           slug: string
+          sort_order: number
+          user_price: number
         }
         Insert: {
           active?: boolean
+          agent_price: number
+          category?: Database["public"]["Enums"]["exam_product_category"]
           created_at?: string
           description?: string | null
           id?: string
           name: string
           price: number
           slug: string
+          sort_order?: number
+          user_price: number
         }
         Update: {
           active?: boolean
+          agent_price?: number
+          category?: Database["public"]["Enums"]["exam_product_category"]
           created_at?: string
           description?: string | null
           id?: string
           name?: string
           price?: number
           slug?: string
+          sort_order?: number
+          user_price?: number
         }
         Relationships: []
       }
@@ -634,6 +646,7 @@ export type Database = {
           id: string
           product_id: string
           quantity: number
+          recipient_phone: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_amount: number
           user_id: string
@@ -644,6 +657,7 @@ export type Database = {
           id?: string
           product_id: string
           quantity?: number
+          recipient_phone?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_amount: number
           user_id: string
@@ -654,6 +668,7 @@ export type Database = {
           id?: string
           product_id?: string
           quantity?: number
+          recipient_phone?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_amount?: number
           user_id?: string
@@ -1229,7 +1244,12 @@ export type Database = {
         Returns: string
       }
       purchase_result_checker: {
-        Args: { p_product_slug: string; p_quantity?: number }
+        Args: {
+          p_product_id?: string
+          p_product_slug?: string
+          p_recipient_phone?: string
+          p_quantity?: number
+        }
         Returns: string
       }
       purchase_utility: {
@@ -1340,6 +1360,7 @@ export type Database = {
     Enums: {
       announcement_audience: "all" | "users" | "agents"
       announcement_severity: "info" | "warning" | "urgent"
+      exam_product_category: "result_checker" | "admission_form"
       app_role: "admin" | "user"
       network_type:
         | "mtn"
@@ -1483,6 +1504,7 @@ export const Constants = {
     Enums: {
       announcement_audience: ["all", "users", "agents"],
       announcement_severity: ["info", "warning", "urgent"],
+      exam_product_category: ["result_checker", "admission_form"],
       app_role: ["admin", "user"],
       network_type: [
         "mtn",
