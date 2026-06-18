@@ -2,18 +2,39 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAgent } from "@/hooks/useIsAgent";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Megaphone } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Banner = {
   id: string;
-  title: string;
-  subtitle: string | null;
-  cta_text: string | null;
+  title: string | null;
   link_url: string | null;
+  image_url: string;
   audience: string;
 };
+
+function BannerImage({ banner, className }: { banner: Banner; className?: string }) {
+  const img = (
+    <img
+      src={banner.image_url}
+      alt={banner.title ?? "Promotion"}
+      className={cn("w-full aspect-[3/1] object-cover", className)}
+      loading="lazy"
+    />
+  );
+
+  if (!banner.link_url) return img;
+
+  if (banner.link_url.startsWith("/")) {
+    return <Link to={banner.link_url} className="block">{img}</Link>;
+  }
+  return (
+    <a href={banner.link_url} target="_blank" rel="noopener noreferrer" className="block">
+      {img}
+    </a>
+  );
+}
 
 export default function PromoCarousel() {
   const { isAgent } = useIsAgent();
@@ -22,10 +43,15 @@ export default function PromoCarousel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from("promo_banners").select("id, title, subtitle, cta_text, link_url, audience")
-      .eq("active", true).order("sort_order").then(({ data }) => {
+    supabase
+      .from("promo_banners")
+      .select("id, title, link_url, image_url, audience")
+      .eq("active", true)
+      .not("image_url", "is", null)
+      .order("sort_order")
+      .then(({ data }) => {
         const ok = (a: string) => a === "all" || (a === "agents" && isAgent) || (a === "users" && !isAgent);
-        setBanners((data ?? []).filter(b => ok(b.audience)) as Banner[]);
+        setBanners((data ?? []).filter(b => b.image_url && ok(b.audience)) as Banner[]);
         setLoading(false);
       });
   }, [isAgent]);
@@ -45,36 +71,41 @@ export default function PromoCarousel() {
   const b = banners[idx];
 
   return (
-    <div className="relative group rounded-3xl overflow-hidden border border-white/10 shadow-xl">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-purple-500/10 to-transparent" />
-      <div className="relative p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-4 min-h-[140px]">
-        <div className="h-12 w-12 rounded-2xl bg-primary/20 border border-primary/30 grid place-items-center shrink-0">
-          <Megaphone className="h-6 w-6 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Special Offer</p>
-          <h3 className="text-xl md:text-2xl font-display font-black">{b.title}</h3>
-          {b.subtitle && <p className="text-sm text-muted-foreground mt-1">{b.subtitle}</p>}
-          {b.cta_text && b.link_url && (
-            b.link_url.startsWith("/") ? (
-              <Link to={b.link_url} className="inline-block mt-3 text-sm font-bold text-primary hover:underline">{b.cta_text} →</Link>
-            ) : (
-              <a href={b.link_url} target="_blank" rel="noopener noreferrer" className="inline-block mt-3 text-sm font-bold text-primary hover:underline">{b.cta_text} →</a>
-            )
-          )}
-        </div>
-        {banners.length > 1 && (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/20" onClick={prev}><ChevronLeft className="h-4 w-4" /></Button>
-            <div className="flex gap-1">
-              {banners.map((_, i) => (
-                <button key={i} type="button" onClick={() => setIdx(i)} className={cn("h-1.5 rounded-full transition-all", i === idx ? "w-6 bg-primary" : "w-1.5 bg-white/30")} />
-              ))}
-            </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/20" onClick={next}><ChevronRight className="h-4 w-4" /></Button>
+    <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-xl group">
+      <BannerImage banner={b} />
+      {banners.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={prev}
+            aria-label="Previous banner"
+          >
+            <ChevronLeft className="h-5 w-5 text-white" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={next}
+            aria-label="Next banner"
+          >
+            <ChevronRight className="h-5 w-5 text-white" />
+          </Button>
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Go to banner ${i + 1}`}
+                onClick={() => setIdx(i)}
+                className={cn("h-1.5 rounded-full transition-all", i === idx ? "w-6 bg-primary" : "w-1.5 bg-white/50")}
+              />
+            ))}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }

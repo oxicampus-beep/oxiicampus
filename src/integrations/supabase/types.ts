@@ -759,11 +759,13 @@ export type Database = {
           cta_text: string | null
           ends_at: string | null
           id: string
+          image_path: string | null
+          image_url: string | null
           link_url: string | null
           sort_order: number
           starts_at: string | null
           subtitle: string | null
-          title: string
+          title: string | null
         }
         Insert: {
           active?: boolean
@@ -772,11 +774,13 @@ export type Database = {
           cta_text?: string | null
           ends_at?: string | null
           id?: string
+          image_path?: string | null
+          image_url?: string | null
           link_url?: string | null
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
-          title: string
+          title?: string | null
         }
         Update: {
           active?: boolean
@@ -785,11 +789,13 @@ export type Database = {
           cta_text?: string | null
           ends_at?: string | null
           id?: string
+          image_path?: string | null
+          image_url?: string | null
           link_url?: string | null
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
-          title?: string
+          title?: string | null
         }
         Relationships: []
       }
