@@ -16,7 +16,7 @@ const styles: Record<Network, string> = {
   telecel: "bg-telecel text-telecel-foreground hover:shadow-[0_0_24px_hsl(var(--telecel)/0.5)]",
 };
 
-export default function NetworkBuyPage({ network, title, subtitle }: { network: Network; title: string; subtitle: string }) {
+export default function NetworkBuyPage({ network, title, subtitle, embedded }: { network: Network; title: string; subtitle: string; embedded?: boolean }) {
   const { isAgent, loading: agentLoading } = useIsAgent();
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,20 +35,22 @@ export default function NetworkBuyPage({ network, title, subtitle }: { network: 
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-3xl md:text-4xl font-display font-bold">{title}</h1>
-          {!agentLoading && (
-            <Badge variant={isAgent ? "default" : "secondary"}>
-              {isAgent ? "Agent pricing" : "User pricing"}
-            </Badge>
+      {!embedded && (
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-3xl md:text-4xl font-display font-bold">{title}</h1>
+            {!agentLoading && (
+              <Badge variant={isAgent ? "default" : "secondary"}>
+                {isAgent ? "Agent pricing" : "User pricing"}
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground mt-1">{subtitle}</p>
+          {isAgent && (
+            <p className="text-xs text-primary mt-1">You have a store — you're buying at agent rates.</p>
           )}
         </div>
-        <p className="text-muted-foreground mt-1">{subtitle}</p>
-        {isAgent && (
-          <p className="text-xs text-primary mt-1">You have a store — you're buying at agent rates.</p>
-        )}
-      </div>
+      )}
 
       {loading || agentLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

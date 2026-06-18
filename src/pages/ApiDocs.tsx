@@ -185,7 +185,7 @@ export default function ApiDocs() {
               <Link to="/api-docs">Docs</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link to="/dashboard/developer">Get API Key</Link>
+              <Link to="/dashboard/api">Get API Key</Link>
             </Button>
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function ApiDocs() {
           </h2>
           <p className="text-muted-foreground">
             Generate an API key from your{" "}
-            <Link to="/dashboard/developer" className="text-primary underline font-medium">Developer API</Link>{" "}
+            <Link to="/dashboard/api" className="text-primary underline font-medium">Developer API</Link>{" "}
             dashboard. Include it on every authenticated request using either header:
           </p>
           <CopyBlock text={`Authorization: Bearer ${sampleKey}\n# or\nX-API-Key: ${sampleKey}`} />

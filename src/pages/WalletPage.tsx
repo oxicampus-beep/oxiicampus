@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { DashboardPageHeader, GlassCard } from "@/components/dashboard/DashboardUi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,20 +46,16 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-display font-bold">Wallet</h1>
-        <p className="text-muted-foreground mt-1">Top up your wallet to pay for data bundles and store activation.</p>
-      </div>
+    <div className="space-y-6 max-w-2xl">
+      <DashboardPageHeader title="Account Balance" description="Top up your wallet to pay for data bundles and store activation." />
 
-      <Card className="p-8 bg-gradient-to-br from-primary/15 to-primary/5 border-primary/30">
-        <div className="text-sm text-muted-foreground">Available balance</div>
+      <GlassCard className="p-8 bg-gradient-to-br from-primary/15 to-primary/5 border-primary/30">
+        <div className="text-xs font-black uppercase tracking-widest text-muted-foreground">Available balance</div>
         <div className="text-5xl font-display font-black mt-2 text-primary">₵{Number(profile?.wallet_balance ?? 0).toFixed(2)}</div>
-        <p className="text-xs text-muted-foreground mt-3">Use your balance to buy data bundles across all networks.</p>
-      </Card>
+        <p className="text-xs text-muted-foreground mt-3">Secured wallet for instant data purchases across all networks.</p>
+      </GlassCard>
 
-      <Card className="p-6 space-y-4">
-        <h2 className="text-xl font-display font-semibold">Top up</h2>
+      <GlassCard title="Top Up">
         <div className="space-y-2">
           <Label>Amount (₵)</Label>
           <Input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="50" />
@@ -74,9 +70,9 @@ export default function WalletPage() {
           {loading ? "Processing…" : "Top up wallet"}
         </Button>
         <p className="text-xs text-muted-foreground">Demo top-up — funds are added instantly to your wallet balance.</p>
-      </Card>
+      </GlassCard>
 
-      <Card className="p-6">
+      <GlassCard>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-display font-semibold">Recent Activity</h2>
           <Link to="/dashboard/transactions" className="text-sm text-primary hover:underline flex items-center gap-1">
@@ -104,7 +100,7 @@ export default function WalletPage() {
             ))}
           </ul>
         )}
-      </Card>
+      </GlassCard>
     </div>
   );
 }

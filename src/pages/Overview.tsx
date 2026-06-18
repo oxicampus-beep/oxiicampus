@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, ShoppingBag, History, ArrowUpRight, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsAgent } from "@/hooks/useIsAgent";
+import { DashboardPageHeader, DashStatCard, GlassCard } from "@/components/dashboard/DashboardUi";
+import PromoCarousel from "@/components/dashboard/PromoCarousel";
+import LastOrderWidget from "@/components/dashboard/LastOrderWidget";
+import QuickNetworkGrid from "@/components/dashboard/QuickNetworkGrid";
+import { Wallet, ShoppingBag, History, Trophy, ArrowUpRight, Store } from "lucide-react";
 
 export default function Overview() {
   const { user } = useAuth();
@@ -27,61 +30,71 @@ export default function Overview() {
     })();
   }, [user]);
 
+  const firstName = profile?.full_name?.split(" ")[0];
+
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-3xl md:text-4xl font-display font-bold">Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋</h1>
-          <Badge variant={isAgent ? "default" : "secondary"}>{isAgent ? "Agent" : "User"}</Badge>
-        </div>
-        <p className="text-muted-foreground mt-1">
-          {isAgent ? "You're an agent — you get lower prices on data bundles." : "Top up your wallet to buy data, or create a store to become an agent."}
-        </p>
+    <div className="space-y-6 md:space-y-8">
+      <DashboardPageHeader
+        title={`Welcome back${firstName ? `, ${firstName}` : ""} 👋`}
+        description={isAgent
+          ? "Your agent dashboard — wholesale pricing, store sales, and earnings at a glance."
+          : "Buy data bundles, top up your wallet, or start your reselling journey."}
+        badge={isAgent ? "Agent" : "User"}
+      />
+
+      <PromoCarousel />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <DashStatCard icon={Wallet} label="Account Balance" value={`₵${Number(profile?.wallet_balance ?? 0).toFixed(2)}`} accent to="/dashboard/wallet" />
+        <DashStatCard icon={Trophy} label="Reward Points" value={`${Number(profile?.points_balance ?? 0)}`} to="/dashboard/rewards" />
+        <DashStatCard icon={ShoppingBag} label="Total Orders" value={String(stats.orders)} />
+        <DashStatCard icon={History} label="Total Spent" value={`₵${stats.spent.toFixed(2)}`} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Wallet} label="Wallet Balance" value={`₵${Number(profile?.wallet_balance ?? 0).toFixed(2)}`} accent />
-        <StatCard icon={Trophy} label="Reward Points" value={`${Number(profile?.points_balance ?? 0)}`} link="/dashboard/rewards" />
-        <StatCard icon={ShoppingBag} label="Total Orders" value={stats.orders.toString()} />
-        <StatCard icon={History} label="Total Spent" value={`₵${stats.spent.toFixed(2)}`} />
-      </div>
+      {!isAgent && (
+        <Link to="/dashboard/my-store" className="block rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-transparent p-5 hover:border-primary/50 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-primary/20 grid place-items-center"><Store className="h-6 w-6 text-primary" /></div>
+            <div className="flex-1">
+              <p className="font-black">Start Your Data Reselling Business</p>
+              <p className="text-sm text-muted-foreground">Unlock wholesale prices and your own Paystack-powered store.</p>
+            </div>
+            <Badge className="bg-primary text-primary-foreground font-black">Become Agent</Badge>
+          </div>
+        </Link>
+      )}
 
-      <Card className="p-6">
+      <GlassCard title="Quick Buy">
+        <QuickNetworkGrid />
+      </GlassCard>
+
+      <LastOrderWidget />
+
+      <GlassCard>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-display font-semibold">Recent Activity</h2>
-          <Link to="/dashboard/transactions" className="text-sm text-primary hover:underline flex items-center gap-1">View all <ArrowUpRight className="h-4 w-4" /></Link>
+          <h2 className="font-display font-bold text-lg">Recent Activity</h2>
+          <Link to="/dashboard/transactions" className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
+            View all <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </div>
         {stats.recent.length === 0 ? (
           <p className="text-muted-foreground text-sm">No activity yet — buy your first bundle to get started.</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-white/10">
             {stats.recent.map((t: any) => (
-              <li key={t.id} className="py-3 flex justify-between items-center">
-                <div>
-                  <div className="font-medium">{t.description ?? t.type}</div>
+              <li key={t.id} className="py-3 flex justify-between items-center gap-4">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{t.description ?? t.type}</div>
                   <div className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString()}</div>
                 </div>
-                <div className={`font-bold ${Number(t.amount) < 0 ? "text-destructive" : "text-primary"}`}>
+                <div className={`font-black shrink-0 ${Number(t.amount) < 0 ? "text-destructive" : "text-primary"}`}>
                   {Number(t.amount) < 0 ? "" : "+"}₵{Math.abs(Number(t.amount)).toFixed(2)}
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </Card>
+      </GlassCard>
     </div>
   );
 }
-
-const StatCard = ({ icon: Icon, label, value, accent, link }: any) => {
-  const inner = (
-    <Card className={`p-6 ${accent ? "border-primary/40 bg-primary/5" : ""} ${link ? "hover:border-primary/30 transition-colors" : ""}`}>
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`h-10 w-10 rounded-lg grid place-items-center ${accent ? "bg-primary text-primary-foreground" : "bg-secondary"}`}><Icon className="h-5 w-5" /></div>
-        <div className="text-sm text-muted-foreground">{label}</div>
-      </div>
-      <div className="text-3xl font-display font-bold">{value}</div>
-    </Card>
-  );
-  return link ? <Link to={link}>{inner}</Link> : inner;
-};

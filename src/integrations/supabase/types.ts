@@ -499,6 +499,258 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_renewal_schedules: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          interval_days: number
+          last_run_at: string | null
+          next_run_at: string
+          package_id: string
+          recipient_phone: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          interval_days: number
+          last_run_at?: string | null
+          next_run_at?: string
+          package_id: string
+          recipient_phone: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          interval_days?: number
+          last_run_at?: string | null
+          next_run_at?: string
+          package_id?: string
+          recipient_phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      airtime_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          network: string
+          recipient_phone: string
+          status: Database["public"]["Enums"]["order_status"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          network: string
+          recipient_phone: string
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          network?: string
+          recipient_phone?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      utility_orders: {
+        Row: {
+          account_number: string
+          amount: number
+          created_at: string
+          id: string
+          meta: Json
+          status: Database["public"]["Enums"]["order_status"]
+          user_id: string
+          utility_type: string
+        }
+        Insert: {
+          account_number: string
+          amount: number
+          created_at?: string
+          id?: string
+          meta?: Json
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id: string
+          utility_type: string
+        }
+        Update: {
+          account_number?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          meta?: Json
+          status?: Database["public"]["Enums"]["order_status"]
+          user_id?: string
+          utility_type?: string
+        }
+        Relationships: []
+      }
+      result_checker_products: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          price: number
+          slug: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          price: number
+          slug: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      result_checker_orders: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          status: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          user_id: string
+          voucher_codes: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          user_id: string
+          voucher_codes?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          total_amount?: number
+          user_id?: string
+          voucher_codes?: string[]
+        }
+        Relationships: []
+      }
+      bulk_disbursement_jobs: {
+        Row: {
+          created_at: string
+          failed_count: number
+          id: string
+          package_id: string
+          status: string
+          success_count: number
+          total_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          failed_count?: number
+          id?: string
+          package_id: string
+          status?: string
+          success_count?: number
+          total_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          failed_count?: number
+          id?: string
+          package_id?: string
+          status?: string
+          success_count?: number
+          total_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bulk_disbursement_items: {
+        Row: {
+          created_at: string
+          data_order_id: string | null
+          error_message: string | null
+          id: string
+          job_id: string
+          recipient_phone: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          data_order_id?: string | null
+          error_message?: string | null
+          id?: string
+          job_id: string
+          recipient_phone: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          data_order_id?: string | null
+          error_message?: string | null
+          id?: string
+          job_id?: string
+          recipient_phone?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      customer_contacts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          network: string | null
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          network?: string | null
+          phone: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          network?: string | null
+          phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       promo_banners: {
         Row: {
           active: boolean
@@ -716,6 +968,8 @@ export type Database = {
           updated_at: string
           user_id: string
           whatsapp: string
+          whatsapp_bot_enabled: boolean
+          whatsapp_bot_greeting: string | null
         }
         Insert: {
           active?: boolean
@@ -726,6 +980,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           whatsapp: string
+          whatsapp_bot_enabled?: boolean
+          whatsapp_bot_greeting?: string | null
         }
         Update: {
           active?: boolean
@@ -736,6 +992,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp?: string
+          whatsapp_bot_enabled?: boolean
+          whatsapp_bot_greeting?: string | null
         }
         Relationships: []
       }
@@ -944,6 +1202,38 @@ export type Database = {
         Args: { p_parent_store_slug: string }
         Returns: string
       }
+      bulk_purchase_data: {
+        Args: { p_package_id: string; p_phones: string[] }
+        Returns: string
+      }
+      cancel_auto_renewal: {
+        Args: { p_schedule_id: string }
+        Returns: undefined
+      }
+      create_auto_renewal: {
+        Args: { p_interval_days: number; p_package_id: string; p_recipient_phone: string }
+        Returns: string
+      }
+      run_auto_renewal: {
+        Args: { p_schedule_id: string }
+        Returns: string
+      }
+      purchase_airtime: {
+        Args: { p_amount: number; p_network: string; p_recipient_phone: string }
+        Returns: string
+      }
+      purchase_result_checker: {
+        Args: { p_product_slug: string; p_quantity?: number }
+        Returns: string
+      }
+      purchase_utility: {
+        Args: { p_account_number: string; p_amount: number; p_meta?: Json; p_utility_type: string }
+        Returns: string
+      }
+      get_agent_leaderboard: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       create_store: {
         Args: { p_name: string; p_whatsapp: string; p_slug: string }
         Returns: string
@@ -993,6 +1283,17 @@ export type Database = {
       spin_wheel: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_notification_inbox: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          is_read: boolean
+          severity: Database["public"]["Enums"]["announcement_severity"]
+          title: string
+        }[]
       }
       get_network_health_stats: {
         Args: Record<PropertyKey, never>

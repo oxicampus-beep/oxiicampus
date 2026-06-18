@@ -6,24 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { dashboardChildRoutes } from "@/pages/dashboard/DashboardRoutes";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Auth from "@/pages/Auth";
-import Overview from "@/pages/Overview";
-import WalletPage from "@/pages/WalletPage";
-import Transactions from "@/pages/Transactions";
-import BuyMTN from "@/pages/BuyMTN";
-import BuyATIshare from "@/pages/BuyATIshare";
-import BuyATBigTime from "@/pages/BuyATBigTime";
-import BuyTelecel from "@/pages/BuyTelecel";
-import AFA from "@/pages/AFA";
-import ExtraServices from "@/pages/ExtraServices";
-import Rewards from "@/pages/Rewards";
-import MyStore from "@/pages/MyStore";
-import StoreOrders from "@/pages/StoreOrders";
-import StoreWithdrawal from "@/pages/StoreWithdrawal";
-import DeveloperAPI from "@/pages/DeveloperAPI";
-import SettingsPage from "@/pages/SettingsPage";
-import ReportIssue from "@/pages/ReportIssue";
 import AdminPackages from "@/pages/AdminPackages";
 import AdminOverview from "@/pages/AdminOverview";
 import AdminOrders from "@/pages/AdminOrders";
@@ -79,23 +64,7 @@ const App = () => (
             <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="/store/:slug" element={<Storefront />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<Overview />} />
-              <Route path="wallet" element={<WalletPage />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="buy/mtn" element={<BuyMTN />} />
-              <Route path="buy/at-ishare" element={<BuyATIshare />} />
-              <Route path="buy/at-bigtime" element={<BuyATBigTime />} />
-              <Route path="buy/telecel" element={<BuyTelecel />} />
-              <Route path="afa" element={<AFA />} />
-              <Route path="extras" element={<ExtraServices />} />
-              <Route path="rewards" element={<Rewards />} />
-              <Route path="store" element={<MyStore />} />
-              <Route path="store/packages" element={<Navigate to="/dashboard/store" replace />} />
-              <Route path="store/orders" element={<StoreOrders />} />
-              <Route path="store/withdrawal" element={<StoreWithdrawal />} />
-              <Route path="developer" element={<DeveloperAPI />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="report" element={<ReportIssue />} />
+              {dashboardChildRoutes}
             </Route>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminOverview />} />

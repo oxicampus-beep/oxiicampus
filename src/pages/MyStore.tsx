@@ -485,7 +485,7 @@ export default function MyStore() {
             <div className="text-xs text-muted-foreground mt-1">See customer orders from your store</div>
           </Card>
         </Link>
-        <Link to="/dashboard/store/withdrawal">
+        <Link to="/dashboard/withdrawals">
           <Card className="p-6 hover:border-primary/40 transition-colors">
             <Banknote className="h-6 w-6 text-primary mb-2" />
             <div className="font-display font-semibold">Withdraw Earnings</div>
