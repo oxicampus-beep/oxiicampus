@@ -22,16 +22,19 @@ export default function Rewards() {
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimSpinId, setClaimSpinId] = useState<string | undefined>();
   const [ledger, setLedger] = useState<any[]>([]);
+  const [flags, setFlags] = useState({ spin_wheel_enabled: true, referrals_enabled: true });
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: s, error }, { data: history }] = await Promise.all([
+    const [{ data: s, error }, { data: history }, { data: settings }] = await Promise.all([
       supabase.rpc("get_rewards_status"),
       supabase.from("points_ledger").select("*").order("created_at", { ascending: false }).limit(10),
+      supabase.from("platform_settings").select("spin_wheel_enabled, referrals_enabled").eq("id", 1).maybeSingle(),
     ]);
     if (error) toast.error(error.message);
     setStatus(s as RewardsStatus);
     setLedger(history ?? []);
+    if (settings) setFlags({ spin_wheel_enabled: settings.spin_wheel_enabled ?? true, referrals_enabled: settings.referrals_enabled ?? true });
     setLoading(false);
   }, []);
 
@@ -108,22 +111,28 @@ export default function Rewards() {
             <Users className="h-5 w-5 text-primary" />
             <span className="text-sm text-muted-foreground">Referrals</span>
           </div>
-          <div className="text-3xl font-display font-bold">{status?.referrals_count ?? 0}</div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Earn <strong>{REFERRAL_POINTS} points</strong> for each friend who signs up.
-          </p>
-          <div className="mt-4 flex gap-2">
-            <code className="flex-1 text-xs bg-secondary rounded px-2 py-2 truncate">
-              {status?.referral_code ? referralLink(status.referral_code) : "—"}
-            </code>
-            <Button size="icon" variant="outline" onClick={copyReferral} aria-label="Copy link">
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <Button variant="secondary" className="mt-3 w-full gap-2" onClick={copyReferral}>
-            <Share2 className="h-4 w-4" />
-            Share referral link
-          </Button>
+          {!flags.referrals_enabled ? (
+            <p className="text-sm text-muted-foreground">Referral rewards are temporarily disabled.</p>
+          ) : (
+            <>
+              <div className="text-3xl font-display font-bold">{status?.referrals_count ?? 0}</div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Earn <strong>{REFERRAL_POINTS} points</strong> for each friend who signs up.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <code className="flex-1 text-xs bg-secondary rounded px-2 py-2 truncate">
+                  {status?.referral_code ? referralLink(status.referral_code) : "—"}
+                </code>
+                <Button size="icon" variant="outline" onClick={copyReferral} aria-label="Copy link">
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button variant="secondary" className="mt-3 w-full gap-2" onClick={copyReferral}>
+                <Share2 className="h-4 w-4" />
+                Share referral link
+              </Button>
+            </>
+          )}
         </Card>
 
         <Card className="p-6">
@@ -149,27 +158,31 @@ export default function Rewards() {
         </Card>
       </div>
 
-      <Card className="p-6 md:p-10">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-          <div className="flex-1 text-center lg:text-left">
-            <Badge variant="secondary" className="mb-3">Spin Wheel</Badge>
-            <h2 className="text-2xl font-display font-bold mb-2">Try your luck</h2>
-            <p className="text-muted-foreground text-sm max-w-md">
-              Three prizes on the wheel: 5 points, 15 points, or 1GB data.
-              {!status?.can_spin && status?.next_spin_at && (
-                <> Next spin: <strong>{formatNextSpin(status.next_spin_at)}</strong>.</>
-              )}
-            </p>
+      {flags.spin_wheel_enabled ? (
+        <Card className="p-6 md:p-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
+            <div className="flex-1 text-center lg:text-left">
+              <Badge variant="secondary" className="mb-3">Spin Wheel</Badge>
+              <h2 className="text-2xl font-display font-bold mb-2">Try your luck</h2>
+              <p className="text-muted-foreground text-sm max-w-md">
+                Three prizes on the wheel: 5 points, 15 points, or 1GB data.
+                {!status?.can_spin && status?.next_spin_at && (
+                  <> Next spin: <strong>{formatNextSpin(status.next_spin_at)}</strong>.</>
+                )}
+              </p>
+            </div>
+            <SpinWheel
+              canSpin={!!status?.can_spin && !status?.pending_data_spin}
+              nextSpinAt={status?.next_spin_at ?? null}
+              onSpin={handleSpin}
+              onSpinComplete={handleSpinComplete}
+              disabled={!!status?.pending_data_spin}
+            />
           </div>
-          <SpinWheel
-            canSpin={!!status?.can_spin && !status?.pending_data_spin}
-            nextSpinAt={status?.next_spin_at ?? null}
-            onSpin={handleSpin}
-            onSpinComplete={handleSpinComplete}
-            disabled={!!status?.pending_data_spin}
-          />
-        </div>
-      </Card>
+        </Card>
+      ) : (
+        <Card className="p-6 text-sm text-muted-foreground">The spin wheel is temporarily unavailable.</Card>
+      )}
 
       <Card className="p-6">
         <h2 className="text-xl font-display font-semibold mb-4">Points History</h2>

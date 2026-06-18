@@ -15,6 +15,23 @@ import { toast } from "sonner";
 
 export default function AdminOverview() {
   const [maintenance, setMaintenance] = useState(false);
+  const [savingMaint, setSavingMaint] = useState(false);
+
+  useEffect(() => {
+    supabase.from("platform_settings").select("maintenance_mode").eq("id", 1).single().then(({ data }) => {
+      if (data) setMaintenance(data.maintenance_mode ?? false);
+    });
+  }, []);
+
+  const toggleMaintenance = async (v: boolean) => {
+    setSavingMaint(true);
+    const { error } = await supabase.from("platform_settings").update({ maintenance_mode: v }).eq("id", 1);
+    setSavingMaint(false);
+    if (error) return toast.error(error.message);
+    setMaintenance(v);
+    await supabase.rpc("admin_log_action", { p_action: v ? "maintenance_on" : "maintenance_off" });
+    toast.success(v ? "Maintenance mode enabled" : "Maintenance mode disabled");
+  };
   const [stats, setStats] = useState({
     totalRevenue: 0, todayRevenue: 0, totalOrders: 0, todayOrders: 0,
     totalUsers: 0, pendingWithdrawals: 0, openTickets: 0,
@@ -78,7 +95,8 @@ export default function AdminOverview() {
             <Switch
               id="maint"
               checked={maintenance}
-              onCheckedChange={v => { setMaintenance(v); toast.info(v ? "Maintenance mode enabled (UI flag)" : "Maintenance mode disabled"); }}
+              disabled={savingMaint}
+              onCheckedChange={toggleMaintenance}
             />
           </div>
         }

@@ -1,5 +1,15 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Sparkles, Tv, GraduationCap, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsAgent } from "@/hooks/useIsAgent";
+import { useProfile } from "@/hooks/useProfile";
+import { toast } from "sonner";
+import { Sparkles, Tv, GraduationCap, Zap, Users, Loader2 } from "lucide-react";
 
 const services = [
   { icon: Tv, title: "DStv / GOtv Subscriptions", desc: "Pay for your TV subscriptions instantly." },
@@ -9,12 +19,81 @@ const services = [
 ];
 
 export default function ExtraServices() {
+  const { user } = useAuth();
+  const { isAgent } = useIsAgent();
+  const { profile, refresh } = useProfile();
+  const [slug, setSlug] = useState("");
+  const [fee, setFee] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const [{ data: settings }, { data: sub }] = await Promise.all([
+        supabase.from("platform_settings").select("sub_agent_activation_fee").eq("id", 1).maybeSingle(),
+        supabase.from("sub_agents").select("status").eq("user_id", user.id).maybeSingle(),
+      ]);
+      if (settings) setFee(Number(settings.sub_agent_activation_fee ?? 0));
+      if (sub) setStatus(sub.status);
+    })();
+  }, [user]);
+
+  const applySubAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!slug.trim()) return toast.error("Enter the parent store slug.");
+    if (fee > 0 && Number(profile?.wallet_balance ?? 0) < fee) {
+      return toast.error(`Insufficient wallet balance. Activation fee is ₵${fee.toFixed(2)}.`);
+    }
+    setApplying(true);
+    const { error } = await supabase.rpc("apply_sub_agent", { p_parent_store_slug: slug.trim() });
+    setApplying(false);
+    if (error) return toast.error(error.message);
+    toast.success("Sub-agent application submitted!");
+    setStatus("pending");
+    await refresh();
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl md:text-4xl font-display font-bold">Extra Services</h1>
         <p className="text-muted-foreground mt-1">More ways to grow your reselling business.</p>
       </div>
+
+      {!isAgent && (
+        <Card className="p-6 border-primary/30">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-lg bg-primary/15 text-primary grid place-items-center shrink-0">
+              <Users className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-display font-semibold text-lg">Become a Sub-Agent</h2>
+                {status && <Badge variant={status === "active" ? "default" : "secondary"} className="capitalize">{status}</Badge>}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Join an existing agent store as a sub-agent. {fee > 0 ? `Activation fee: ₵${fee.toFixed(2)}.` : "No activation fee required."}
+              </p>
+              {!status && (
+                <form onSubmit={applySubAgent} className="mt-4 flex flex-col sm:flex-row gap-3 items-end">
+                  <div className="flex-1 w-full">
+                    <Label>Parent store slug</Label>
+                    <Input value={slug} onChange={e => setSlug(e.target.value)} placeholder="e.g. my-data-shop" className="mt-1" />
+                  </div>
+                  <Button type="submit" disabled={applying} className="gap-2 shrink-0">
+                    {applying && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Apply
+                  </Button>
+                </form>
+              )}
+              {status === "pending" && <p className="text-sm text-muted-foreground mt-3">Your application is pending admin approval.</p>}
+              {status === "active" && <p className="text-sm text-green-600 mt-3">You are an active sub-agent under your parent store.</p>}
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-4">
         {services.map(s => (
           <Card key={s.title} className="p-6 hover:border-primary/40 transition-colors cursor-pointer">

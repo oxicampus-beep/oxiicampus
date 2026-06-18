@@ -4,6 +4,7 @@ import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import AnnouncementPopup from "@/components/notifications/AnnouncementPopup";
+import PlatformBanners from "@/components/platform/PlatformBanners";
 import OrderTrackerFab from "@/components/orders/OrderTrackerFab";
 import { Button } from "@/components/ui/button";
 import { LogOut, Wallet, Trophy } from "lucide-react";
@@ -44,6 +45,7 @@ export default function DashboardLayout() {
             </div>
           </header>
           <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+            <PlatformBanners />
             <Outlet />
           </main>
           <AnnouncementPopup />

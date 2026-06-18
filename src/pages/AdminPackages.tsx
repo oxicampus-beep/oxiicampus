@@ -15,7 +15,7 @@ import { groupByNetwork, sortByNetworkThenSize } from "@/lib/networks";
 export default function AdminPackages() {
   const [items, setItems] = useState<any[]>([]);
   const [syncing, setSyncing] = useState(false);
-  const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "" });
+  const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "", provider_cost: "" });
   const VALIDITY = "Non expiry";
 
   const load = async () => {
@@ -31,11 +31,19 @@ export default function AdminPackages() {
       size_gb: Number(f.size_gb),
       user_price: Number(f.user_price),
       agent_price: Number(f.agent_price),
+      provider_cost: f.provider_cost ? Number(f.provider_cost) : Number(f.agent_price) * 0.88,
       validity: VALIDITY,
     });
     if (error) return toast.error(error.message);
     toast.success("Package created");
-    setF({ network: "mtn", size_gb: "", user_price: "", agent_price: "" });
+    setF({ network: "mtn", size_gb: "", user_price: "", agent_price: "", provider_cost: "" });
+    load();
+  };
+
+  const updateProviderCost = async (id: string, val: string) => {
+    const n = Number(val);
+    if (Number.isNaN(n) || n < 0) return;
+    await supabase.from("data_packages").update({ provider_cost: n }).eq("id", id);
     load();
   };
 
@@ -68,7 +76,7 @@ export default function AdminPackages() {
       />
 
       <Card className="p-6">
-        <form onSubmit={create} className="grid sm:grid-cols-5 gap-3 items-end">
+        <form onSubmit={create} className="grid sm:grid-cols-6 gap-3 items-end">
           <div>
             <Label>Network</Label>
             <Select value={f.network} onValueChange={v => setF({ ...f, network: v })}>
@@ -84,6 +92,7 @@ export default function AdminPackages() {
           <div><Label>Size (GB)</Label><Input type="number" step="0.1" required value={f.size_gb} onChange={e => setF({ ...f, size_gb: e.target.value })} /></div>
           <div><Label>User price (₵)</Label><Input type="number" step="0.01" required value={f.user_price} onChange={e => setF({ ...f, user_price: e.target.value })} /></div>
           <div><Label>Agent base (₵)</Label><Input type="number" step="0.01" required value={f.agent_price} onChange={e => setF({ ...f, agent_price: e.target.value })} /></div>
+          <div><Label>Provider cost (₵)</Label><Input type="number" step="0.01" placeholder="Auto 88%" value={f.provider_cost} onChange={e => setF({ ...f, provider_cost: e.target.value })} /></div>
           <Button type="submit" className="font-semibold">Add</Button>
         </form>
       </Card>
@@ -103,12 +112,20 @@ export default function AdminPackages() {
                   <div>
                     <div className="font-semibold">{p.size_gb}GB · {labelFor(p.network)}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      Users: ₵{Number(p.user_price).toFixed(2)} · Agent base: ₵{Number(p.agent_price).toFixed(2)} · {VALIDITY}
+                      Users: ₵{Number(p.user_price).toFixed(2)} · Agent base: ₵{Number(p.agent_price).toFixed(2)} · COGS: ₵{Number(p.provider_cost ?? p.agent_price * 0.88).toFixed(2)} · {VALIDITY}
                       {p.swift_package_id && <> · Swift: <span className="font-mono">{p.swift_package_id}</span></>}
                       {!p.swift_package_id && <> · <span className="text-amber-600">No SwiftData plan mapped</span></>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      className="w-24 h-8 text-xs"
+                      defaultValue={Number(p.provider_cost ?? p.agent_price * 0.88).toFixed(2)}
+                      onBlur={e => updateProviderCost(p.id, e.target.value)}
+                      title="Provider cost (COGS)"
+                    />
                     <Switch checked={p.active} onCheckedChange={() => toggle(p)} />
                     <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>

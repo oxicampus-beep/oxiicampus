@@ -5,27 +5,42 @@ import { formatCurrency } from "@/lib/admin";
 import { DollarSign, TrendingDown, TrendingUp } from "lucide-react";
 
 export default function AdminProfits() {
-  const [stats, setStats] = useState({ revenue: 0, margin: 0, orders: 0 });
+  const [stats, setStats] = useState({ revenue: 0, cogs: 0, profit: 0, orders: 0, marginPct: 0 });
 
   useEffect(() => {
     (async () => {
-      const { data: orders } = await supabase.from("data_orders").select("price, status, size_gb").eq("status", "completed");
-      const revenue = (orders ?? []).reduce((s, o) => s + Number(o.price), 0);
-      const margin = revenue * 0.12;
-      setStats({ revenue, margin, orders: orders?.length ?? 0 });
+      const { data: orders } = await supabase
+        .from("data_orders")
+        .select("price, status, package_id, data_packages(provider_cost, agent_price)")
+        .eq("status", "completed");
+
+      let revenue = 0, cogs = 0;
+      (orders ?? []).forEach((o: any) => {
+        const pkg = o.data_packages;
+        const cost = Number(pkg?.provider_cost ?? pkg?.agent_price ?? 0);
+        revenue += Number(o.price);
+        cogs += cost;
+      });
+
+      const profit = revenue - cogs;
+      setStats({
+        revenue, cogs, profit, orders: orders?.length ?? 0,
+        marginPct: revenue > 0 ? Math.round((profit / revenue) * 1000) / 10 : 0,
+      });
     })();
   }, []);
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Profits" description="Platform revenue and estimated margin from data sales." />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <AdminPageHeader title="Profits" description="Platform revenue and cost of goods sold from completed orders." />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <AdminStatCard label="Gross Revenue" value={formatCurrency(stats.revenue)} icon={TrendingUp} accent />
-        <AdminStatCard label="Est. Margin (~12%)" value={formatCurrency(stats.margin)} icon={DollarSign} />
-        <AdminStatCard label="Completed Orders" value={String(stats.orders)} icon={TrendingDown} />
+        <AdminStatCard label="COGS" value={formatCurrency(stats.cogs)} icon={TrendingDown} />
+        <AdminStatCard label="Net Profit" value={formatCurrency(stats.profit)} icon={DollarSign} />
+        <AdminStatCard label="Margin" value={`${stats.marginPct}%`} sub={`${stats.orders} orders`} />
       </div>
       <AdminCard>
-        <p className="text-white/45 text-sm">Margin is estimated from completed order volume. Configure cost prices on packages for precise profit tracking.</p>
+        <p className="text-white/45 text-sm">COGS uses provider_cost on each package (defaults to 88% of agent price). Set provider_cost in Manage Packages for accuracy.</p>
       </AdminCard>
     </div>
   );

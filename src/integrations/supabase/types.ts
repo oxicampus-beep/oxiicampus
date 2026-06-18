@@ -146,6 +146,7 @@ export type Database = {
           created_at: string
           id: string
           network: Database["public"]["Enums"]["network_type"]
+          provider_cost: number | null
           size_gb: number
           swift_package_id: string | null
           updated_at: string
@@ -158,6 +159,7 @@ export type Database = {
           created_at?: string
           id?: string
           network: Database["public"]["Enums"]["network_type"]
+          provider_cost?: number | null
           size_gb: number
           swift_package_id?: string | null
           updated_at?: string
@@ -170,6 +172,7 @@ export type Database = {
           created_at?: string
           id?: string
           network?: Database["public"]["Enums"]["network_type"]
+          provider_cost?: number | null
           size_gb?: number
           swift_package_id?: string | null
           updated_at?: string
@@ -460,21 +463,246 @@ export type Database = {
       platform_settings: {
         Row: {
           id: number
+          maintenance_message: string | null
+          maintenance_mode: boolean
+          purchases_enabled: boolean
+          referrals_enabled: boolean
+          spin_wheel_enabled: boolean
           store_activation_enabled: boolean
           store_activation_fee: number
+          sub_agent_activation_fee: number
           updated_at: string
         }
         Insert: {
           id?: number
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
+          purchases_enabled?: boolean
+          referrals_enabled?: boolean
+          spin_wheel_enabled?: boolean
           store_activation_enabled?: boolean
           store_activation_fee?: number
+          sub_agent_activation_fee?: number
           updated_at?: string
         }
         Update: {
           id?: number
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
+          purchases_enabled?: boolean
+          referrals_enabled?: boolean
+          spin_wheel_enabled?: boolean
           store_activation_enabled?: boolean
           store_activation_fee?: number
+          sub_agent_activation_fee?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_banners: {
+        Row: {
+          active: boolean
+          audience: string
+          created_at: string
+          cta_text: string | null
+          ends_at: string | null
+          id: string
+          link_url: string | null
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          cta_text?: string | null
+          ends_at?: string | null
+          id?: string
+          link_url?: string | null
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          cta_text?: string | null
+          ends_at?: string | null
+          id?: string
+          link_url?: string | null
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          min_order_amount: number
+          network: Database["public"]["Enums"]["network_type"] | null
+          uses_count: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order_amount?: number
+          network?: Database["public"]["Enums"]["network_type"] | null
+          uses_count?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order_amount?: number
+          network?: Database["public"]["Enums"]["network_type"] | null
+          uses_count?: number
+        }
+        Relationships: []
+      }
+      promo_redemptions: {
+        Row: {
+          created_at: string
+          discount_amount: number
+          id: string
+          order_id: string | null
+          promo_code_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          promo_code_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          promo_code_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          meta: Json
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          meta?: Json
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          meta?: Json
+        }
+        Relationships: []
+      }
+      sms_templates: {
+        Row: {
+          active: boolean
+          body: string
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sub_agents: {
+        Row: {
+          activation_fee_paid: number
+          created_at: string
+          id: string
+          notes: string | null
+          parent_store_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activation_fee_paid?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parent_store_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activation_fee_paid?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parent_store_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -691,6 +919,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_points: {
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
+        Returns: number
+      }
+      admin_adjust_wallet: {
+        Args: { p_amount: number; p_description?: string; p_user_id: string }
+        Returns: number
+      }
+      admin_log_action: {
+        Args: {
+          p_action: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_meta?: Json
+        }
+        Returns: string
+      }
+      admin_update_sub_agent: {
+        Args: { p_notes?: string; p_status: string; p_sub_agent_id: string }
+        Returns: string
+      }
+      apply_sub_agent: {
+        Args: { p_parent_store_slug: string }
+        Returns: string
+      }
       create_store: {
         Args: { p_name: string; p_whatsapp: string; p_slug: string }
         Returns: string
@@ -741,8 +994,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_network_health_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_sentinel_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       purchase_data_package: {
-        Args: { p_package_id: string; p_recipient_phone: string }
+        Args: {
+          p_package_id: string
+          p_promo_code?: string
+          p_recipient_phone: string
+        }
         Returns: string
       }
       track_orders_by_phone: {
