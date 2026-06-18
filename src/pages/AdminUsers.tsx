@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { AdminGuard } from "@/components/admin/AdminGuard";
+import { AdminPageHeader } from "@/components/admin/AdminUi";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -90,10 +90,7 @@ function AdminUsersContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-display font-bold">Users</h1>
-        <p className="text-muted-foreground mt-1">View and manage all registered users on the platform.</p>
-      </div>
+      <AdminPageHeader title="Users" description="View and manage all registered users on the platform." />
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -179,9 +176,5 @@ function AdminUsersContent() {
 }
 
 export default function AdminUsers() {
-  return (
-    <AdminGuard>
-      <AdminUsersContent />
-    </AdminGuard>
-  );
+  return <AdminUsersContent />;
 }

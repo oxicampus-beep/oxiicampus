@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminGuard } from "@/components/admin/AdminGuard";
+import { AdminPageHeader } from "@/components/admin/AdminUi";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,20 +109,11 @@ function AdminOrdersContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl md:text-4xl font-display font-bold">Orders</h1>
-            {live && (
-              <Badge className="animate-pulse gap-1">
-                <Radio className="h-3 w-3" /> New order
-              </Badge>
-            )}
-          </div>
-          <p className="text-muted-foreground mt-1">All platform data orders — updates live when users purchase.</p>
-        </div>
-        <div className="text-sm text-muted-foreground">{filtered.length} of {orders.length} orders</div>
-      </div>
+      <AdminPageHeader
+        title="Orders"
+        description="All platform data orders — updates live when users purchase."
+        actions={live ? <Badge className="animate-pulse gap-1 border-amber-400/40 text-amber-400"><Radio className="h-3 w-3" /> New order</Badge> : undefined}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -228,9 +219,5 @@ function AdminOrdersContent() {
 }
 
 export default function AdminOrders() {
-  return (
-    <AdminGuard>
-      <AdminOrdersContent />
-    </AdminGuard>
-  );
+  return <AdminOrdersContent />;
 }

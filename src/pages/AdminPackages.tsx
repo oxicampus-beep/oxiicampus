@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { useIsAdmin } from "@/hooks/useRoles";
+import { AdminPageHeader } from "@/components/admin/AdminUi";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { labelFor } from "@/components/data/BuyDataDialog";
 import { groupByNetwork, sortByNetworkThenSize } from "@/lib/networks";
 
 export default function AdminPackages() {
-  const { isAdmin, loading } = useIsAdmin();
   const [items, setItems] = useState<any[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [f, setF] = useState({ network: "mtn", size_gb: "", user_price: "", agent_price: "" });
@@ -24,10 +22,7 @@ export default function AdminPackages() {
     const { data } = await supabase.from("data_packages").select("*");
     setItems(sortByNetworkThenSize(data ?? []));
   };
-  useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
-
-  if (loading) return <div className="text-muted-foreground">Loading…</div>;
-  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  useEffect(() => { load(); }, []);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,16 +56,16 @@ export default function AdminPackages() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold">Manage Packages</h1>
-          <p className="text-muted-foreground mt-1">Set user and agent base prices. Sync SwiftData plan IDs before going live.</p>
-        </div>
-        <Button variant="outline" onClick={syncSwiftPlans} disabled={syncing} className="gap-2 shrink-0">
-          {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          Sync SwiftData plans
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Manage Packages"
+        description="Set user and agent base prices. Sync SwiftData plan IDs before going live."
+        actions={
+          <Button variant="outline" onClick={syncSwiftPlans} disabled={syncing} className="gap-2 shrink-0 border-white/10 text-white hover:bg-white/10">
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Sync SwiftData plans
+          </Button>
+        }
+      />
 
       <Card className="p-6">
         <form onSubmit={create} className="grid sm:grid-cols-5 gap-3 items-end">

@@ -89,12 +89,7 @@ export function AppSidebar() {
         {renderGroup("Store", store)}
         {renderGroup("Account", account)}
         {isAdmin && renderGroup("Admin", [
-          { title: "Overview", url: "/admin/overview", icon: BarChart3 },
-          { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
-          { title: "Users", url: "/admin/users", icon: Users },
-          { title: "Manage Packages", url: "/admin/packages", icon: Shield },
-          { title: "Notifications", url: "/admin/notifications", icon: Bell },
-          { title: "Settings", url: "/admin/settings", icon: Settings },
+          { title: "Control Center", url: "/admin", icon: Shield },
         ])}
       </SidebarContent>
     </Sidebar>

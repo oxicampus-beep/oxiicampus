@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AdminGuard } from "@/components/admin/AdminGuard";
+import { AdminPageHeader } from "@/components/admin/AdminUi";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -81,10 +81,7 @@ function AdminAnnouncementsContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-display font-bold">Notifications</h1>
-        <p className="text-muted-foreground mt-1">Send popup messages to users, agents, or everyone on the platform.</p>
-      </div>
+      <AdminPageHeader title="Notifications" description="Send popup messages to users, agents, or everyone on the platform." />
 
       <Card className="p-6">
         <form onSubmit={send} className="space-y-4">
@@ -200,9 +197,5 @@ function AdminAnnouncementsContent() {
 }
 
 export default function AdminAnnouncements() {
-  return (
-    <AdminGuard>
-      <AdminAnnouncementsContent />
-    </AdminGuard>
-  );
+  return <AdminAnnouncementsContent />;
 }

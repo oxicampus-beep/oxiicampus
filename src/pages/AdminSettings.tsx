@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { useIsAdmin } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminGuard } from "@/components/admin/AdminGuard";
-import { Card } from "@/components/ui/card";
+import { AdminCard, AdminPageHeader } from "@/components/admin/AdminUi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,12 +43,8 @@ function AdminSettingsContent() {
 
   return (
     <div className="space-y-6 max-w-xl">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-display font-bold">Platform Settings</h1>
-        <p className="text-muted-foreground mt-1">Configure store activation and platform-wide options.</p>
-      </div>
-
-      <Card className="p-6 space-y-6">
+      <AdminPageHeader title="Platform Settings" description="Configure store activation and platform-wide options." />
+      <AdminCard>
         <div className="flex items-start gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/10 grid place-items-center shrink-0">
             <Store className="h-5 w-5 text-primary" />
@@ -91,15 +84,11 @@ function AdminSettingsContent() {
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           Save settings
         </Button>
-      </Card>
+      </AdminCard>
     </div>
   );
 }
 
 export default function AdminSettings() {
-  return (
-    <AdminGuard>
-      <AdminSettingsContent />
-    </AdminGuard>
-  );
+  return <AdminSettingsContent />;
 }
