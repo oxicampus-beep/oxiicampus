@@ -15,9 +15,12 @@ export default function AdminWalletTopup() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    supabase.from("profiles").select("id, full_name, email, wallet_balance").order("full_name").then(({ data }) => setUsers(data ?? []));
-  }, []);
+  const loadUsers = async () => {
+    const { data } = await supabase.from("profiles").select("id, full_name, email, wallet_balance").order("full_name");
+    setUsers(data ?? []);
+  };
+
+  useEffect(() => { loadUsers(); }, []);
 
   const selected = users.find(u => u.id === userId);
 
@@ -26,19 +29,16 @@ export default function AdminWalletTopup() {
     const amt = Number(amount);
     if (!userId || !amt || amt <= 0) return toast.error("Select a user and enter a valid amount");
     setLoading(true);
-    const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("id", userId).single();
-    const newBal = Number(profile?.wallet_balance ?? 0) + amt;
-    const { error: updErr } = await supabase.from("profiles").update({ wallet_balance: newBal }).eq("id", userId);
-    if (updErr) { setLoading(false); return toast.error(updErr.message); }
-    await supabase.from("transactions").insert({
-      user_id: userId, type: "topup", amount: amt, balance_after: newBal,
-      description: "Admin wallet top-up", status: "success",
+    const { error } = await supabase.rpc("admin_adjust_wallet", {
+      p_user_id: userId,
+      p_amount: amt,
+      p_description: "Admin wallet top-up",
     });
     setLoading(false);
+    if (error) return toast.error(error.message);
     toast.success(`Topped up ${formatCurrency(amt)}`);
     setAmount("");
-    const { data } = await supabase.from("profiles").select("id, full_name, email, wallet_balance").order("full_name");
-    setUsers(data ?? []);
+    loadUsers();
   };
 
   return (
