@@ -23,13 +23,24 @@ import {
   ORDER_STATUS_LABELS,
   type TrackedOrder,
 } from "@/lib/orders";
+import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "byteboss_tracker_phone";
 
-export default function OrderTrackerFab() {
+export default function OrderTrackerFab({
+  open: controlledOpen,
+  onOpenChange,
+  theme = "dark",
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  theme?: "dark" | "light";
+} = {}) {
   const { user } = useAuth();
   const { profile } = useProfile();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [phone, setPhone] = useState("");
   const [trackedPhone, setTrackedPhone] = useState<string | null>(null);
   const [orders, setOrders] = useState<TrackedOrder[]>([]);
@@ -95,7 +106,12 @@ export default function OrderTrackerFab() {
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-14 rounded-full shadow-lg shadow-primary/25 gap-2 px-5 font-semibold"
+        className={cn(
+          "fixed bottom-6 right-6 z-50 h-14 rounded-full shadow-lg gap-2 px-5 font-semibold",
+          theme === "light"
+            ? "bg-zinc-900 hover:bg-zinc-800 text-white shadow-zinc-900/20"
+            : "shadow-primary/25",
+        )}
         size="lg"
       >
         <PackageSearch className="h-5 w-5" />

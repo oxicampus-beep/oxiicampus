@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Clock, Loader2, MessageCircle } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
 import { whatsappLink } from "@/lib/store";
+import NetworkBadge from "@/components/store/NetworkBadge";
 
 type Pkg = {
   id: string;
@@ -50,7 +51,7 @@ export default function StoreBuyDialog({
     setLoading(false);
     if (error) return toast.error(error.message);
 
-    const msg = `Hi ${storeName}! I'd like to buy:\n\n📦 ${pkg.name}\n📶 ${pkg.size_gb}GB ${labelFor(pkg.network)}\n💰 ₵${Number(pkg.price).toFixed(2)}\n📱 Recipient: ${phone.trim()}\n\nOrder ref: ${data.id.slice(0, 8)}`;
+    const msg = `Hi ${storeName}! I'd like to buy:\n\n📦 ${pkg.size_gb}GB ${labelFor(pkg.network)}\n💰 GH₵${Number(pkg.price).toFixed(2)}\n📱 Recipient: ${phone.trim()}\n\nOrder ref: ${data.id.slice(0, 8)}`;
     window.open(whatsappLink(whatsapp, msg), "_blank");
     toast.success("Order placed! Complete payment via WhatsApp.");
     setPhone("");
@@ -59,29 +60,42 @@ export default function StoreBuyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white text-zinc-900 border-zinc-200">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{pkg.name}</DialogTitle>
-          <DialogDescription>
-            {pkg.size_gb}GB {labelFor(pkg.network)} · ₵{Number(pkg.price).toFixed(2)}
+          <div className="flex items-center gap-2 mb-1">
+            <NetworkBadge network={pkg.network} />
+            <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+              <Clock className="h-3.5 w-3.5" /> 1–5 min delivery
+            </span>
+          </div>
+          <DialogTitle className="text-2xl font-display">
+            {pkg.size_gb}GB · {labelFor(pkg.network)}
+          </DialogTitle>
+          <DialogDescription className="text-zinc-500">
+            GH₵ {Number(pkg.price).toFixed(2)} · Pay by Mobile Money via WhatsApp
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label>Your phone number</Label>
+            <Label className="text-zinc-700">Recipient phone number</Label>
             <Input
               placeholder="0241234567"
               value={phone}
               onChange={e => setPhone(e.target.value)}
+              className="bg-white border-zinc-200"
             />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-zinc-500">
             You'll be redirected to WhatsApp to confirm and pay with {storeName}.
           </p>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleOrder} disabled={loading} className="gap-2 font-semibold">
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-200">Cancel</Button>
+          <Button
+            onClick={handleOrder}
+            disabled={loading}
+            className="gap-2 font-semibold bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
             Order via WhatsApp
           </Button>
