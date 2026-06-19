@@ -10,6 +10,7 @@ import PromoCarousel from "@/components/dashboard/PromoCarousel";
 import LastOrderWidget from "@/components/dashboard/LastOrderWidget";
 import QuickNetworkGrid from "@/components/dashboard/QuickNetworkGrid";
 import AgentUpgradeBanner from "@/components/dashboard/AgentUpgradeBanner";
+import { useMtn1GbOfferPricing } from "@/lib/agentPricingExample";
 import { Wallet, ShoppingBag, History, Trophy, ArrowUpRight, Store, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +18,7 @@ export default function Overview() {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { isAgent } = useIsAgent();
+  const { example: mtnOffer } = useMtn1GbOfferPricing();
   const [stats, setStats] = useState({ orders: 0, spent: 0, recent: [] as any[] });
 
   useEffect(() => {
@@ -78,7 +80,11 @@ export default function Overview() {
             <div className="h-12 w-12 rounded-2xl bg-primary/20 grid place-items-center"><Store className="h-6 w-6 text-primary" /></div>
             <div className="flex-1">
               <p className="font-black">Unlock Cheaper Agent Prices</p>
-              <p className="text-sm text-muted-foreground">Create your store and pay wholesale rates on every bundle you buy.</p>
+              <p className="text-sm text-muted-foreground">
+                {mtnOffer
+                  ? `${mtnOffer.label}: agents pay ₵${mtnOffer.agentPrice.toFixed(2)} vs ₵${mtnOffer.userPrice.toFixed(2)} for users — save ₵${mtnOffer.saved.toFixed(2)} per bundle.`
+                  : "Create your store and pay wholesale rates on every bundle you buy."}
+              </p>
             </div>
             <Badge className="bg-primary text-primary-foreground font-black">Become Agent</Badge>
           </div>

@@ -112,13 +112,25 @@ function StorefrontContent() {
   const supportMsg = `Hi ${store.name}, I have a question about your data bundles.`;
   const openWhatsApp = () => window.open(whatsappLink(store.whatsapp, supportMsg), "_blank");
 
+  const isOwner = user?.id === store.user_id;
+
   return (
     <>
-      <StoreHeader storeName={store.name} onTrackOrder={() => setTrackerOpen(true)} />
-      <StoreHero storeName={store.name} onWhatsApp={openWhatsApp} />
+      <StoreHeader
+        storeName={store.name}
+        storeSlug={store.slug}
+        showSubAgentLink={!isOwner}
+        onTrackOrder={() => setTrackerOpen(true)}
+      />
+      <StoreHero
+        storeName={store.name}
+        storeSlug={store.slug}
+        showSubAgentCta={!isOwner}
+        onWhatsApp={openWhatsApp}
+      />
 
       <main id="bundles" className="max-w-5xl mx-auto px-4 pb-8 space-y-10">
-        {user?.id !== store.user_id && (
+        {!isOwner && (
           <SubAgentApply storeSlug={store.slug} storeName={store.name} />
         )}
         {packages.length === 0 ? (
@@ -145,7 +157,12 @@ function StorefrontContent() {
         )}
       </main>
 
-      <StoreFooter storeName={store.name} onTrackOrder={() => setTrackerOpen(true)} />
+      <StoreFooter
+        storeName={store.name}
+        storeSlug={store.slug}
+        showSubAgentLink={!isOwner}
+        onTrackOrder={() => setTrackerOpen(true)}
+      />
 
       <StoreBuyDialog
         pkg={selected}

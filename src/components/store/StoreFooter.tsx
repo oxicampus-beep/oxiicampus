@@ -1,13 +1,17 @@
+import { Link } from "react-router-dom";
 import { useStoreTheme } from "@/components/store/StoreThemeProvider";
 import { cn } from "@/lib/utils";
 
 type Props = {
   storeName: string;
+  storeSlug?: string;
+  showSubAgentLink?: boolean;
   onTrackOrder?: () => void;
 };
 
-export default function StoreFooter({ storeName, onTrackOrder }: Props) {
+export default function StoreFooter({ storeName, storeSlug, showSubAgentLink = true, onTrackOrder }: Props) {
   const { isDark } = useStoreTheme();
+  const subAgentHref = storeSlug ? `/store/${storeSlug}/sub-agent` : undefined;
 
   return (
     <footer className={cn("border-t mt-16", isDark ? "border-white/10 bg-zinc-900/50" : "border-zinc-200 bg-white")}>
@@ -31,6 +35,16 @@ export default function StoreFooter({ storeName, onTrackOrder }: Props) {
                   Browse bundles
                 </a>
               </li>
+              {showSubAgentLink && subAgentHref && (
+                <li>
+                  <Link
+                    to={subAgentHref}
+                    className={cn("transition-colors font-medium", isDark ? "text-primary hover:text-primary/80" : "text-primary hover:underline")}
+                  >
+                    Become a sub-agent
+                  </Link>
+                </li>
+              )}
               {onTrackOrder && (
                 <li>
                   <button

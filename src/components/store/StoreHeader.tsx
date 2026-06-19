@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Menu, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import StoreThemeToggle from "@/components/store/StoreThemeToggle";
@@ -8,12 +9,15 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   storeName: string;
+  storeSlug?: string;
+  showSubAgentLink?: boolean;
   onTrackOrder?: () => void;
 };
 
-export default function StoreHeader({ storeName, onTrackOrder }: Props) {
+export default function StoreHeader({ storeName, storeSlug, showSubAgentLink = true, onTrackOrder }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isDark } = useStoreTheme();
+  const subAgentHref = storeSlug ? `/store/${storeSlug}/sub-agent` : undefined;
 
   return (
     <header
@@ -23,7 +27,7 @@ export default function StoreHeader({ storeName, onTrackOrder }: Props) {
       )}
     >
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <Link to={storeSlug ? `/store/${storeSlug}` : "#"} className="flex items-center gap-3 min-w-0">
           <div
             className={cn(
               "h-9 w-9 rounded-xl grid place-items-center font-black text-lg shrink-0",
@@ -35,9 +39,17 @@ export default function StoreHeader({ storeName, onTrackOrder }: Props) {
           <span className={cn("font-display font-bold truncate", isDark ? "text-white" : "text-zinc-900")}>
             {storeName}
           </span>
-        </div>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-1">
+          {showSubAgentLink && subAgentHref && (
+            <Button asChild variant="ghost" size="sm" className={cn("gap-1.5 font-semibold", isDark ? "text-primary hover:text-primary" : "text-primary")}>
+              <Link to={subAgentHref}>
+                <UserPlus className="h-4 w-4" />
+                Become sub-agent
+              </Link>
+            </Button>
+          )}
           {onTrackOrder && (
             <Button
               variant="ghost"
@@ -52,6 +64,14 @@ export default function StoreHeader({ storeName, onTrackOrder }: Props) {
         </nav>
 
         <div className="flex md:hidden items-center gap-1">
+          {showSubAgentLink && subAgentHref && (
+            <Button asChild size="sm" variant="outline" className="h-8 px-2 text-xs font-bold gap-1">
+              <Link to={subAgentHref}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Join
+              </Link>
+            </Button>
+          )}
           <StoreThemeToggle />
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
@@ -64,6 +84,14 @@ export default function StoreHeader({ storeName, onTrackOrder }: Props) {
                 <SheetTitle className="text-left font-display">{storeName}</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-2 mt-6">
+                {showSubAgentLink && subAgentHref && (
+                  <Button asChild variant="default" className="justify-start gap-2">
+                    <Link to={subAgentHref} onClick={() => setMenuOpen(false)}>
+                      <UserPlus className="h-4 w-4" />
+                      Become a sub-agent
+                    </Link>
+                  </Button>
+                )}
                 {onTrackOrder && (
                   <Button
                     variant="outline"
@@ -73,6 +101,11 @@ export default function StoreHeader({ storeName, onTrackOrder }: Props) {
                     Track order
                   </Button>
                 )}
+                <Button asChild variant="outline" className="justify-start">
+                  <Link to={storeSlug ? `/store/${storeSlug}` : "#"} onClick={() => setMenuOpen(false)}>
+                    Browse bundles
+                  </Link>
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>

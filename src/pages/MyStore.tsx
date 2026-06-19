@@ -57,7 +57,7 @@ type StorePkg = {
 export default function MyStore() {
   const { user } = useAuth();
   const { profile, refresh: refreshProfile } = useProfile();
-  const { isSubAgent, subAgentStatus } = useDashboardRole();
+  const { isSubAgent, subAgentStatus, isParentAgent } = useDashboardRole();
   const [store, setStore] = useState<StoreRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -298,6 +298,12 @@ export default function MyStore() {
   }
 
   const storeUrl = getStoreUrl(store.slug);
+  const subAgentUrl = `${window.location.origin}/store/${store.slug}/sub-agent`;
+
+  const copySubAgentLink = () => {
+    navigator.clipboard.writeText(subAgentUrl);
+    toast.success("Sub-agent signup link copied!");
+  };
 
   /* ── Store exists: dashboard ── */
   return (
@@ -374,6 +380,24 @@ export default function MyStore() {
           </button>
         </p>
       </Card>
+
+      {isParentAgent && (
+        <Card className="p-6 border-indigo-500/30 bg-indigo-500/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Link2 className="h-5 w-5 text-indigo-400" />
+            <h2 className="font-display font-semibold text-lg">Sub-agent signup link</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Share this link so people can sign up as sub-agents under your store — they get cheaper prices and their own reseller store.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input readOnly value={subAgentUrl} className="font-mono text-sm bg-background" />
+            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={copySubAgentLink}>
+              <Copy className="h-4 w-4" /> Copy link
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid sm:grid-cols-3 gap-4">

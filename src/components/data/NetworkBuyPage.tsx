@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBuyPrices } from "@/hooks/useBuyPrices";
 import { useDashboardRole } from "@/hooks/useDashboardRole";
 import AgentUpgradeBanner from "@/components/dashboard/AgentUpgradeBanner";
+import { useMtn1GbOfferPricing } from "@/lib/agentPricingExample";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 
@@ -22,6 +23,7 @@ const styles: Record<Network, string> = {
 export default function NetworkBuyPage({ network, title, subtitle, embedded }: { network: Network; title: string; subtitle: string; embedded?: boolean }) {
   const { isSubAgent, isParentAgent, loading: roleLoading } = useDashboardRole();
   const { resolvePrice, loading: priceLoading } = useBuyPrices();
+  const { example: mtnOffer } = useMtn1GbOfferPricing();
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any | null>(null);
@@ -62,11 +64,22 @@ export default function NetworkBuyPage({ network, title, subtitle, embedded }: {
           )}
           {!isSubAgent && !isParentAgent && !roleLoading && (
             <p className="text-xs text-amber-400 mt-1">
-              Paying user prices?{" "}
-              <Link to="/dashboard/my-store" className="font-bold underline hover:text-amber-300">
-                Become an agent
-              </Link>{" "}
-              for cheaper bundles.
+              {mtnOffer ? (
+                <>
+                  {mtnOffer.label}: you pay ₵{mtnOffer.userPrice.toFixed(2)}, agents pay ₵{mtnOffer.agentPrice.toFixed(2)}.{" "}
+                  <Link to="/dashboard/my-store" className="font-bold underline hover:text-amber-300">
+                    Become an agent
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Paying user prices?{" "}
+                  <Link to="/dashboard/my-store" className="font-bold underline hover:text-amber-300">
+                    Become an agent
+                  </Link>{" "}
+                  for cheaper bundles.
+                </>
+              )}
             </p>
           )}
         </div>

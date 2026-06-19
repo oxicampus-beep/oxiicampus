@@ -46,6 +46,7 @@ import AdminAPIUsers from "@/pages/admin/AdminAPIUsers";
 import AdminAPIOrders from "@/pages/admin/AdminAPIOrders";
 import AdminAccountSettings from "@/pages/admin/AdminAccountSettings";
 import Storefront from "@/pages/Storefront";
+import SubAgentAuth from "@/pages/store/SubAgentAuth";
 import ApiDocs from "@/pages/ApiDocs";
 import NotFound from "./pages/NotFound";
 
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="/store/:slug" element={<Storefront />} />
+            <Route path="/store/:slug/sub-agent" element={<SubAgentAuth />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               {dashboardChildRoutes}
             </Route>

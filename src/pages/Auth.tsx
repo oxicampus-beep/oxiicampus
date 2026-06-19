@@ -42,7 +42,9 @@ export default function Auth() {
   const { user } = useAuth();
   const referralCode = useMemo(() => searchParams.get("ref")?.trim().toUpperCase() ?? "", [searchParams]);
 
-  useEffect(() => { if (user) navigate("/dashboard", { replace: true }); }, [user, navigate]);
+  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+
+  useEffect(() => { if (user) navigate(redirectTo, { replace: true }); }, [user, navigate, redirectTo]);
   useEffect(() => {
     if (referralCode) localStorage.setItem("byteboss_ref", referralCode);
   }, [referralCode]);
@@ -57,7 +59,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithPassword(signin);
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Welcome back!"); navigate("/dashboard");
+    toast.success("Welcome back!"); navigate(redirectTo);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -83,7 +85,7 @@ export default function Auth() {
       await supabase.rpc("apply_referral_on_signup", { p_referral_code: ref });
       localStorage.removeItem("byteboss_ref");
     }
-    navigate("/dashboard");
+    navigate(redirectTo);
   };
 
   return (

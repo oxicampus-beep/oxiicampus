@@ -1,27 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Store, TrendingDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type SavingsExample = {
-  sizeGb: number;
-  network: string;
-  userPrice: number;
-  agentPrice: number;
-  saved: number;
-  pct: number;
-};
+import { useMtn1GbOfferPricing } from "@/lib/agentPricingExample";
 
 const DISMISS_KEY = "byteboss_agent_banner_dismissed";
-
-function networkLabel(network: string) {
-  if (network.startsWith("airteltigo")) return "AirtelTigo";
-  if (network === "telecel") return "Telecel";
-  return "MTN";
-}
 
 type Props = {
   compact?: boolean;
@@ -29,36 +14,8 @@ type Props = {
 };
 
 export default function AgentUpgradeBanner({ compact, className }: Props) {
-  const [example, setExample] = useState<SavingsExample | null>(null);
+  const { example } = useMtn1GbOfferPricing();
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === "1");
-
-  useEffect(() => {
-    supabase
-      .from("data_packages")
-      .select("network, size_gb, user_price, agent_price")
-      .eq("active", true)
-      .then(({ data }) => {
-        let best: SavingsExample | null = null;
-        for (const p of data ?? []) {
-          const user = Number(p.user_price);
-          const agent = Number(p.agent_price);
-          if (user <= agent) continue;
-          const saved = user - agent;
-          const pct = Math.round((saved / user) * 100);
-          if (!best || saved > best.saved) {
-            best = {
-              sizeGb: Number(p.size_gb),
-              network: p.network,
-              userPrice: user,
-              agentPrice: agent,
-              saved,
-              pct,
-            };
-          }
-        }
-        setExample(best);
-      });
-  }, []);
 
   if (dismissed) return null;
 
@@ -79,9 +36,12 @@ export default function AgentUpgradeBanner({ compact, className }: Props) {
         <p className="flex-1 min-w-0 text-muted-foreground">
           <span className="text-foreground font-semibold">Agents get cheaper data.</span>
           {example ? (
-            <> Save up to ₵{example.saved.toFixed(2)} ({example.pct}%) per bundle.</>
+            <>
+              {" "}
+              {example.label}: save ₵{example.saved.toFixed(2)} ({example.pct}%) — you ₵{example.userPrice.toFixed(2)}, agents ₵{example.agentPrice.toFixed(2)}.
+            </>
           ) : (
-            <> Unlock wholesale pricing on every network.</>
+            <> Unlock wholesale pricing on MTN 1GB and more.</>
           )}
         </p>
         <Button asChild size="sm" className="h-8 shrink-0 font-bold text-xs gap-1.5">
@@ -130,12 +90,13 @@ export default function AgentUpgradeBanner({ compact, className }: Props) {
           <p className="text-sm text-muted-foreground mt-1">
             {example ? (
               <>
-                Agents pay <span className="text-primary font-bold">₵{example.agentPrice.toFixed(2)}</span> for{" "}
-                {example.sizeGb}GB {networkLabel(example.network)} — you pay ₵{example.userPrice.toFixed(2)}.
-                That&apos;s <span className="text-amber-400 font-bold">₵{example.saved.toFixed(2)} saved</span> per bundle.
+                On <span className="font-semibold text-foreground">{example.label}</span>, you pay{" "}
+                <span className="font-bold">₵{example.userPrice.toFixed(2)}</span> — agents pay{" "}
+                <span className="text-primary font-bold">₵{example.agentPrice.toFixed(2)}</span>.
+                That&apos;s <span className="text-amber-400 font-bold">₵{example.saved.toFixed(2)} saved</span> ({example.pct}%) on every order.
               </>
             ) : (
-              <>Create a free store and unlock wholesale agent pricing on MTN, Telecel, and AirtelTigo.</>
+              <>Create a free store and unlock wholesale agent pricing on MTN 1GB Offer and other bundles.</>
             )}
           </p>
         </div>
