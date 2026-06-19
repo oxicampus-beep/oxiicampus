@@ -9,7 +9,9 @@ import { DashboardPageHeader, DashStatCard, GlassCard } from "@/components/dashb
 import PromoCarousel from "@/components/dashboard/PromoCarousel";
 import LastOrderWidget from "@/components/dashboard/LastOrderWidget";
 import QuickNetworkGrid from "@/components/dashboard/QuickNetworkGrid";
-import { Wallet, ShoppingBag, History, Trophy, ArrowUpRight, Store } from "lucide-react";
+import AgentUpgradeBanner from "@/components/dashboard/AgentUpgradeBanner";
+import { Wallet, ShoppingBag, History, Trophy, ArrowUpRight, Store, Smartphone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Overview() {
   const { user } = useAuth();
@@ -40,7 +42,26 @@ export default function Overview() {
           ? "Your agent dashboard — wholesale pricing, store sales, and earnings at a glance."
           : "Buy data bundles, top up your wallet, or start your reselling journey."}
         badge={isAgent ? "Agent" : "User"}
+        actions={
+          <Button asChild size="lg" className="font-black gap-2 shadow-lg shadow-primary/25">
+            <Link to="/dashboard/buy-data">
+              <Smartphone className="h-5 w-5" />
+              Buy Data Now
+            </Link>
+          </Button>
+        }
       />
+
+      <GlassCard title="Quick Buy — pick a network">
+        <QuickNetworkGrid />
+        <div className="mt-4 text-center">
+          <Link to="/dashboard/buy-data" className="text-sm font-bold text-primary hover:underline">
+            View all buy options →
+          </Link>
+        </div>
+      </GlassCard>
+
+      {!isAgent && <AgentUpgradeBanner />}
 
       <PromoCarousel />
 
@@ -56,17 +77,13 @@ export default function Overview() {
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-2xl bg-primary/20 grid place-items-center"><Store className="h-6 w-6 text-primary" /></div>
             <div className="flex-1">
-              <p className="font-black">Start Your Data Reselling Business</p>
-              <p className="text-sm text-muted-foreground">Unlock wholesale prices and your own Paystack-powered store.</p>
+              <p className="font-black">Unlock Cheaper Agent Prices</p>
+              <p className="text-sm text-muted-foreground">Create your store and pay wholesale rates on every bundle you buy.</p>
             </div>
             <Badge className="bg-primary text-primary-foreground font-black">Become Agent</Badge>
           </div>
         </Link>
       )}
-
-      <GlassCard title="Quick Buy">
-        <QuickNetworkGrid />
-      </GlassCard>
 
       <LastOrderWidget />
 

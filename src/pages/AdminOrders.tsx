@@ -20,6 +20,8 @@ type Order = {
   size_gb: number;
   recipient_phone: string;
   created_at: string;
+  buyer_role?: string;
+  sub_agent_id?: string | null;
   provider_order_id?: string | null;
   provider_error?: string | null;
   provider_status?: string | null;
@@ -27,6 +29,18 @@ type Order = {
   userPhone?: string | null;
   userEmail?: string | null;
 };
+
+function buyerRoleLabel(role?: string) {
+  if (role === "sub_agent") return "Sub-agent";
+  if (role === "agent") return "Agent";
+  return "User";
+}
+
+function buyerRoleClass(role?: string) {
+  if (role === "sub_agent") return "border-violet-400/40 text-violet-400";
+  if (role === "agent") return "border-sky-400/40 text-sky-400";
+  return "border-zinc-400/40 text-zinc-400";
+}
 
 const STATUSES = ["pending", "processing", "completed", "failed", "refunded"] as const;
 
@@ -147,6 +161,7 @@ function AdminOrdersContent() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Buyer</TableHead>
                   <TableHead>Bundle</TableHead>
                   <TableHead>Recipient</TableHead>
                   <TableHead>Amount</TableHead>
@@ -162,6 +177,11 @@ function AdminOrdersContent() {
                     <TableCell>
                       <div className="font-medium">{o.userName ?? "—"}</div>
                       <div className="text-xs text-muted-foreground">{o.userEmail ?? o.userPhone ?? "—"}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`text-[10px] ${buyerRoleClass(o.buyer_role)}`}>
+                        {buyerRoleLabel(o.buyer_role)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{o.size_gb}GB</div>

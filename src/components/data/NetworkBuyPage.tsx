@@ -4,8 +4,11 @@ import BuyDataDialog, { labelFor } from "./BuyDataDialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIsAgent } from "@/hooks/useIsAgent";
-import { withResolvedPrice } from "@/lib/pricing";
+import { useBuyPrices } from "@/hooks/useBuyPrices";
+import { useDashboardRole } from "@/hooks/useDashboardRole";
+import AgentUpgradeBanner from "@/components/dashboard/AgentUpgradeBanner";
+import { Link } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 
 type Network = "mtn" | "airteltigo_ishare" | "airteltigo_bigtime" | "telecel";
 
@@ -17,7 +20,8 @@ const styles: Record<Network, string> = {
 };
 
 export default function NetworkBuyPage({ network, title, subtitle, embedded }: { network: Network; title: string; subtitle: string; embedded?: boolean }) {
-  const { isAgent, loading: agentLoading } = useIsAgent();
+  const { isSubAgent, isParentAgent, loading: roleLoading } = useDashboardRole();
+  const { resolvePrice, loading: priceLoading } = useBuyPrices();
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any | null>(null);
@@ -31,28 +35,48 @@ export default function NetworkBuyPage({ network, title, subtitle, embedded }: {
   };
   useEffect(() => { load(); }, [network]);
 
-  const displayPackages = packages.map(p => withResolvedPrice(p, isAgent));
+  const displayPackages = packages.map(p => ({ ...p, price: resolvePrice(p) }));
+  const pricingLabel = isSubAgent ? "Sub-agent pricing" : isParentAgent ? "Agent pricing" : "User pricing";
 
   return (
     <div className="space-y-6">
       {!embedded && (
         <div>
+          <Link to="/dashboard/buy-data" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary font-semibold mb-3">
+            <ChevronLeft className="h-4 w-4" /> Back to Buy Data
+          </Link>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-3xl md:text-4xl font-display font-bold">{title}</h1>
-            {!agentLoading && (
-              <Badge variant={isAgent ? "default" : "secondary"}>
-                {isAgent ? "Agent pricing" : "User pricing"}
+            {!roleLoading && (
+              <Badge variant={isSubAgent || isParentAgent ? "default" : "secondary"}>
+                {pricingLabel}
               </Badge>
             )}
           </div>
           <p className="text-muted-foreground mt-1">{subtitle}</p>
-          {isAgent && (
+          {isSubAgent && (
+            <p className="text-xs text-primary mt-1">Prices set by your parent agent.</p>
+          )}
+          {isParentAgent && (
             <p className="text-xs text-primary mt-1">You have a store — you're buying at agent rates.</p>
+          )}
+          {!isSubAgent && !isParentAgent && !roleLoading && (
+            <p className="text-xs text-amber-400 mt-1">
+              Paying user prices?{" "}
+              <Link to="/dashboard/my-store" className="font-bold underline hover:text-amber-300">
+                Become an agent
+              </Link>{" "}
+              for cheaper bundles.
+            </p>
           )}
         </div>
       )}
 
-      {loading || agentLoading ? (
+      {!embedded && !isSubAgent && !isParentAgent && !roleLoading && (
+        <AgentUpgradeBanner />
+      )}
+
+      {loading || roleLoading || priceLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>

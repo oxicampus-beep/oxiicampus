@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { getStoreUrl, slugify, whatsappLink } from "@/lib/store";
 import { labelFor } from "@/components/data/BuyDataDialog";
 import { useProfile } from "@/hooks/useProfile";
+import { useDashboardRole } from "@/hooks/useDashboardRole";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -56,6 +57,7 @@ type StorePkg = {
 export default function MyStore() {
   const { user } = useAuth();
   const { profile, refresh: refreshProfile } = useProfile();
+  const { isSubAgent, subAgentStatus } = useDashboardRole();
   const [store, setStore] = useState<StoreRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -73,13 +75,17 @@ export default function MyStore() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data: s }, { count: pCount }, { data: orders }, { data: pkgs }, { data: settings }, { data: catalogPkgs }] = await Promise.all([
+    const catalogPromise = isSubAgent
+      ? supabase.rpc("get_my_subagent_prices")
+      : supabase.from("data_packages").select("id, network, size_gb, agent_price, validity").eq("active", true).order("network").order("size_gb");
+
+    const [{ data: s }, { count: pCount }, { data: orders }, { data: pkgs }, { data: settings }, catalogResult] = await Promise.all([
       supabase.from("stores").select("id, name, whatsapp, slug").eq("user_id", user.id).maybeSingle(),
       supabase.from("store_packages").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("store_orders").select("price").eq("store_owner_id", user.id),
       supabase.from("store_packages").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("platform_settings").select("store_activation_enabled, store_activation_fee").eq("id", 1).maybeSingle(),
-      supabase.from("data_packages").select("id, network, size_gb, agent_price, validity").eq("active", true).order("network").order("size_gb"),
+      catalogPromise,
     ]);
     setStore(s ?? null);
     if (s) setEditForm({ name: s.name, whatsapp: s.whatsapp });
@@ -90,7 +96,16 @@ export default function MyStore() {
       revenue: (orders ?? []).reduce((sum, o) => sum + Number(o.price), 0),
     });
     setPackages(sortByNetworkThenSize((pkgs ?? []) as StorePkg[]));
-    setCatalog(sortByNetworkThenSize((catalogPkgs ?? []) as CatalogPkg[]));
+    const catalogPkgs = isSubAgent
+      ? ((catalogResult.data ?? []) as { data_package_id: string; network: string; size_gb: number; subagent_price: number; validity: string }[]).map(r => ({
+          id: r.data_package_id,
+          network: r.network,
+          size_gb: Number(r.size_gb),
+          agent_price: Number(r.subagent_price),
+          validity: r.validity,
+        }))
+      : ((catalogResult.data ?? []) as CatalogPkg[]);
+    setCatalog(sortByNetworkThenSize(catalogPkgs));
     setLoading(false);
   };
 
@@ -109,14 +124,14 @@ export default function MyStore() {
   );
   const listedByNetwork = groupByNetwork(packages);
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => { load(); }, [user, isSubAgent]);
 
   const createStore = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (!createForm.name.trim()) return toast.error("Enter a store name.");
     if (!createForm.whatsapp.trim()) return toast.error("Enter a WhatsApp support number.");
-    if (activation.enabled && Number(profile?.wallet_balance ?? 0) < activation.fee) {
+    if (!isSubAgent && activation.enabled && Number(profile?.wallet_balance ?? 0) < activation.fee) {
       return toast.error(`Insufficient wallet balance. Top up ₵${activation.fee.toFixed(2)} to activate your store.`);
     }
     setCreating(true);
@@ -128,7 +143,7 @@ export default function MyStore() {
     });
     setCreating(false);
     if (error) return toast.error(error.message);
-    toast.success("Your store is live! You're now an agent with agent pricing.");
+    toast.success(isSubAgent ? "Your sub-agent store is live!" : "Your store is live! You're now an agent with agent pricing.");
     await refreshProfile();
     load();
   };
@@ -197,19 +212,38 @@ export default function MyStore() {
 
   /* ── No store yet: setup form ── */
   if (!store) {
+    if (subAgentStatus === "pending") {
+      return (
+        <div className="space-y-6 max-w-lg mx-auto text-center">
+          <div className="inline-flex h-16 w-16 rounded-2xl bg-amber-500/10 items-center justify-center mb-2">
+            <Store className="h-8 w-8 text-amber-500" />
+          </div>
+          <h1 className="text-3xl font-display font-bold">Sub-agent application pending</h1>
+          <p className="text-muted-foreground">
+            An admin will review your application. Once approved, you can create your store here with no activation fee.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-8 max-w-lg mx-auto">
         <div className="text-center">
           <div className="inline-flex h-16 w-16 rounded-2xl bg-primary/10 items-center justify-center mb-4">
             <Store className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold">Create Your Store</h1>
+          <h1 className="text-3xl md:text-4xl font-display font-bold">
+            {isSubAgent ? "Create Your Sub-agent Store" : "Create Your Store"}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            Set up your mini website to resell data under your own brand. Once created, you become an agent with lower data prices.
+            {isSubAgent
+              ? "Set up your mini website to resell data. Your wholesale prices are set by your parent agent."
+              : "Set up your mini website to resell data under your own brand. Once created, you become an agent with lower data prices."}
           </p>
+          {isSubAgent && <Badge className="mt-3">Sub-agent</Badge>}
         </div>
 
-        {activation.enabled && activation.fee > 0 && (
+        {!isSubAgent && activation.enabled && activation.fee > 0 && (
           <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
             <p className="text-sm">
               Store activation fee: <span className="font-bold text-primary">₵{activation.fee.toFixed(2)}</span>
@@ -218,6 +252,12 @@ export default function MyStore() {
                 <> · <Link to="/dashboard/wallet" className="text-primary underline">Top up wallet</Link></>
               )}
             </p>
+          </Card>
+        )}
+
+        {isSubAgent && (
+          <Card className="p-4 border-emerald-500/30 bg-emerald-500/5">
+            <p className="text-sm">Store activation is free for approved sub-agents.</p>
           </Card>
         )}
 
@@ -247,7 +287,7 @@ export default function MyStore() {
             </div>
             <Button type="submit" disabled={creating} className="w-full h-11 font-semibold gap-2">
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {activation.enabled && activation.fee > 0
+              {!isSubAgent && activation.enabled && activation.fee > 0
                 ? `Create Store · Pay ₵${activation.fee.toFixed(2)}`
                 : "Create My Store (Free)"}
             </Button>
@@ -266,9 +306,13 @@ export default function MyStore() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-3xl md:text-4xl font-display font-bold">{store.name}</h1>
-            <Badge>Agent</Badge>
+            <Badge>{isSubAgent ? "Sub-agent" : "Agent"}</Badge>
           </div>
-          <p className="text-muted-foreground mt-1">Manage your mini store, packages, and share your link. You get agent pricing on data purchases.</p>
+          <p className="text-muted-foreground mt-1">
+            {isSubAgent
+              ? "Manage your store, packages, and share your link. You buy data at your parent agent's wholesale rates."
+              : "Manage your mini store, packages, and share your link. You get agent pricing on data purchases."}
+          </p>
         </div>
         {!editing ? (
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setEditing(true)}>
@@ -354,7 +398,9 @@ export default function MyStore() {
           <h2 className="text-xl font-display font-semibold">Store Packages</h2>
         </div>
         <p className="text-sm text-muted-foreground -mt-2">
-          Pick admin bundles at agent base price, add your profit, and list on your store website.
+          {isSubAgent
+            ? "Pick platform bundles at your wholesale price, add your profit, and list on your store website."
+            : "Pick admin bundles at agent base price, add your profit, and list on your store website."}
         </p>
 
         <Card className="p-6">
@@ -415,7 +461,7 @@ export default function MyStore() {
               {selectedCatalog && (
                 <div className="rounded-lg bg-secondary/50 p-4 grid sm:grid-cols-3 gap-3 text-sm">
                   <div>
-                    <div className="text-muted-foreground text-xs">Base cost (agent price)</div>
+                    <div className="text-muted-foreground text-xs">{isSubAgent ? "Base cost (your rate)" : "Base cost (agent price)"}</div>
                     <div className="font-bold">₵{baseCost.toFixed(2)}</div>
                   </div>
                   <div>

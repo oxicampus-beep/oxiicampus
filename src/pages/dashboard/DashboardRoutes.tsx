@@ -3,6 +3,7 @@ import Overview from "@/pages/Overview";
 import WalletPage from "@/pages/WalletPage";
 import Transactions from "@/pages/Transactions";
 import BuyMTN from "@/pages/BuyMTN";
+import BuyDataHub from "@/pages/dashboard/BuyDataHub";
 import BuyTelecel from "@/pages/BuyTelecel";
 import BuyAirtelTigo from "@/pages/BuyAirtelTigo";
 import AFA from "@/pages/AFA";
@@ -20,6 +21,7 @@ import ReferralProgram from "@/pages/dashboard/ReferralProgram";
 import AddressBook from "@/pages/dashboard/AddressBook";
 import AgentPrices from "@/pages/dashboard/AgentPrices";
 import AgentSubAgents from "@/pages/dashboard/AgentSubAgents";
+import AgentSubAgentPricing from "@/pages/dashboard/AgentSubAgentPricing";
 import StoreSettings from "@/pages/dashboard/StoreSettings";
 import AutoRenewal from "@/pages/dashboard/AutoRenewal";
 import BuyAirtime from "@/pages/dashboard/BuyAirtime";
@@ -42,6 +44,7 @@ export const dashboardChildRoutes = (
     <Route path="schedule" element={<AutoRenewal />} />
     <Route path="transactions" element={<Transactions />} />
     <Route path="notifications" element={<NotificationsInbox />} />
+    <Route path="buy-data" element={<BuyDataHub />} />
     <Route path="buy-data/mtn" element={<BuyMTN />} />
     <Route path="buy-data/telecel" element={<BuyTelecel />} />
     <Route path="buy-data/airteltigo" element={<BuyAirtelTigo />} />
@@ -67,6 +70,7 @@ export const dashboardChildRoutes = (
     <Route path="agent-prices" element={<AgentPrices />} />
     <Route path="withdrawals" element={<StoreWithdrawal />} />
     <Route path="subagents" element={<AgentSubAgents />} />
+    <Route path="subagent-pricing" element={<AgentSubAgentPricing />} />
     <Route path="api" element={<DeveloperAPI />} />
     <Route path="developer" element={<Navigate to="/dashboard/api" replace />} />
     <Route path="marketing" element={<MarketingTools />} />

@@ -82,6 +82,7 @@ export type Database = {
       }
       data_orders: {
         Row: {
+          buyer_role: string
           created_at: string
           id: string
           network: Database["public"]["Enums"]["network_type"]
@@ -94,10 +95,12 @@ export type Database = {
           recipient_phone: string
           size_gb: number
           status: Database["public"]["Enums"]["order_status"]
+          sub_agent_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          buyer_role?: string
           created_at?: string
           id?: string
           network: Database["public"]["Enums"]["network_type"]
@@ -110,10 +113,12 @@ export type Database = {
           recipient_phone: string
           size_gb: number
           status?: Database["public"]["Enums"]["order_status"]
+          sub_agent_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          buyer_role?: string
           created_at?: string
           id?: string
           network?: Database["public"]["Enums"]["network_type"]
@@ -126,6 +131,7 @@ export type Database = {
           recipient_phone?: string
           size_gb?: number
           status?: Database["public"]["Enums"]["order_status"]
+          sub_agent_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -946,6 +952,48 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_subagent_prices: {
+        Row: {
+          created_at: string
+          data_package_id: string
+          id: string
+          parent_agent_id: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_package_id: string
+          id?: string
+          parent_agent_id: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_package_id?: string
+          id?: string
+          parent_agent_id?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_subagent_prices_data_package_id_fkey"
+            columns: ["data_package_id"]
+            isOneToOne: false
+            referencedRelation: "data_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_subagent_prices_parent_agent_id_fkey"
+            columns: ["parent_agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sub_agents: {
         Row: {
           activation_fee_paid: number
@@ -1254,6 +1302,41 @@ export type Database = {
       }
       purchase_utility: {
         Args: { p_account_number: string; p_amount: number; p_meta?: Json; p_utility_type: string }
+        Returns: string
+      }
+      get_admin_subagents: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_my_subagent_prices: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          agent_base_price: number
+          data_package_id: string
+          network: Database["public"]["Enums"]["network_type"]
+          size_gb: number
+          subagent_price: number
+          validity: string
+        }[]
+      }
+      get_parent_subagents: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      is_parent_agent: {
+        Args: { _user_id?: string }
+        Returns: boolean
+      }
+      is_subagent: {
+        Args: { _user_id?: string }
+        Returns: boolean
+      }
+      resolve_buy_price: {
+        Args: { p_package_id: string; p_user_id: string }
+        Returns: number
+      }
+      set_subagent_price: {
+        Args: { p_data_package_id: string; p_price: number }
         Returns: string
       }
       get_agent_leaderboard: {

@@ -3,19 +3,20 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { useIsAgent } from "@/hooks/useIsAgent";
+import { useDashboardRole } from "@/hooks/useDashboardRole";
 import AnnouncementPopup from "@/components/notifications/AnnouncementPopup";
 import PlatformBanners from "@/components/platform/PlatformBanners";
 import OrderTrackerFab from "@/components/orders/OrderTrackerFab";
 import WelcomeOnboarding from "@/components/auth/WelcomeOnboarding";
+import AgentUpgradeBanner from "@/components/dashboard/AgentUpgradeBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Wallet, Trophy, Bell, ArrowUpRight } from "lucide-react";
+import { LogOut, Wallet, Trophy, Bell, ArrowUpRight, Smartphone } from "lucide-react";
 
 export default function DashboardLayout() {
   const { user, loading, signOut } = useAuth();
   const { profile } = useProfile();
-  const { isAgent } = useIsAgent();
+  const { showAgentNav, isSubAgent, isParentAgent } = useDashboardRole();
 
   if (loading) return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -31,11 +32,17 @@ export default function DashboardLayout() {
               <div className="hidden md:block min-w-0">
                 <span className="font-display font-bold text-base">Dashboard</span>
                 <Badge variant="outline" className="ml-2 text-[10px] font-black uppercase border-primary/30 text-primary">
-                  {isAgent ? "Agent" : "User"}
+                  {isSubAgent ? "Sub-agent" : showAgentNav ? "Agent" : "User"}
                 </Badge>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button asChild size="sm" className="h-9 font-black gap-1.5 shadow-lg shadow-primary/25">
+                <Link to="/dashboard/buy-data">
+                  <Smartphone className="h-4 w-4" />
+                  <span className="hidden sm:inline">Buy Data</span>
+                </Link>
+              </Button>
               <Link
                 to="/dashboard/notifications"
                 className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 grid place-items-center hover:bg-white/10 transition-colors"
@@ -65,6 +72,7 @@ export default function DashboardLayout() {
               </Button>
             </div>
           </header>
+          {!showAgentNav && <AgentUpgradeBanner compact />}
           <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto overflow-x-hidden">
             <PlatformBanners />
             <Outlet />

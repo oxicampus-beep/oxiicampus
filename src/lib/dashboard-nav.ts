@@ -2,7 +2,7 @@ import {
   LayoutDashboard, User, Shield, Wallet, RefreshCw, History, Bell, Smartphone,
   Radio, Wifi, Phone, Zap, UserPlus, Sparkles, Store, ShoppingCart, Banknote,
   AlertCircle, BookUser, Users, Trophy, Tag, Code2, Image, Megaphone, BarChart3,
-  Send, Bot, GraduationCap, Settings, Package,
+  Send, Bot, GraduationCap, Settings, Package, DollarSign,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -11,7 +11,10 @@ export type DashboardNavItem = {
   to: string;
   icon: LucideIcon;
   badge?: "new" | "hot";
-  agentOnly?: boolean;
+  /** Visible when user has agent or sub-agent dashboard access */
+  resellerOnly?: boolean;
+  /** Hidden from sub-agents (parent agents only) */
+  parentAgentOnly?: boolean;
   userOnly?: boolean;
   matchPrefix?: boolean;
 };
@@ -19,7 +22,7 @@ export type DashboardNavItem = {
 export type DashboardNavGroup = {
   label: string;
   items: DashboardNavItem[];
-  agentOnly?: boolean;
+  resellerOnly?: boolean;
 };
 
 export const accountNav: DashboardNavItem[] = [
@@ -33,9 +36,10 @@ export const accountNav: DashboardNavItem[] = [
 ];
 
 export const buyDataNav: DashboardNavItem[] = [
-  { label: "Buy MTN Data", to: "/dashboard/buy-data/mtn", icon: Smartphone, matchPrefix: true },
-  { label: "Buy Telecel Data", to: "/dashboard/buy-data/telecel", icon: Wifi, matchPrefix: true },
-  { label: "Buy AirtelTigo Data", to: "/dashboard/buy-data/airteltigo", icon: Radio, matchPrefix: true },
+  { label: "Buy Data", to: "/dashboard/buy-data", icon: Smartphone, badge: "hot", matchPrefix: true },
+  { label: "MTN Bundles", to: "/dashboard/buy-data/mtn", icon: Smartphone, matchPrefix: true },
+  { label: "Telecel Bundles", to: "/dashboard/buy-data/telecel", icon: Wifi, matchPrefix: true },
+  { label: "AirtelTigo Bundles", to: "/dashboard/buy-data/airteltigo", icon: Radio, matchPrefix: true },
   { label: "Buy Airtime", to: "/dashboard/buy-airtime", icon: Phone, badge: "new" },
 ];
 
@@ -51,51 +55,63 @@ export const servicesNav: DashboardNavItem[] = [
 ];
 
 export const storeNav: DashboardNavItem[] = [
-  { label: "My Store", to: "/dashboard/my-store", icon: Store, agentOnly: true },
-  { label: "Store Orders", to: "/dashboard/store/orders", icon: ShoppingCart, agentOnly: true },
-  { label: "Store Settings", to: "/dashboard/store-settings", icon: Settings, agentOnly: true },
+  { label: "My Store", to: "/dashboard/my-store", icon: Store, resellerOnly: true },
+  { label: "Store Orders", to: "/dashboard/store/orders", icon: ShoppingCart, resellerOnly: true },
+  { label: "Store Settings", to: "/dashboard/store-settings", icon: Settings, resellerOnly: true },
 ];
 
 export const agentToolsNav: DashboardNavItem[] = [
-  { label: "Agent Prices", to: "/dashboard/agent-prices", icon: Tag, agentOnly: true },
-  { label: "Withdrawals", to: "/dashboard/withdrawals", icon: Banknote, agentOnly: true },
-  { label: "Subagents", to: "/dashboard/subagents", icon: Users, agentOnly: true },
-  { label: "My API Access", to: "/dashboard/api", icon: Code2, agentOnly: true },
-  { label: "Marketing Tools", to: "/dashboard/marketing", icon: Megaphone, agentOnly: true },
-  { label: "Flyer Generator", to: "/dashboard/flyer", icon: Image, agentOnly: true },
-  { label: "Agent Leaderboard", to: "/dashboard/leaderboard", icon: BarChart3, agentOnly: true },
-  { label: "Bulk Disbursement", to: "/dashboard/bulk", icon: Send, agentOnly: true },
-  { label: "WhatsApp Bot", to: "/dashboard/whatsapp-bot", icon: Bot, agentOnly: true },
+  { label: "My Prices", to: "/dashboard/agent-prices", icon: Tag, resellerOnly: true },
+  { label: "Withdrawals", to: "/dashboard/withdrawals", icon: Banknote, resellerOnly: true },
+  { label: "Subagents", to: "/dashboard/subagents", icon: Users, resellerOnly: true, parentAgentOnly: true },
+  { label: "Sub-agent Pricing", to: "/dashboard/subagent-pricing", icon: DollarSign, resellerOnly: true, parentAgentOnly: true },
+  { label: "My API Access", to: "/dashboard/api", icon: Code2, resellerOnly: true },
+  { label: "Marketing Tools", to: "/dashboard/marketing", icon: Megaphone, resellerOnly: true },
+  { label: "Flyer Generator", to: "/dashboard/flyer", icon: Image, resellerOnly: true },
+  { label: "Agent Leaderboard", to: "/dashboard/leaderboard", icon: BarChart3, resellerOnly: true },
+  { label: "Bulk Disbursement", to: "/dashboard/bulk", icon: Send, resellerOnly: true },
+  { label: "WhatsApp Bot", to: "/dashboard/whatsapp-bot", icon: Bot, resellerOnly: true },
 ];
 
-export const dashboardNavGroups = (isAgent: boolean): DashboardNavGroup[] => {
+export function dashboardNavGroups(showAgentNav: boolean, canRecruitSubAgents: boolean): DashboardNavGroup[] {
   const filter = (items: DashboardNavItem[]) =>
-    items.filter(i => (!i.agentOnly || isAgent) && (!i.userOnly || !isAgent));
+    items.filter(i => {
+      if (i.resellerOnly && !showAgentNav) return false;
+      if (i.parentAgentOnly && !canRecruitSubAgents) return false;
+      if (i.userOnly && showAgentNav) return false;
+      return true;
+    });
 
   const groups: DashboardNavGroup[] = [
-    { label: "Account", items: filter(accountNav) },
     { label: "Buy Data", items: filter(buyDataNav) },
+    { label: "Account", items: filter(accountNav) },
     { label: "Services", items: filter(servicesNav) },
   ];
 
-  if (isAgent) {
-    groups.push({ label: "Store", items: filter(storeNav), agentOnly: true });
-    groups.push({ label: "Agent Tools", items: filter(agentToolsNav), agentOnly: true });
+  if (showAgentNav) {
+    groups.push({ label: "Store", items: filter(storeNav), resellerOnly: true });
+    groups.push({
+      label: canRecruitSubAgents ? "Agent Tools" : "Sub-agent Tools",
+      items: filter(agentToolsNav),
+      resellerOnly: true,
+    });
   } else {
     groups.push({
       label: "Agent Program",
       items: [
         { label: "Become an Agent", to: "/dashboard/my-store", icon: Package },
-        { label: "Become a Sub-Agent", to: "/dashboard/extras", icon: Users },
       ],
     });
   }
 
   return groups;
-};
+}
 
 export function isNavActive(pathname: string, item: DashboardNavItem) {
   if (item.to === "/dashboard") return pathname === "/dashboard";
+  if (item.to === "/dashboard/buy-data") {
+    return pathname === "/dashboard/buy-data";
+  }
   if (item.matchPrefix) return pathname === item.to || pathname.startsWith(item.to + "/");
   return pathname === item.to || pathname.startsWith(item.to + "/");
 }

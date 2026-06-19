@@ -9,7 +9,7 @@ const OPTIONS = [
     icon: ShoppingBag,
     title: "Buy a data bundle",
     desc: "Purchase MTN, Telecel or AirtelTigo data instantly",
-    to: "/dashboard/buy-data/mtn",
+    to: "/dashboard/buy-data",
     color: "border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/15",
   },
   {

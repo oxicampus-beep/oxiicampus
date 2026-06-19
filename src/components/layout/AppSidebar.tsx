@@ -4,7 +4,7 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsAdmin } from "@/hooks/useRoles";
-import { useIsAgent } from "@/hooks/useIsAgent";
+import { useDashboardRole } from "@/hooks/useDashboardRole";
 import { dashboardNavGroups, isNavActive, type DashboardNavItem } from "@/lib/dashboard-nav";
 import { Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,18 +22,21 @@ function NavBadge({ badge }: { badge?: "new" | "hot" }) {
 function NavItemLink({ item, collapsed }: { item: DashboardNavItem; collapsed: boolean }) {
   const { pathname } = useLocation();
   const active = isNavActive(pathname, item);
+  const isBuyHub = item.to === "/dashboard/buy-data";
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={active} className="h-11">
         <NavLink
           to={item.to}
-          end={item.to === "/dashboard"}
+          end={item.to === "/dashboard" || item.to === "/dashboard/buy-data"}
           className={cn(
             "group flex items-center justify-between px-3 rounded-xl text-sm font-bold transition-all duration-200",
             active
               ? "text-primary bg-gradient-to-r from-primary/20 to-transparent border-l-2 border-primary shadow-lg shadow-primary/5"
-              : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+              : isBuyHub
+                ? "text-primary/90 bg-primary/10 border border-primary/20 hover:bg-primary/15"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5",
           )}
         >
           <div className="flex items-center gap-3 min-w-0">
@@ -51,8 +54,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { isAdmin } = useIsAdmin();
-  const { isAgent } = useIsAgent();
-  const groups = dashboardNavGroups(isAgent);
+  const { showAgentNav, canRecruitSubAgents } = useDashboardRole();
+  const groups = dashboardNavGroups(showAgentNav, canRecruitSubAgents);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-white/10 bg-[#0A0A0F]/95 backdrop-blur-xl">

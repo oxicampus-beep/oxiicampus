@@ -3,9 +3,9 @@ import { Smartphone, Wifi, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const networks = [
-  { label: "MTN", to: "/dashboard/buy-data/mtn", icon: Smartphone, color: "from-amber-500/20 to-amber-600/5 border-amber-500/30 text-amber-400" },
-  { label: "Telecel", to: "/dashboard/buy-data/telecel", icon: Wifi, color: "from-red-500/20 to-red-600/5 border-red-500/30 text-red-400" },
-  { label: "AirtelTigo", to: "/dashboard/buy-data/airteltigo", icon: Radio, color: "from-indigo-500/20 to-indigo-600/5 border-indigo-500/30 text-indigo-400" },
+  { label: "MTN", to: "/dashboard/buy-data/mtn", hub: "/dashboard/buy-data", icon: Smartphone, color: "from-amber-500/20 to-amber-600/5 border-amber-500/30 text-amber-400" },
+  { label: "Telecel", to: "/dashboard/buy-data/telecel", hub: "/dashboard/buy-data", icon: Wifi, color: "from-red-500/20 to-red-600/5 border-red-500/30 text-red-400" },
+  { label: "AirtelTigo", to: "/dashboard/buy-data/airteltigo", hub: "/dashboard/buy-data", icon: Radio, color: "from-indigo-500/20 to-indigo-600/5 border-indigo-500/30 text-indigo-400" },
 ];
 
 export default function QuickNetworkGrid() {
@@ -25,7 +25,7 @@ export default function QuickNetworkGrid() {
           </div>
           <div>
             <p className="font-black text-white">{n.label}</p>
-            <p className="text-xs text-white/50">Buy data bundle</p>
+            <p className="text-xs text-white/50">Tap to buy bundle</p>
           </div>
         </Link>
       ))}

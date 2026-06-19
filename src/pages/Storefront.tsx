@@ -11,6 +11,8 @@ import StoreHero from "@/components/store/StoreHero";
 import StoreFooter from "@/components/store/StoreFooter";
 import StoreBundleCard, { StoreNetworkSection } from "@/components/store/StoreBundleCard";
 import StoreErrorBoundary from "@/components/store/StoreErrorBoundary";
+import SubAgentApply from "@/components/store/SubAgentApply";
+import { useAuth } from "@/contexts/AuthContext";
 import { StoreThemeProvider, useStoreTheme } from "@/components/store/StoreThemeProvider";
 import { whatsappLink } from "@/lib/store";
 import { groupByNetwork, sortByNetworkThenSize } from "@/lib/networks";
@@ -28,6 +30,7 @@ type Pkg = {
 
 function StorefrontContent() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const { isDark } = useStoreTheme();
   const [store, setStore] = useState<StoreRow | null>(null);
   const [packages, setPackages] = useState<Pkg[]>([]);
@@ -115,6 +118,9 @@ function StorefrontContent() {
       <StoreHero storeName={store.name} onWhatsApp={openWhatsApp} />
 
       <main id="bundles" className="max-w-5xl mx-auto px-4 pb-8 space-y-10">
+        {user?.id !== store.user_id && (
+          <SubAgentApply storeSlug={store.slug} storeName={store.name} />
+        )}
         {packages.length === 0 ? (
           <div
             className={cn(

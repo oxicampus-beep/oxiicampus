@@ -7,30 +7,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatCurrency, formatDate } from "@/lib/admin";
-import { Check, X } from "lucide-react";
+import { Check, ExternalLink, X } from "lucide-react";
+import { Link } from "react-router-dom";
+
+type SubRow = {
+  id: string;
+  status: string;
+  created_at: string;
+  activation_fee_paid: number;
+  notes: string | null;
+  user_name: string | null;
+  user_email: string | null;
+  user_phone: string | null;
+  wallet_balance: number;
+  parent_store_name: string;
+  parent_store_slug: string;
+  parent_agent_name: string | null;
+  sub_store_name: string | null;
+  sub_store_slug: string | null;
+  order_count: number;
+  order_revenue: number;
+};
 
 export default function AdminSubAgents() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<SubRow[]>([]);
   const [fee, setFee] = useState(0);
 
   const load = async () => {
-    const [{ data: subs }, { data: settings }, { data: stores }, { data: profiles }] = await Promise.all([
-      supabase.from("sub_agents").select("*").order("created_at", { ascending: false }),
+    const [{ data, error }, { data: settings }] = await Promise.all([
+      supabase.rpc("get_admin_subagents"),
       supabase.from("platform_settings").select("sub_agent_activation_fee").eq("id", 1).single(),
-      supabase.from("stores").select("id, name, slug"),
-      supabase.from("profiles").select("id, full_name, email, phone"),
     ]);
+    if (error) return toast.error(error.message);
+    setRows((data as SubRow[]) ?? []);
     setFee(Number(settings?.sub_agent_activation_fee ?? 0));
-    const smap = Object.fromEntries((stores ?? []).map(s => [s.id, s]));
-    const pmap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]));
-    setRows((subs ?? []).map(r => ({
-      ...r,
-      storeName: smap[r.parent_store_id]?.name,
-      storeSlug: smap[r.parent_store_id]?.slug,
-      userName: pmap[r.user_id]?.full_name,
-      userEmail: pmap[r.user_id]?.email,
-      userPhone: pmap[r.user_id]?.phone,
-    })));
   };
 
   useEffect(() => { load(); }, []);
@@ -51,7 +61,10 @@ export default function AdminSubAgents() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Sub-Agents" description="Approve sub-agents registered under parent agent stores." />
+      <AdminPageHeader
+        title="Sub-Agents"
+        description="Manage sub-agents, their parent agents, stores, and platform orders."
+      />
 
       <AdminCard>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -65,9 +78,10 @@ export default function AdminSubAgents() {
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/50">Applicant</TableHead>
-              <TableHead className="text-white/50">Parent store</TableHead>
-              <TableHead className="text-white/50">Fee paid</TableHead>
+              <TableHead className="text-white/50">Sub-agent</TableHead>
+              <TableHead className="text-white/50">Parent agent</TableHead>
+              <TableHead className="text-white/50">Sub-agent store</TableHead>
+              <TableHead className="text-white/50">Orders</TableHead>
               <TableHead className="text-white/50">Status</TableHead>
               <TableHead className="text-white/50">Applied</TableHead>
               <TableHead className="text-white/50">Actions</TableHead>
@@ -75,15 +89,31 @@ export default function AdminSubAgents() {
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-white/40 py-10">No sub-agent applications.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center text-white/40 py-10">No sub-agent applications.</TableCell></TableRow>
             ) : rows.map(r => (
               <TableRow key={r.id} className="border-white/10">
                 <TableCell>
-                  <div className="text-white font-medium">{r.userName ?? "—"}</div>
-                  <div className="text-xs text-white/35">{r.userEmail ?? r.userPhone}</div>
+                  <div className="text-white font-medium">{r.user_name ?? "—"}</div>
+                  <div className="text-xs text-white/35">{r.user_email ?? r.user_phone}</div>
+                  <div className="text-xs text-white/30">Wallet: {formatCurrency(Number(r.wallet_balance))}</div>
                 </TableCell>
-                <TableCell className="text-white/70">{r.storeName} <span className="text-white/30">/{r.storeSlug}</span></TableCell>
-                <TableCell className="text-amber-400">{formatCurrency(Number(r.activation_fee_paid))}</TableCell>
+                <TableCell>
+                  <div className="text-white/80">{r.parent_agent_name ?? "—"}</div>
+                  <div className="text-xs text-white/40">{r.parent_store_name} /{r.parent_store_slug}</div>
+                </TableCell>
+                <TableCell>
+                  {r.sub_store_slug ? (
+                    <Link to={`/store/${r.sub_store_slug}`} target="_blank" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                      {r.sub_store_name} <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-white/40">No store yet</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="text-white/80">{r.order_count}</div>
+                  <div className="text-xs text-amber-400">{formatCurrency(Number(r.order_revenue))}</div>
+                </TableCell>
                 <TableCell>
                   <Select value={r.status} onValueChange={v => updateStatus(r.id, v)}>
                     <SelectTrigger className="h-8 w-28 bg-white/5 border-white/10 text-white text-xs capitalize"><SelectValue /></SelectTrigger>
