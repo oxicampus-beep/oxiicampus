@@ -63,11 +63,12 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
     if (!purchasesEnabled) return toast.error("Purchases are temporarily disabled.");
     if (insufficient) return toast.error("Insufficient wallet balance. Top up first.");
     setLoading(true);
-    const { data: orderId, error } = await supabase.rpc("purchase_data_package", {
+    const rpcArgs: { p_package_id: string; p_recipient_phone: string; p_promo_code?: string } = {
       p_package_id: pkg.id,
       p_recipient_phone: phone,
-      p_promo_code: promoCode.trim() || undefined,
-    });
+    };
+    if (promoCode.trim()) rpcArgs.p_promo_code = promoCode.trim();
+    const { data: orderId, error } = await supabase.rpc("purchase_data_package", rpcArgs);
     if (error) {
       setLoading(false);
       if (error.message.includes("Insufficient")) return toast.error("Insufficient wallet balance. Top up first.");
