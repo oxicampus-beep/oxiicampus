@@ -97,3 +97,70 @@ export function generateReference() {
 export function ghsToPesewas(amountGhs: number) {
   return Math.round(amountGhs * 100);
 }
+
+export type ChargeResponse = {
+  status: boolean;
+  message: string;
+  data: {
+    reference: string;
+    status: string;
+    display_text?: string;
+    message?: string;
+    gateway_response?: string;
+  };
+};
+
+async function paystackPost(secretKey: string, path: string, body?: Record<string, unknown>) {
+  const res = await fetch(`${PAYSTACK_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok && !data.status) {
+    throw new Error(data.message ?? `Paystack request failed (${path})`);
+  }
+  return data as ChargeResponse;
+}
+
+export async function paystackChargeMobileMoney(
+  secretKey: string,
+  params: {
+    email: string;
+    amountPesewas: number;
+    reference: string;
+    phone: string;
+    provider: string;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  return paystackPost(secretKey, "/charge", {
+    email: params.email,
+    amount: params.amountPesewas,
+    currency: "GHS",
+    reference: params.reference,
+    metadata: params.metadata ?? {},
+    mobile_money: {
+      phone: params.phone,
+      provider: params.provider,
+    },
+  });
+}
+
+export async function paystackSubmitOtp(secretKey: string, reference: string, otp: string) {
+  return paystackPost(secretKey, "/charge/submit_otp", { reference, otp });
+}
+
+export async function paystackCheckPendingCharge(secretKey: string, reference: string) {
+  const res = await fetch(`${PAYSTACK_BASE}/charge/${encodeURIComponent(reference)}`, {
+    headers: { Authorization: `Bearer ${secretKey}` },
+  });
+  const data = await res.json();
+  if (!res.ok && !data.status) {
+    throw new Error(data.message ?? "Failed to check charge status");
+  }
+  return data as ChargeResponse;
+}

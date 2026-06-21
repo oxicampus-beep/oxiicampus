@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { openPaystackCheckout } from "@/lib/paystackCheckoutBridge";
 
 export type PaystackPurpose =
   | "wallet_topup"
@@ -33,34 +34,6 @@ export type PaystackVerifyResult = {
   error?: string;
 };
 
-const LOCAL_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
-
-declare global {
-  interface Window {
-    PaystackPop?: {
-      setup: (opts: Record<string, unknown>) => { openIframe: () => void };
-    };
-  }
-}
-
-function loadPaystackScript(): Promise<void> {
-  if (window.PaystackPop) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[src="https://js.paystack.co/v1/inline.js"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Failed to load Paystack")));
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://js.paystack.co/v1/inline.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Paystack"));
-    document.body.appendChild(script);
-  });
-}
-
 export async function verifyPaystackPayment(reference: string): Promise<PaystackVerifyResult> {
   const { data, error } = await supabase.functions.invoke("paystack-verify", {
     body: { reference },
@@ -83,50 +56,22 @@ export async function initiatePaystackPayment(opts: PaystackInitOptions): Promis
   if (initErr) throw new Error(initErr.message);
   if (!init?.success) throw new Error(init?.error ?? "Could not start payment");
 
-  const publicKey = (init.public_key as string | undefined) ?? LOCAL_PUBLIC_KEY;
-  if (!publicKey) {
-    throw new Error("Paystack public key is not configured");
-  }
-
-  const { reference, amount, authorization_url } = init as {
-    reference: string;
-    amount: number;
-    authorization_url: string;
-  };
+  const { reference, amount } = init as { reference: string; amount: number };
 
   sessionStorage.setItem(
     "paystack_pending",
     JSON.stringify({ reference, purpose: opts.purpose, returnPath: window.location.pathname }),
   );
 
-  await loadPaystackScript();
-
-  if (window.PaystackPop) {
-    return new Promise((resolve, reject) => {
-      const handler = window.PaystackPop!.setup({
-        key: publicKey,
-        email: opts.email,
-        amount: Math.round(amount * 100),
-        ref: reference,
-        currency: "GHS",
-        onClose: () => reject(new Error("Payment cancelled")),
-        callback: async (response: { reference: string }) => {
-          try {
-            const result = await verifyPaystackPayment(response.reference);
-            if (!result.success) throw new Error(result.error ?? "Verification failed");
-            sessionStorage.removeItem("paystack_pending");
-            await opts.onSuccess?.(result);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        },
-      });
-      handler.openIframe();
-    });
-  }
-
-  window.location.href = authorization_url;
+  await openPaystackCheckout({
+    reference,
+    amount,
+    email: opts.email,
+    onSuccess: async (result) => {
+      sessionStorage.removeItem("paystack_pending");
+      await opts.onSuccess?.(result);
+    },
+  });
 }
 
 export function paystackConfigured(): boolean {

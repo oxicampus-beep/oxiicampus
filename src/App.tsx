@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { PaystackCheckoutProvider } from "@/contexts/PaystackCheckoutContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { dashboardChildRoutes } from "@/pages/dashboard/DashboardRoutes";
@@ -61,6 +61,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <PaystackCheckoutProvider>
           <ProfileProvider>
           <PasskeySetupDialog />
           <Routes>
@@ -115,6 +116,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </ProfileProvider>
+          </PaystackCheckoutProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

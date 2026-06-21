@@ -1,8 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   generateReference,
-  ghsToPesewas,
-  paystackInitialize,
   type PaystackPurpose,
 } from "../_shared/paystack.ts";
 
@@ -71,20 +69,6 @@ Deno.serve(async (req) => {
     const reference = generateReference();
     const callbackUrl = `${appUrl.replace(/\/$/, "")}${callbackPath.startsWith("/") ? callbackPath : `/${callbackPath}`}?reference=${reference}`;
 
-    const payMeta = {
-      purpose,
-      user_id: userId,
-      ...metadata,
-    };
-
-    const init = await paystackInitialize(paystackSecret, {
-      email,
-      amountPesewas: ghsToPesewas(amount),
-      reference,
-      callbackUrl,
-      metadata: payMeta,
-    });
-
     const { error: insertErr } = await admin.from("paystack_payments").insert({
       user_id: userId,
       reference,
@@ -93,7 +77,6 @@ Deno.serve(async (req) => {
       metadata,
       customer_email: email,
       status: "pending",
-      paystack_access_code: init.access_code,
     });
 
     if (insertErr) {
@@ -106,8 +89,6 @@ Deno.serve(async (req) => {
       reference,
       amount,
       public_key: paystackPublicKey,
-      authorization_url: init.authorization_url,
-      access_code: init.access_code,
       callback_url: callbackUrl,
     });
   } catch (e) {
