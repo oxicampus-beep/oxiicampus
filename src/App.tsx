@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { dashboardChildRoutes } from "@/pages/dashboard/DashboardRoutes";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Auth from "@/pages/Auth";
+import PasskeySetupDialog from "@/components/auth/PasskeySetupDialog";
 import AdminPackages from "@/pages/AdminPackages";
 import AdminOverview from "@/pages/AdminOverview";
 import AdminOrders from "@/pages/AdminOrders";
@@ -60,6 +61,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ProfileProvider>
+          <PasskeySetupDialog />
           <Routes>
             <Route path="/" element={<Navigate to="/auth" replace />} />
             <Route path="/auth" element={<Auth />} />

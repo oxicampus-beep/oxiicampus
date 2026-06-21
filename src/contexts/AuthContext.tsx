@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
-import PasskeySetupDialog from "@/components/auth/PasskeySetupDialog";
 
 type AuthCtx = {
   user: User | null;
@@ -30,7 +29,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <Ctx.Provider value={{ user, session, loading, signOut: async () => { await supabase.auth.signOut(); } }}>
       {children}
-      <PasskeySetupDialog />
     </Ctx.Provider>
   );
 };

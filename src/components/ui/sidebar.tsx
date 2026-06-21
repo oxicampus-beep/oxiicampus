@@ -218,7 +218,7 @@ const Sidebar = React.forwardRef<
 Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
-  ({ className, onClick, ...props }, ref) => {
+  ({ className, onClick, variant: _variant, size: _size, asChild: _asChild, ...props }, ref) => {
     const { toggleSidebar, openMobile, isMobile } = useSidebar();
     const menuOpen = isMobile && openMobile;
 
@@ -233,7 +233,7 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
             onClick?.(event as unknown as React.MouseEvent<HTMLButtonElement>);
             toggleSidebar();
           }}
-          {...(props as Omit<React.ComponentPropsWithoutRef<"button">, "onClick">)}
+          {...props}
         />
       );
     }
