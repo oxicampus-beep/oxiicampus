@@ -120,9 +120,6 @@ async function paystackPost(secretKey: string, path: string, body?: Record<strin
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
-  if (!res.ok && !data.status) {
-    throw new Error(data.message ?? `Paystack request failed (${path})`);
-  }
   return data as ChargeResponse;
 }
 
@@ -159,8 +156,5 @@ export async function paystackCheckPendingCharge(secretKey: string, reference: s
     headers: { Authorization: `Bearer ${secretKey}` },
   });
   const data = await res.json();
-  if (!res.ok && !data.status) {
-    throw new Error(data.message ?? "Failed to check charge status");
-  }
   return data as ChargeResponse;
 }

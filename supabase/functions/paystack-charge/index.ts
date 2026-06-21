@@ -21,7 +21,6 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY");
 
@@ -54,13 +53,13 @@ Deno.serve(async (req) => {
 
     if (!PUBLIC_PURPOSES.has(payment.purpose)) {
       const authHeader = req.headers.get("Authorization");
-      if (!authHeader) return json({ success: false, error: "Unauthorized" }, 401);
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user } } = await userClient.auth.getUser();
-      if (!user || user.id !== payment.user_id) {
-        return json({ success: false, error: "Unauthorized" }, 401);
+      if (!authHeader?.startsWith("Bearer ")) {
+        return json({ success: false, error: "Please sign in to continue" }, 401);
+      }
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: userErr } = await admin.auth.getUser(token);
+      if (userErr || !user || user.id !== payment.user_id) {
+        return json({ success: false, error: "Session expired — please sign in again" }, 401);
       }
     }
 
@@ -115,7 +114,10 @@ Deno.serve(async (req) => {
     return json({ success: false, error: "Unknown action" }, 400);
   } catch (e) {
     console.error(e);
-    return json({ success: false, error: e instanceof Error ? e.message : "Internal error" }, 500);
+    return json({
+      success: false,
+      error: e instanceof Error ? e.message : "Payment failed",
+    });
   }
 });
 
@@ -123,20 +125,35 @@ async function handleChargeResult(
   admin: ReturnType<typeof createClient>,
   paystackSecret: string,
   reference: string,
-  result: { status: boolean; message: string; data: { status: string; display_text?: string; message?: string } },
+  result: { status: boolean; message: string; data?: { status: string; display_text?: string; message?: string; reference?: string } },
 ) {
-  const chargeStatus = result.data?.status ?? "failed";
-  const displayText = result.data?.display_text ?? result.data?.message ?? result.message;
+  if (!result.status || !result.data) {
+    return json({
+      success: false,
+      charge_status: "failed",
+      error: result.message ?? "Charge failed",
+      display_text: result.message,
+    });
+  }
+
+  const chargeStatus = result.data.status ?? "failed";
+  const displayText = result.data.display_text ?? result.data.message ?? result.message;
+  const chargeReference = result.data.reference ?? reference;
 
   if (chargeStatus === "success") {
-    const verified = await paystackVerify(paystackSecret, reference);
+    const verified = await paystackVerify(paystackSecret, chargeReference);
     if (verified.data?.status === "success") {
       const { data: fulfill, error } = await admin.rpc("fulfill_paystack_payment", {
         p_reference: reference,
         p_paystack_data: verified.data,
       });
       if (error) {
-        return json({ success: false, error: error.message, charge_status: chargeStatus }, 500);
+        console.error("Fulfill error:", error);
+        return json({
+          success: false,
+          charge_status: "success",
+          error: `Payment received but fulfillment failed: ${error.message}. Contact support with ref ${reference}.`,
+        });
       }
       return json({
         success: true,

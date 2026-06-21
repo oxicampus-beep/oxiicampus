@@ -90,7 +90,7 @@ export default function WalletPage() {
         </div>
         <Button onClick={topUp} disabled={loading} className="w-full font-semibold gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {loading ? "Opening Paystack…" : "Pay with Paystack"}
+          {loading ? "Opening payment…" : "Pay with Mobile Money"}
         </Button>
         <p className="text-xs text-muted-foreground">Secure payment via Mobile Money, debit card, or bank transfer.</p>
       </GlassCard>

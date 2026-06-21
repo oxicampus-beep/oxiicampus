@@ -18,13 +18,11 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY");
-    const paystackPublicKey = Deno.env.get("PAYSTACK_PUBLIC_KEY");
     const appUrl = Deno.env.get("APP_URL") ?? "http://localhost:5173";
 
-    if (!paystackSecret || !paystackPublicKey) {
+    if (!paystackSecret) {
       return json({ success: false, error: "Paystack is not configured" }, 500);
     }
 
@@ -38,20 +36,28 @@ Deno.serve(async (req) => {
       return json({ success: false, error: "purpose and valid email are required" }, 400);
     }
 
+    const admin = createClient(supabaseUrl, serviceKey);
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
 
     if (!PUBLIC_PURPOSES.has(purpose)) {
-      if (!authHeader) return json({ success: false, error: "Unauthorized" }, 401);
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user } } = await userClient.auth.getUser();
-      if (!user) return json({ success: false, error: "Unauthorized" }, 401);
+      if (!authHeader?.startsWith("Bearer ")) {
+        return json({ success: false, error: "Please sign in to continue" }, 401);
+      }
+      const token = authHeader.slice(7);
+      const { data: { user }, error: userErr } = await admin.auth.getUser(token);
+      if (userErr || !user) {
+        return json({ success: false, error: "Session expired — please sign in again" }, 401);
+      }
       userId = user.id;
-    }
 
-    const admin = createClient(supabaseUrl, serviceKey);
+      await admin.from("profiles").upsert({
+        id: user.id,
+        email: user.email ?? email,
+        full_name: (user.user_metadata?.full_name as string) ?? null,
+        phone: (user.user_metadata?.phone as string) ?? null,
+      }, { onConflict: "id" });
+    }
 
     const { data: amountGhs, error: quoteErr } = await admin.rpc("quote_paystack_amount", {
       p_purpose: purpose,
@@ -88,7 +94,6 @@ Deno.serve(async (req) => {
       success: true,
       reference,
       amount,
-      public_key: paystackPublicKey,
       callback_url: callbackUrl,
     });
   } catch (e) {

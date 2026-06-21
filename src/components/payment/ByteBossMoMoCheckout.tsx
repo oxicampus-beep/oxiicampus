@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/invokeEdgeFunction";
 import {
   detectGhanaNetwork,
   isValidGhanaMoMoPhone,
@@ -38,6 +38,7 @@ type ChargeResult = {
   charge_status?: string;
   display_text?: string;
   error?: string;
+  success?: boolean;
   purpose?: string;
   order_id?: string;
   data_order_id?: string;
@@ -85,10 +86,11 @@ export default function ByteBossMoMoCheckout({
   }, [phone]);
 
   const invokeCharge = async (body: Record<string, unknown>): Promise<ChargeResult> => {
-    const { data, error: fnErr } = await supabase.functions.invoke("paystack-charge", { body });
-    if (fnErr) throw new Error(fnErr.message);
-    if (!data?.success && data?.error) throw new Error(data.error);
-    return data as ChargeResult;
+    const data = await invokeEdgeFunction<ChargeResult>("paystack-charge", body);
+    if (data?.error && data.charge_status === "failed") {
+      throw new Error(data.error);
+    }
+    return data;
   };
 
   const handleChargeStatus = (result: ChargeResult) => {
@@ -96,6 +98,11 @@ export default function ByteBossMoMoCheckout({
     const text = result.display_text ?? "";
 
     if (status === "success") {
+      if (!result.success) {
+        setError(result.error ?? "Payment received but could not be completed. Contact support.");
+        setStep("failed");
+        return;
+      }
       setStep("success");
       setTimeout(() => onComplete(result as PaystackVerifyResult), 1200);
       return;

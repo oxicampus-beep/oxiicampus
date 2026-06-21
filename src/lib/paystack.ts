@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/invokeEdgeFunction";
 import { openPaystackCheckout } from "@/lib/paystackCheckoutBridge";
 
 export type PaystackPurpose =
@@ -35,28 +35,27 @@ export type PaystackVerifyResult = {
 };
 
 export async function verifyPaystackPayment(reference: string): Promise<PaystackVerifyResult> {
-  const { data, error } = await supabase.functions.invoke("paystack-verify", {
-    body: { reference },
-  });
-  if (error) return { success: false, error: error.message };
-  if (!data?.success) return { success: false, error: data?.error ?? "Verification failed" };
-  return data as PaystackVerifyResult;
+  const data = await invokeEdgeFunction<PaystackVerifyResult>("paystack-verify", { reference });
+  if (!data?.success) {
+    return { success: false, error: data?.error ?? "Verification failed" };
+  }
+  return data;
 }
 
 export async function initiatePaystackPayment(opts: PaystackInitOptions): Promise<void> {
-  const { data: init, error: initErr } = await supabase.functions.invoke("paystack-initialize", {
-    body: {
-      purpose: opts.purpose,
-      email: opts.email,
-      metadata: opts.metadata,
-      callback_path: opts.callbackPath ?? "/payment/callback",
-    },
+  const init = await invokeEdgeFunction<{
+    success: boolean;
+    reference: string;
+    amount: number;
+    error?: string;
+  }>("paystack-initialize", {
+    purpose: opts.purpose,
+    email: opts.email,
+    metadata: opts.metadata,
+    callback_path: opts.callbackPath ?? "/payment/callback",
   });
 
-  if (initErr) throw new Error(initErr.message);
-  if (!init?.success) throw new Error(init?.error ?? "Could not start payment");
-
-  const { reference, amount } = init as { reference: string; amount: number };
+  const { reference, amount } = init;
 
   sessionStorage.setItem(
     "paystack_pending",
