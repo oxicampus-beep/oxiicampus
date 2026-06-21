@@ -106,6 +106,10 @@ export function getPaystackSecret(): string {
   if (!key.startsWith("sk_")) {
     throw new Error("Paystack secret key format is invalid");
   }
+  // Live/test secret keys are sk_{live|test}_ + 40 hex chars (48 chars total)
+  if (key.length < 48) {
+    throw new Error("Paystack secret key appears truncated — re-save the full key from your Paystack dashboard");
+  }
   return key;
 }
 
