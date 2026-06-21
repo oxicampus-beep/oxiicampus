@@ -61,7 +61,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithPassword(signin);
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Welcome back!"); navigate(redirectTo);
+    toast.success("Welcome back!");
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -88,7 +88,6 @@ export default function Auth() {
       localStorage.removeItem("byteboss_ref");
     }
     markPasskeyOfferPending();
-    navigate(redirectTo);
   };
 
   return (

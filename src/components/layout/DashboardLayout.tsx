@@ -1,4 +1,4 @@
-import { Outlet, Navigate, Link } from "react-router-dom";
+import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,12 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, Wallet, Trophy, Bell, ArrowUpRight, Smartphone } from "lucide-react";
 
 export default function DashboardLayout() {
+  const location = useLocation();
   const { user, loading, signOut } = useAuth();
   const { profile } = useProfile();
   const { showAgentNav, isSubAgent, isParentAgent } = useDashboardRole();
 
   if (loading) return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
 
   return (
     <SidebarProvider>

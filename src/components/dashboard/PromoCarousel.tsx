@@ -52,6 +52,7 @@ export default function PromoCarousel() {
       .then(({ data }) => {
         const ok = (a: string) => a === "all" || (a === "agents" && isAgent) || (a === "users" && !isAgent);
         setBanners((data ?? []).filter(b => b.image_url && ok(b.audience)) as Banner[]);
+        setIdx(0);
         setLoading(false);
       });
   }, [isAgent]);
@@ -68,7 +69,9 @@ export default function PromoCarousel() {
   if (loading) return <div className="w-full aspect-[3/1] rounded-3xl bg-white/5 animate-pulse" />;
   if (!banners.length) return null;
 
-  const b = banners[idx];
+  const safeIdx = idx % banners.length;
+  const b = banners[safeIdx];
+  if (!b) return null;
 
   return (
     <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-xl group">
@@ -100,7 +103,7 @@ export default function PromoCarousel() {
                 type="button"
                 aria-label={`Go to banner ${i + 1}`}
                 onClick={() => setIdx(i)}
-                className={cn("h-1.5 rounded-full transition-all", i === idx ? "w-6 bg-primary" : "w-1.5 bg-white/50")}
+                className={cn("h-1.5 rounded-full transition-all", i === safeIdx ? "w-6 bg-primary" : "w-1.5 bg-white/50")}
               />
             ))}
           </div>
