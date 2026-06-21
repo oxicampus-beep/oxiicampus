@@ -13,21 +13,35 @@ type NetHealth = {
   failed: number; processing: number; success_rate: number;
 };
 
+type Provider = "swiftdata" | "datamax";
+
 export default function AdminAPINetwork() {
   const [rows, setRows] = useState<NetHealth[]>([]);
-  const [swiftOk, setSwiftOk] = useState<boolean | null>(null);
+  const [activeProvider, setActiveProvider] = useState<Provider>("swiftdata");
+  const [providerOk, setProviderOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: stats }, { data: sync }] = await Promise.all([
+    const [{ data: stats }, { data: settings }] = await Promise.all([
       supabase.rpc("get_network_health_stats"),
-      supabase.functions.invoke("sync-swift-plans"),
+      supabase.from("platform_settings").select("data_fulfillment_provider").eq("id", 1).single(),
     ]);
+    const provider: Provider = settings?.data_fulfillment_provider === "datamax" ? "datamax" : "swiftdata";
+    setActiveProvider(provider);
+
+    const { data: test, error } = await supabase.functions.invoke("test-data-provider", {
+      body: { provider },
+    });
     setLoading(false);
     setRows((stats as NetHealth[]) ?? []);
-    setSwiftOk(sync?.success ?? false);
-    if (!sync?.success) toast.warning("SwiftData API check failed — verify API key");
+    if (error) {
+      setProviderOk(false);
+      toast.warning(`${provider === "datamax" ? "Datamax" : "SwiftData"} API check failed`);
+      return;
+    }
+    setProviderOk(Boolean(test?.success));
+    if (!test?.success) toast.warning(`${provider === "datamax" ? "Datamax" : "SwiftData"} API check failed — verify API key`);
   };
 
   useEffect(() => { load(); }, []);
@@ -37,20 +51,26 @@ export default function AdminAPINetwork() {
     r >= 80 ? "border-amber-500/40 text-amber-400" :
     "border-red-500/40 text-red-400";
 
+  const providerLabel = activeProvider === "datamax" ? "Datamax" : "SwiftData";
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="API Network Intelligence"
-        description="Per-network fulfillment success rates and SwiftData provider status."
+        description="Per-network fulfillment success rates and active data provider status."
         actions={<Button variant="outline" size="sm" onClick={load} disabled={loading} className="border-white/10 text-white gap-2">{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Refresh</Button>}
       />
 
       <AdminCard>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-white/60">SwiftData API</span>
-          <Badge variant="outline" className={swiftOk ? "border-green-500/40 text-green-400" : swiftOk === false ? "border-red-500/40 text-red-400" : "border-white/20 text-white/40"}>
-            {swiftOk === null ? "Checking…" : swiftOk ? "Connected" : "Error"}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm text-white/60">Active provider</span>
+          <Badge variant="outline" className="border-primary/40 text-primary capitalize">{providerLabel}</Badge>
+          <Badge variant="outline" className={providerOk ? "border-green-500/40 text-green-400" : providerOk === false ? "border-red-500/40 text-red-400" : "border-white/20 text-white/40"}>
+            {providerOk === null ? "Checking…" : providerOk ? "Connected" : "Error"}
           </Badge>
+          <Button variant="link" className="text-primary px-0 h-auto" asChild>
+            <a href="/admin/swift-vendor">Switch provider →</a>
+          </Button>
         </div>
       </AdminCard>
 

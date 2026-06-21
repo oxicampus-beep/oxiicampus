@@ -20,7 +20,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     title: "Operations",
     items: [
-      { label: "Swift Vendor Master", icon: Zap, path: "/admin/swift-vendor" },
+      { label: "Data Vendor Hub", icon: Zap, path: "/admin/swift-vendor" },
       { label: "Agents", icon: Users, path: "/admin/agents" },
       { label: "Sub-Agents", icon: UserPlus, path: "/admin/sub-agents" },
       { label: "Orders", icon: ShoppingBag, path: "/admin/orders" },

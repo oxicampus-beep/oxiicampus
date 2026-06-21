@@ -84,6 +84,7 @@ export type Database = {
         Row: {
           buyer_role: string
           created_at: string
+          fulfillment_provider: string | null
           id: string
           network: Database["public"]["Enums"]["network_type"]
           package_id: string | null
@@ -102,6 +103,7 @@ export type Database = {
         Insert: {
           buyer_role?: string
           created_at?: string
+          fulfillment_provider?: string | null
           id?: string
           network: Database["public"]["Enums"]["network_type"]
           package_id?: string | null
@@ -120,6 +122,7 @@ export type Database = {
         Update: {
           buyer_role?: string
           created_at?: string
+          fulfillment_provider?: string | null
           id?: string
           network?: Database["public"]["Enums"]["network_type"]
           package_id?: string | null
@@ -468,6 +471,7 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          data_fulfillment_provider: string
           id: number
           maintenance_message: string | null
           maintenance_mode: boolean
@@ -480,6 +484,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          data_fulfillment_provider?: string
           id?: number
           maintenance_message?: string | null
           maintenance_mode?: boolean
@@ -492,6 +497,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          data_fulfillment_provider?: string
           id?: number
           maintenance_message?: string | null
           maintenance_mode?: boolean
