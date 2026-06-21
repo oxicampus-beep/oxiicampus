@@ -23,9 +23,10 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY");
+    const paystackPublicKey = Deno.env.get("PAYSTACK_PUBLIC_KEY");
     const appUrl = Deno.env.get("APP_URL") ?? "http://localhost:5173";
 
-    if (!paystackSecret) {
+    if (!paystackSecret || !paystackPublicKey) {
       return json({ success: false, error: "Paystack is not configured" }, 500);
     }
 
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
       success: true,
       reference,
       amount,
+      public_key: paystackPublicKey,
       authorization_url: init.authorization_url,
       access_code: init.access_code,
       callback_url: callbackUrl,

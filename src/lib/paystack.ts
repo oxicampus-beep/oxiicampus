@@ -33,7 +33,7 @@ export type PaystackVerifyResult = {
   error?: string;
 };
 
-const PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
+const LOCAL_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
 
 declare global {
   interface Window {
@@ -71,10 +71,6 @@ export async function verifyPaystackPayment(reference: string): Promise<Paystack
 }
 
 export async function initiatePaystackPayment(opts: PaystackInitOptions): Promise<void> {
-  if (!PUBLIC_KEY) {
-    throw new Error("Paystack public key is not configured (VITE_PAYSTACK_PUBLIC_KEY)");
-  }
-
   const { data: init, error: initErr } = await supabase.functions.invoke("paystack-initialize", {
     body: {
       purpose: opts.purpose,
@@ -86,6 +82,11 @@ export async function initiatePaystackPayment(opts: PaystackInitOptions): Promis
 
   if (initErr) throw new Error(initErr.message);
   if (!init?.success) throw new Error(init?.error ?? "Could not start payment");
+
+  const publicKey = (init.public_key as string | undefined) ?? LOCAL_PUBLIC_KEY;
+  if (!publicKey) {
+    throw new Error("Paystack public key is not configured");
+  }
 
   const { reference, amount, authorization_url } = init as {
     reference: string;
@@ -103,7 +104,7 @@ export async function initiatePaystackPayment(opts: PaystackInitOptions): Promis
   if (window.PaystackPop) {
     return new Promise((resolve, reject) => {
       const handler = window.PaystackPop!.setup({
-        key: PUBLIC_KEY,
+        key: publicKey,
         email: opts.email,
         amount: Math.round(amount * 100),
         ref: reference,
@@ -129,5 +130,5 @@ export async function initiatePaystackPayment(opts: PaystackInitOptions): Promis
 }
 
 export function paystackConfigured(): boolean {
-  return Boolean(PUBLIC_KEY);
+  return true;
 }
