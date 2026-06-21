@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShoppingBag, Store, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ONBOARDING_COMPLETE_EVENT } from "@/lib/passkey";
 
 const OPTIONS = [
   {
@@ -32,14 +33,19 @@ export default function WelcomeOnboarding() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(() => !localStorage.getItem("byteboss_onboarding_done"));
 
-  const pick = (to: string) => {
+  const finishOnboarding = () => {
     localStorage.setItem("byteboss_onboarding_done", "1");
+    window.dispatchEvent(new Event(ONBOARDING_COMPLETE_EVENT));
+  };
+
+  const pick = (to: string) => {
+    finishOnboarding();
     setOpen(false);
     navigate(to);
   };
 
   const skip = () => {
-    localStorage.setItem("byteboss_onboarding_done", "1");
+    finishOnboarding();
     setOpen(false);
   };
 

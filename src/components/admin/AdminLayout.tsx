@@ -7,8 +7,9 @@ import { adminNavLabel } from "@/lib/admin-nav";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
+import { MobileMenuButton } from "@/components/layout/AnimatedHamburger";
 import {
-  ChevronRight, LogOut, Menu, Moon, Search, Shield, Sun, X,
+  ChevronRight, LogOut, Moon, Search, Shield, Sun, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -147,9 +148,12 @@ export default function AdminLayout() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 md:px-8 py-4 border-b border-white/10 bg-[#050508]/80 backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0">
-              <Button variant="ghost" size="icon" className="md:hidden text-white" onClick={() => setMobileOpen(true)}>
-                <Menu className="h-5 w-5" />
-              </Button>
+              <MobileMenuButton
+                variant="admin"
+                open={mobileOpen}
+                className="md:hidden"
+                onClick={() => setMobileOpen(o => !o)}
+              />
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/30">AdminPro</p>
                 <h1 className="font-bold text-lg truncate">{pageTitle}</h1>

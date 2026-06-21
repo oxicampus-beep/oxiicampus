@@ -2,6 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
+import { MobileMenuButton } from "@/components/layout/AnimatedHamburger";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -218,7 +219,24 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
   ({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar } = useSidebar();
+    const { toggleSidebar, openMobile, isMobile } = useSidebar();
+    const menuOpen = isMobile && openMobile;
+
+    if (isMobile) {
+      return (
+        <MobileMenuButton
+          ref={ref as React.Ref<HTMLButtonElement>}
+          open={menuOpen}
+          variant="dashboard"
+          className={cn("shrink-0 md:hidden", className)}
+          onClick={event => {
+            onClick?.(event as unknown as React.MouseEvent<HTMLButtonElement>);
+            toggleSidebar();
+          }}
+          {...(props as Omit<React.ComponentPropsWithoutRef<"button">, "onClick">)}
+        />
+      );
+    }
 
     return (
       <Button
@@ -226,7 +244,7 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         data-sidebar="trigger"
         variant="ghost"
         size="icon"
-        className={cn("h-7 w-7", className)}
+        className={cn("h-7 w-7 hidden md:inline-flex", className)}
         onClick={(event) => {
           onClick?.(event);
           toggleSidebar();

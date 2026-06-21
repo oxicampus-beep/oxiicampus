@@ -11,6 +11,8 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthBackground } from "@/components/auth/AuthBackground";
 import { Mail, Lock, User, Phone, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BiometricSignInButton } from "@/components/auth/BiometricSignInButton";
+import { markPasskeyOfferPending } from "@/lib/passkey";
 
 function FieldGroup({
   label,
@@ -85,6 +87,7 @@ export default function Auth() {
       await supabase.rpc("apply_referral_on_signup", { p_referral_code: ref });
       localStorage.removeItem("byteboss_ref");
     }
+    markPasskeyOfferPending();
     navigate(redirectTo);
   };
 
@@ -165,6 +168,10 @@ export default function Auth() {
                   </Button>
                 </div>
               </form>
+              <BiometricSignInButton
+                disabled={loading}
+                onSuccess={() => navigate(redirectTo)}
+              />
             </TabsContent>
 
             <TabsContent value="signup" className="mt-0 focus-visible:outline-none">

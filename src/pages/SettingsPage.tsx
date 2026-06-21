@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import PasskeySettings from "@/components/auth/PasskeySettings";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -34,6 +35,7 @@ export default function SettingsPage() {
         <div><Label>Phone</Label><Input value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} className="mt-1" /></div>
         <Button onClick={save} disabled={saving} className="w-full font-semibold">{saving ? "..." : "Save changes"}</Button>
       </GlassCard>
+      <PasskeySettings />
     </div>
   );
 }

@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Mail, Lock, User, Phone, Store, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BiometricSignInButton } from "@/components/auth/BiometricSignInButton";
+import { markPasskeyOfferPending } from "@/lib/passkey";
 
 function SubAgentAuthContent() {
   const { slug } = useParams<{ slug: string }>();
@@ -85,6 +87,7 @@ function SubAgentAuthContent() {
       return toast.error(error.message);
     }
     await afterAuth(signup.email, signup.password);
+    markPasskeyOfferPending();
     setAuthLoadingAction(false);
   };
 
@@ -197,6 +200,10 @@ function SubAgentAuthContent() {
                       Sign in & apply
                     </Button>
                   </form>
+                  <BiometricSignInButton
+                    disabled={authLoadingAction}
+                    label="Sign in with biometrics"
+                  />
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-0">

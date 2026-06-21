@@ -87,4 +87,51 @@
       0 8px 32px hsl(0 0% 0% / 0.4),
       0 0 60px hsl(var(--primary) / 0.06);
   }
+
+  @keyframes hamburger-pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.35); }
+    55% { box-shadow: 0 0 0 7px hsl(var(--primary) / 0); }
+  }
+
+  @keyframes hamburger-glow {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.06); }
+  }
+
+  @keyframes hamburger-bar-top {
+    0%, 100% { transform: translateX(0); width: 100%; }
+    50% { transform: translateX(1px); width: 88%; }
+  }
+
+  @keyframes hamburger-bar-mid {
+    0%, 100% { transform: translateX(0); width: 100%; }
+    50% { transform: translateX(-1px); width: 72%; }
+  }
+
+  @keyframes hamburger-bar-bottom {
+    0%, 100% { transform: translateX(0); width: 100%; }
+    50% { transform: translateX(1px); width: 88%; }
+  }
+
+  .hamburger-btn-attention {
+    animation: hamburger-pulse-ring 2.4s ease-out infinite;
+  }
+
+  .animate-hamburger-glow {
+    animation: hamburger-glow 2.4s ease-in-out infinite;
+  }
+
+  .animate-hamburger-bar-top {
+    animation: hamburger-bar-top 2.4s ease-in-out infinite;
+  }
+
+  .animate-hamburger-bar-mid {
+    animation: hamburger-bar-mid 2.4s ease-in-out infinite;
+    animation-delay: 0.12s;
+  }
+
+  .animate-hamburger-bar-bottom {
+    animation: hamburger-bar-bottom 2.4s ease-in-out infinite;
+    animation-delay: 0.24s;
+  }
 }
