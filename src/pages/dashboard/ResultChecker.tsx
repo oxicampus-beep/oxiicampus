@@ -15,10 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Copy, GraduationCap, Loader2, Wallet } from "lucide-react";
+import { Copy, GraduationCap, Loader2 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsAgent } from "@/hooks/useIsAgent";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 
 type Product = {
   id: string;
@@ -40,13 +41,19 @@ type Order = {
 };
 
 export default function ResultChecker() {
-  const { profile, refresh } = useProfile();
+  const { user } = useAuth();
+  const { refresh } = useProfile();
   const { isAgent } = useIsAgent();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<Product | null>(null);
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [buying, setBuying] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
 
   const load = async () => {
     const [{ data: prods }, { data: ords }] = await Promise.all([
@@ -69,45 +76,52 @@ export default function ResultChecker() {
   useEffect(() => { load(); }, []);
 
   const priceFor = (p: Product) => (isAgent ? Number(p.agent_price) : Number(p.user_price));
-  const balance = Number(profile?.wallet_balance ?? 0);
 
   const openBuy = (p: Product) => {
     setSelected(p);
-    setPhone(profile?.phone?.replace(/\D/g, "").slice(-10) ?? "");
+    setPhone("");
   };
 
   const pay = async () => {
     if (!selected) return;
     const cleanPhone = phone.replace(/\D/g, "").slice(0, 10);
     if (cleanPhone.length < 10) return toast.error("Enter a valid 10-digit phone number.");
-    const cost = priceFor(selected);
-    if (balance < cost) return toast.error(`Insufficient wallet balance. You need ₵${cost.toFixed(2)}.`);
+    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
+    if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setBuying(true);
-    const { data: orderId, error } = await supabase.rpc("purchase_result_checker", {
-      p_product_id: selected.id,
-      p_recipient_phone: cleanPhone,
-      p_quantity: 1,
-    });
-    setBuying(false);
-    if (error) return toast.error(error.message);
-
-    toast.success("Purchase successful!");
-    setSelected(null);
-    setPhone("");
-    await refresh();
-    load();
-
-    if (orderId) {
-      const { data: order } = await supabase
-        .from("result_checker_orders")
-        .select("voucher_codes")
-        .eq("id", orderId)
-        .single();
-      if (order?.voucher_codes?.[0]) {
-        await navigator.clipboard.writeText(order.voucher_codes[0]);
-        toast.info(`Voucher copied: ${order.voucher_codes[0]}`);
-      }
+    try {
+      await initiatePaystackPayment({
+        purpose: "result_checker",
+        email,
+        metadata: {
+          product_id: selected.id,
+          recipient_phone: cleanPhone,
+          quantity: 1,
+        },
+        onSuccess: async (result) => {
+          toast.success("Purchase successful!");
+          setSelected(null);
+          setPhone("");
+          await refresh();
+          load();
+          if (result.order_id) {
+            const { data: order } = await supabase
+              .from("result_checker_orders")
+              .select("voucher_codes")
+              .eq("id", result.order_id)
+              .single();
+            if (order?.voucher_codes?.[0]) {
+              await navigator.clipboard.writeText(order.voucher_codes[0]);
+              toast.info(`Voucher copied: ${order.voucher_codes[0]}`);
+            }
+          }
+        },
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Payment failed");
+    } finally {
+      setBuying(false);
     }
   };
 
@@ -153,17 +167,6 @@ export default function ResultChecker() {
         title="Result Checkers & Admission"
         description="Tap a product, enter your phone number, and pay from your wallet."
       />
-
-      <GlassCard className="flex items-center justify-between gap-3 py-3">
-        <div className="flex items-center gap-2 text-sm">
-          <Wallet className="h-4 w-4 text-primary" />
-          <span className="text-muted-foreground">Wallet balance</span>
-          <span className="font-bold">₵{balance.toFixed(2)}</span>
-        </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/dashboard/wallet">Top up</Link>
-        </Button>
-      </GlassCard>
 
       <Tabs defaultValue="result_checker">
         <TabsList className="w-full grid grid-cols-2">
@@ -227,6 +230,10 @@ export default function ResultChecker() {
                   <span className="text-xl font-black text-primary">₵{priceFor(selected).toFixed(2)}</span>
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Payment email</Label>
+                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+                </div>
+                <div className="space-y-1.5">
                   <Label>Phone number</Label>
                   <Input
                     value={phone}
@@ -236,21 +243,16 @@ export default function ResultChecker() {
                   />
                   <p className="text-xs text-muted-foreground">Voucher will be linked to this number.</p>
                 </div>
-                {balance < priceFor(selected) && (
-                  <p className="text-xs text-destructive">
-                    Insufficient balance. <Link to="/dashboard/wallet" className="underline">Top up wallet</Link>
-                  </p>
-                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
                 <Button
                   onClick={pay}
-                  disabled={buying || balance < priceFor(selected)}
+                  disabled={buying || phone.length < 10 || !email.includes("@")}
                   className="gap-2 font-semibold"
                 >
-                  {buying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-                  Pay with wallet
+                  {buying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {buying ? "Opening Paystack…" : `Pay ₵${priceFor(selected).toFixed(2)}`}
                 </Button>
               </DialogFooter>
             </>

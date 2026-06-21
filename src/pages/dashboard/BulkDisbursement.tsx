@@ -6,21 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Send } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
-import { useProfile } from "@/hooks/useProfile";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 
 export default function BulkDisbursement() {
   const { user } = useAuth();
-  const { refresh } = useProfile();
   const [packages, setPackages] = useState<any[]>([]);
   const [packageId, setPackageId] = useState("");
   const [phones, setPhones] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState<any[]>([]);
   const [lastItems, setLastItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
 
   const load = async () => {
     if (!user) return;
@@ -40,34 +45,48 @@ export default function BulkDisbursement() {
     if (!packageId) return toast.error("Select a package");
     if (list.length === 0) return toast.error("Enter at least one phone number");
     if (list.length > 50) return toast.error("Maximum 50 numbers per batch");
+    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
+    if (!paystackConfigured()) return toast.error("Paystack is not configured.");
+
     setLoading(true);
-    const { data: jobId, error } = await supabase.rpc("bulk_purchase_data", {
-      p_package_id: packageId,
-      p_phones: list,
-    });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-
-    const { data: items } = await supabase.from("bulk_disbursement_items").select("*").eq("job_id", jobId);
-    setLastItems(items ?? []);
-
-    const successIds = (items ?? []).filter((i: any) => i.data_order_id).map((i: any) => i.data_order_id);
-    for (const oid of successIds.slice(0, 10)) {
-      await supabase.functions.invoke("fulfill-data-order", { body: { order_id: oid } });
+    try {
+      await initiatePaystackPayment({
+        purpose: "bulk_purchase",
+        email,
+        metadata: { package_id: packageId, phones: list },
+        onSuccess: async (result) => {
+          if (result.job_id) {
+            const { data: items } = await supabase
+              .from("bulk_disbursement_items")
+              .select("*")
+              .eq("job_id", result.job_id);
+            setLastItems(items ?? []);
+            for (const item of (items ?? []).filter((i: any) => i.data_order_id).slice(0, 10)) {
+              await supabase.functions.invoke("fulfill-data-order", { body: { order_id: item.data_order_id } });
+            }
+            toast.success(`Bulk job complete — ${(items ?? []).filter((i: any) => i.status === "success").length}/${list.length} succeeded`);
+          }
+          setPhones("");
+          load();
+        },
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Payment failed");
+    } finally {
+      setLoading(false);
     }
-
-    toast.success(`Bulk job complete — ${(items ?? []).filter((i: any) => i.status === "success").length}/${list.length} succeeded`);
-    setPhones("");
-    await refresh();
-    load();
   };
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <DashboardPageHeader title="Bulk Disbursement" description="Send the same data bundle to multiple numbers at once (max 50)." />
+      <DashboardPageHeader title="Bulk Disbursement" description="Send the same data bundle to multiple numbers at once (max 50) via Paystack." />
 
       <GlassCard title="New batch">
         <form onSubmit={submit} className="space-y-4">
+          <div>
+            <Label>Payment email</Label>
+            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" />
+          </div>
           <div>
             <Label>Package</Label>
             <Select value={packageId} onValueChange={setPackageId}>
@@ -80,23 +99,23 @@ export default function BulkDisbursement() {
             </Select>
           </div>
           <div>
-            <Label>Phone numbers (one per line or comma-separated)</Label>
-            <Textarea value={phones} onChange={e => setPhones(e.target.value)} className="mt-1 min-h-[140px] font-mono text-sm" placeholder={"0241234567\n0551234567"} />
+            <Label>Phone numbers (one per line, comma or semicolon separated)</Label>
+            <Textarea value={phones} onChange={e => setPhones(e.target.value)} className="mt-1 min-h-[120px] font-mono text-sm" placeholder={"0241234567\n0551234567"} />
           </div>
           <Button type="submit" disabled={loading} className="w-full font-bold gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {loading ? "Processing batch…" : "Send bulk data"}
+            {loading ? "Opening Paystack…" : "Pay & send batch"}
           </Button>
         </form>
       </GlassCard>
 
       {lastItems.length > 0 && (
         <GlassCard title="Last batch results">
-          <ul className="space-y-2 max-h-48 overflow-y-auto">
+          <ul className="space-y-2 text-sm">
             {lastItems.map(i => (
-              <li key={i.id} className="flex justify-between text-sm">
-                <span className="font-mono">{i.recipient_phone}</span>
-                <Badge variant={i.status === "success" ? "default" : "destructive"} className="capitalize text-[10px]">{i.status}</Badge>
+              <li key={i.id} className="flex justify-between gap-2">
+                <span>{i.recipient_phone}</span>
+                <Badge variant={i.status === "success" ? "default" : "destructive"}>{i.status}</Badge>
               </li>
             ))}
           </ul>
@@ -104,11 +123,11 @@ export default function BulkDisbursement() {
       )}
 
       {jobs.length > 0 && (
-        <GlassCard title="Recent batches">
-          <ul className="divide-y divide-white/10">
+        <GlassCard title="Recent jobs">
+          <ul className="divide-y divide-border text-sm">
             {jobs.map(j => (
-              <li key={j.id} className="py-3 flex justify-between text-sm">
-                <span>{j.success_count}/{j.total_count} succeeded</span>
+              <li key={j.id} className="py-2 flex justify-between">
+                <span>{new Date(j.created_at).toLocaleString()}</span>
                 <Badge variant="outline" className="capitalize">{j.status}</Badge>
               </li>
             ))}

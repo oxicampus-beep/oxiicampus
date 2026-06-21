@@ -49,6 +49,7 @@ import AdminAccountSettings from "@/pages/admin/AdminAccountSettings";
 import Storefront from "@/pages/Storefront";
 import SubAgentAuth from "@/pages/store/SubAgentAuth";
 import ApiDocs from "@/pages/ApiDocs";
+import PaymentCallback from "@/pages/PaymentCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="/store/:slug" element={<Storefront />} />
             <Route path="/store/:slug/sub-agent" element={<SubAgentAuth />} />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               {dashboardChildRoutes}
             </Route>

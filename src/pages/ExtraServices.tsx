@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,16 +44,34 @@ export default function ExtraServices() {
   const applySubAgent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!slug.trim()) return toast.error("Enter the parent store slug.");
-    if (fee > 0 && Number(profile?.wallet_balance ?? 0) < fee) {
-      return toast.error(`Insufficient wallet balance. Activation fee is ₵${fee.toFixed(2)}.`);
-    }
     setApplying(true);
-    const { error } = await supabase.rpc("apply_sub_agent", { p_parent_store_slug: slug.trim() });
-    setApplying(false);
-    if (error) return toast.error(error.message);
-    toast.success("Sub-agent application submitted!");
-    setStatus("pending");
-    await refresh();
+    try {
+      if (fee > 0) {
+        const email = user?.email;
+        if (!email?.includes("@")) return toast.error("Your account needs a valid email for Paystack.");
+        if (!paystackConfigured()) return toast.error("Paystack is not configured.");
+        await initiatePaystackPayment({
+          purpose: "sub_agent_activation",
+          email,
+          metadata: { parent_store_slug: slug.trim() },
+          onSuccess: async () => {
+            toast.success("Sub-agent application submitted!");
+            setStatus("pending");
+            await refresh();
+          },
+        });
+        return;
+      }
+      const { error } = await supabase.rpc("apply_sub_agent", { p_parent_store_slug: slug.trim() });
+      if (error) return toast.error(error.message);
+      toast.success("Sub-agent application submitted!");
+      setStatus("pending");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Payment failed");
+    } finally {
+      setApplying(false);
+    }
   };
 
   return (

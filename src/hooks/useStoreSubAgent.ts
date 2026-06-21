@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMtn1GbOfferPricing, type AgentPricingExample } from "@/lib/agentPricingExample";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 
 export type SubAgentStatus = "pending" | "active" | "rejected" | "suspended" | null;
 
@@ -79,11 +80,34 @@ export function useStoreSubAgent(storeSlug: string | undefined) {  const { user 
   const apply = useCallback(async () => {
     if (!storeSlug || !canApply) return { error: new Error("Cannot apply") };
     setApplying(true);
-    const { error } = await supabase.rpc("apply_sub_agent", { p_parent_store_slug: storeSlug });
-    setApplying(false);
-    if (!error) setStatus("pending");
-    return { error: error ? new Error(error.message) : null };
-  }, [storeSlug, canApply]);
+    try {
+      if (fee > 0) {
+        const email = user?.email;
+        if (!email?.includes("@")) {
+          setApplying(false);
+          return { error: new Error("Your account needs a valid email for Paystack payments.") };
+        }
+        if (!paystackConfigured()) {
+          setApplying(false);
+          return { error: new Error("Paystack is not configured.") };
+        }
+        await initiatePaystackPayment({
+          purpose: "sub_agent_activation",
+          email,
+          metadata: { parent_store_slug: storeSlug },
+          onSuccess: () => setStatus("pending"),
+        });
+        return { error: null };
+      }
+      const { error } = await supabase.rpc("apply_sub_agent", { p_parent_store_slug: storeSlug });
+      if (!error) setStatus("pending");
+      return { error: error ? new Error(error.message) : null };
+    } catch (e) {
+      return { error: e instanceof Error ? e : new Error("Payment failed") };
+    } finally {
+      setApplying(false);
+    }
+  }, [storeSlug, canApply, fee, user?.email]);
 
   return {
     store,

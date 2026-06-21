@@ -11,6 +11,7 @@ import {
   Store, Package, ShoppingCart, Banknote, Copy, ExternalLink, Share2,
   Trash2, Link2, MessageCircle, Pencil, Check, Loader2, Sparkles,
 } from "lucide-react";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 import { Link } from "react-router-dom";
 import { getStoreUrl, slugify, whatsappLink } from "@/lib/store";
 import { labelFor } from "@/components/data/BuyDataDialog";
@@ -131,11 +132,38 @@ export default function MyStore() {
     if (!user) return;
     if (!createForm.name.trim()) return toast.error("Enter a store name.");
     if (!createForm.whatsapp.trim()) return toast.error("Enter a WhatsApp support number.");
-    if (!isSubAgent && activation.enabled && Number(profile?.wallet_balance ?? 0) < activation.fee) {
-      return toast.error(`Insufficient wallet balance. Top up ₵${activation.fee.toFixed(2)} to activate your store.`);
-    }
-    setCreating(true);
     const slug = slugify(createForm.name);
+    const needsPaystack = !isSubAgent && activation.enabled && activation.fee > 0;
+
+    if (needsPaystack) {
+      const email = user.email;
+      if (!email?.includes("@")) return toast.error("Your account needs a valid email for Paystack payments.");
+      if (!paystackConfigured()) return toast.error("Paystack is not configured.");
+      setCreating(true);
+      try {
+        await initiatePaystackPayment({
+          purpose: "store_activation",
+          email,
+          metadata: {
+            name: createForm.name.trim(),
+            whatsapp: createForm.whatsapp.trim(),
+            slug,
+          },
+          onSuccess: () => {
+            toast.success(isSubAgent ? "Your sub-agent store is live!" : "Your store is live! You're now an agent with agent pricing.");
+            load();
+            refreshProfile();
+          },
+        });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Payment failed");
+      } finally {
+        setCreating(false);
+      }
+      return;
+    }
+
+    setCreating(true);
     const { error } = await supabase.rpc("create_store", {
       p_name: createForm.name.trim(),
       p_whatsapp: createForm.whatsapp.trim(),

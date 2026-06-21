@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 import { toast } from "sonner";
 import { Loader2, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -15,8 +16,13 @@ export default function WalletPage() {
   const { user } = useAuth();
   const { profile, refresh } = useProfile();
   const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [recent, setRecent] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
 
   const loadRecent = async () => {
     if (!user) return;
@@ -35,19 +41,32 @@ export default function WalletPage() {
     if (!user) return;
     const amt = Number(amount);
     if (!amt || amt <= 0) return toast.error("Enter a valid amount");
+    if (!email.includes("@")) return toast.error("Enter a valid email for payment receipt");
+    if (!paystackConfigured()) return toast.error("Paystack is not configured on this app");
+
     setLoading(true);
-    const { data, error } = await supabase.rpc("wallet_topup", { p_amount: amt });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    setAmount("");
-    await refresh();
-    await loadRecent();
-    toast.success(`₵${amt.toFixed(2)} added — new balance ₵${Number(data).toFixed(2)}`);
+    try {
+      await initiatePaystackPayment({
+        purpose: "wallet_topup",
+        email,
+        metadata: { amount: amt },
+        onSuccess: async () => {
+          setAmount("");
+          await refresh();
+          await loadRecent();
+          toast.success(`₵${amt.toFixed(2)} added to your wallet`);
+        },
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Payment failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <DashboardPageHeader title="Account Balance" description="Top up your wallet to pay for data bundles and store activation." />
+      <DashboardPageHeader title="Account Balance" description="Top up your wallet via Paystack (Mobile Money, card & bank)." />
 
       <GlassCard className="p-8 bg-gradient-to-br from-primary/15 to-primary/5 border-primary/30">
         <div className="text-xs font-black uppercase tracking-widest text-muted-foreground">Available balance</div>
@@ -55,7 +74,11 @@ export default function WalletPage() {
         <p className="text-xs text-muted-foreground mt-3">Secured wallet for instant data purchases across all networks.</p>
       </GlassCard>
 
-      <GlassCard title="Top Up">
+      <GlassCard title="Top Up via Paystack">
+        <div className="space-y-2">
+          <Label>Email (for payment receipt)</Label>
+          <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+        </div>
         <div className="space-y-2">
           <Label>Amount (₵)</Label>
           <Input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="50" />
@@ -67,9 +90,9 @@ export default function WalletPage() {
         </div>
         <Button onClick={topUp} disabled={loading} className="w-full font-semibold gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {loading ? "Processing…" : "Top up wallet"}
+          {loading ? "Opening Paystack…" : "Pay with Paystack"}
         </Button>
-        <p className="text-xs text-muted-foreground">Demo top-up — funds are added instantly to your wallet balance.</p>
+        <p className="text-xs text-muted-foreground">Secure payment via Mobile Money, debit card, or bank transfer.</p>
       </GlassCard>
 
       <GlassCard>

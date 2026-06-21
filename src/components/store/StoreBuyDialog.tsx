@@ -3,14 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Clock, Loader2, MessageCircle } from "lucide-react";
+import { Clock, Loader2, CreditCard } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
-import { whatsappLink } from "@/lib/store";
 import NetworkBadge from "@/components/store/NetworkBadge";
 import { useStoreTheme } from "@/components/store/StoreThemeProvider";
 import { cn } from "@/lib/utils";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 
 type Pkg = {
   id: string;
@@ -24,7 +23,6 @@ export default function StoreBuyDialog({
   pkg,
   storeName,
   storeOwnerId,
-  whatsapp,
   open,
   onOpenChange,
 }: {
@@ -37,28 +35,39 @@ export default function StoreBuyDialog({
 }) {
   const { isDark } = useStoreTheme();
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!pkg) return null;
 
   const handleOrder = async () => {
     if (!phone.trim()) return toast.error("Enter your phone number.");
-    setLoading(true);
-    const { data, error } = await supabase.from("store_orders").insert({
-      store_owner_id: storeOwnerId,
-      package_id: pkg.id,
-      customer_phone: phone.trim(),
-      price: pkg.price,
-      status: "pending",
-    }).select("id").single();
-    setLoading(false);
-    if (error) return toast.error(error.message);
+    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
+    if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
-    const msg = `Hi ${storeName}! I'd like to buy:\n\n📦 ${pkg.size_gb}GB ${labelFor(pkg.network)}\n💰 GH₵${Number(pkg.price).toFixed(2)}\n📱 Recipient: ${phone.trim()}\n\nOrder ref: ${data.id.slice(0, 8)}`;
-    window.open(whatsappLink(whatsapp, msg), "_blank");
-    toast.success("Order placed! Complete payment via WhatsApp.");
-    setPhone("");
-    onOpenChange(false);
+    setLoading(true);
+    try {
+      await initiatePaystackPayment({
+        purpose: "store_order",
+        email,
+        metadata: {
+          store_package_id: pkg.id,
+          store_owner_id: storeOwnerId,
+          customer_phone: phone.trim(),
+        },
+        callbackPath: window.location.pathname,
+        onSuccess: () => {
+          toast.success("Payment successful! Your data is being delivered.");
+          setPhone("");
+          setEmail("");
+          onOpenChange(false);
+        },
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Payment failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,7 +89,7 @@ export default function StoreBuyDialog({
             {pkg.size_gb}GB · {labelFor(pkg.network)}
           </DialogTitle>
           <DialogDescription className={isDark ? "text-zinc-400" : "text-zinc-500"}>
-            GH₵ {Number(pkg.price).toFixed(2)} · Pay by Mobile Money via WhatsApp
+            GH₵ {Number(pkg.price).toFixed(2)} · Pay securely with Paystack
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -89,12 +98,22 @@ export default function StoreBuyDialog({
             <Input
               placeholder="0241234567"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+              className={isDark ? "bg-zinc-800 border-white/10" : "bg-white border-zinc-200"}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={isDark ? "text-zinc-300" : "text-zinc-700"}>Email for payment receipt</Label>
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               className={isDark ? "bg-zinc-800 border-white/10" : "bg-white border-zinc-200"}
             />
           </div>
           <p className={cn("text-xs", isDark ? "text-zinc-400" : "text-zinc-500")}>
-            You'll be redirected to WhatsApp to confirm and pay with {storeName}.
+            Pay with Mobile Money, card, or bank via Paystack. Data is delivered to the recipient number.
           </p>
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
@@ -108,10 +127,10 @@ export default function StoreBuyDialog({
           <Button
             onClick={handleOrder}
             disabled={loading}
-            className="gap-2 font-semibold bg-[#25D366] hover:bg-[#1ebe5d] text-white"
+            className="gap-2 font-semibold"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
-            Order via WhatsApp
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+            Pay GH₵{Number(pkg.price).toFixed(2)}
           </Button>
         </DialogFooter>
       </DialogContent>

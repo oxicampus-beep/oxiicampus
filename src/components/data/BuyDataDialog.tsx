@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import { Loader2, Tag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 
 type Pkg = { id: string; network: any; size_gb: number; price: number; validity: string };
 
@@ -16,8 +15,8 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
   pkg: Pkg | null; open: boolean; onOpenChange: (o: boolean) => void; onSuccess?: () => void;
 }) {
   const { user } = useAuth();
-  const { profile, refresh } = useProfile();
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [promoValid, setPromoValid] = useState<boolean | null>(null);
@@ -32,15 +31,14 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
       setDiscount(0);
       setPromoValid(null);
       setStep("enter");
+      if (user?.email) setEmail(user.email);
       supabase.from("platform_settings").select("purchases_enabled, maintenance_mode").eq("id", 1).maybeSingle()
         .then(({ data }) => setPurchasesEnabled(!(data?.maintenance_mode) && (data?.purchases_enabled ?? true)));
     }
-  }, [open]);
+  }, [open, user?.email]);
 
   if (!pkg) return null;
-  const balance = Number(profile?.wallet_balance ?? 0);
   const finalPrice = Math.max(0, Number(pkg.price) - discount);
-  const insufficient = balance < finalPrice;
 
   const validatePromo = async (code: string) => {
     if (!code.trim()) { setDiscount(0); setPromoValid(null); return; }
@@ -61,35 +59,44 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
   const handlePay = async () => {
     if (!user) return;
     if (!purchasesEnabled) return toast.error("Purchases are temporarily disabled.");
-    if (insufficient) return toast.error("Insufficient wallet balance. Top up first.");
+    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
+    if (!paystackConfigured()) return toast.error("Paystack is not configured.");
+
     setLoading(true);
-    const rpcArgs: { p_package_id: string; p_recipient_phone: string; p_promo_code?: string } = {
-      p_package_id: pkg.id,
-      p_recipient_phone: phone,
-    };
-    if (promoCode.trim()) rpcArgs.p_promo_code = promoCode.trim();
-    const { data: orderId, error } = await supabase.rpc("purchase_data_package", rpcArgs);
-    if (error) {
+    try {
+      await initiatePaystackPayment({
+        purpose: "data_purchase",
+        email,
+        metadata: {
+          package_id: pkg.id,
+          recipient_phone: phone,
+          ...(promoCode.trim() ? { promo_code: promoCode.trim() } : {}),
+        },
+        onSuccess: async (result) => {
+          const orderId = result.order_id;
+          if (orderId) {
+            const { data: fulfill, error: fulfillErr } = await supabase.functions.invoke("fulfill-data-order", {
+              body: { order_id: orderId },
+            });
+            if (fulfillErr || !fulfill?.success) {
+              toast.warning(fulfill?.error ?? "Order placed. Data delivery is pending.");
+            } else if (fulfill.status === "completed") {
+              toast.success("Purchase successful! Data has been delivered.");
+            } else {
+              toast.success("Purchase successful! Your data is being delivered.");
+            }
+          } else {
+            toast.success("Purchase successful!");
+          }
+          onOpenChange(false);
+          onSuccess?.();
+        },
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Payment failed");
+    } finally {
       setLoading(false);
-      if (error.message.includes("Insufficient")) return toast.error("Insufficient wallet balance. Top up first.");
-      return toast.error(error.message);
     }
-
-    const { data: fulfill, error: fulfillErr } = await supabase.functions.invoke("fulfill-data-order", {
-      body: { order_id: orderId },
-    });
-    setLoading(false);
-
-    if (fulfillErr || !fulfill?.success) {
-      toast.warning(fulfill?.error ?? "Order placed. Data delivery is pending — we'll retry shortly.");
-    } else if (fulfill.status === "completed") {
-      toast.success("Purchase successful! Data has been delivered.");
-    } else {
-      toast.success("Purchase successful! Your data is being delivered.");
-    }
-    await refresh();
-    onOpenChange(false);
-    onSuccess?.();
   };
 
   return (
@@ -117,6 +124,10 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
               <Input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="0241234567" inputMode="numeric" />
             </div>
             <div>
+              <Label>Payment email</Label>
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+            </div>
+            <div>
               <Label className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Promo code (optional)</Label>
               <Input
                 value={promoCode}
@@ -130,7 +141,7 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button disabled={phone.length < 10 || !purchasesEnabled} onClick={() => setStep("confirm")}>Continue</Button>
+              <Button disabled={phone.length < 10 || !purchasesEnabled || !email.includes("@")} onClick={() => setStep("confirm")}>Continue</Button>
             </DialogFooter>
           </div>
         ) : (
@@ -141,19 +152,13 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
               <Row k="Recipient" v={phone} />
               {discount > 0 && <Row k="Promo discount" v={`-₵${discount.toFixed(2)}`} />}
               <Row k="Amount" v={`₵${finalPrice.toFixed(2)}`} highlight />
-              <Row k="Wallet balance" v={`₵${balance.toFixed(2)}`} />
             </div>
-            {insufficient && (
-              <p className="text-destructive text-sm">
-                Insufficient balance.{" "}
-                <Link to="/dashboard/wallet" className="underline font-medium" onClick={() => onOpenChange(false)}>Top up wallet</Link>
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">You will pay securely via Paystack (Mobile Money, card, or bank).</p>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setStep("enter")}>Back</Button>
-              <Button disabled={loading || insufficient || !purchasesEnabled} onClick={handlePay} className="font-semibold gap-2">
+              <Button disabled={loading || !purchasesEnabled} onClick={handlePay} className="font-semibold gap-2">
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Processing…" : `Pay ₵${finalPrice.toFixed(2)}`}
+                {loading ? "Opening Paystack…" : `Pay ₵${finalPrice.toFixed(2)}`}
               </Button>
             </DialogFooter>
           </div>
