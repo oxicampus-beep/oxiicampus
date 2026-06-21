@@ -49,8 +49,10 @@ export default function WelcomeOnboarding() {
     setOpen(false);
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={o => { if (!o) skip(); }}>
+    <Dialog open onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden border-white/10 bg-[#0A0A0F] text-white">
         <div className="p-6 md:p-8">
           <div className="flex items-center gap-2 mb-2">

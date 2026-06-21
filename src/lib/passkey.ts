@@ -2,6 +2,10 @@ export const PASSKEY_OFFER_KEY = "byteboss_offer_passkey";
 export const PASSKEY_HINT_KEY = "byteboss_has_passkey";
 export const ONBOARDING_COMPLETE_EVENT = "byteboss-onboarding-complete";
 
+export function isOnboardingDone(): boolean {
+  return typeof window !== "undefined" && localStorage.getItem("byteboss_onboarding_done") === "1";
+}
+
 export function isPasskeySupported(): boolean {
   return !!(
     typeof window !== "undefined" &&

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, Bell, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isOnboardingDone, ONBOARDING_COMPLETE_EVENT } from "@/lib/passkey";
 
 type Announcement = {
   id: string;
@@ -41,29 +42,48 @@ export default function AnnouncementPopup() {
   const { user } = useAuth();
   const [queue, setQueue] = useState<Announcement[]>([]);
   const [dismissing, setDismissing] = useState(false);
+  const [canShow, setCanShow] = useState(isOnboardingDone);
   const current = queue[0] ?? null;
 
+  useEffect(() => {
+    if (isOnboardingDone()) setCanShow(true);
+    const onDone = () => setCanShow(true);
+    window.addEventListener(ONBOARDING_COMPLETE_EVENT, onDone);
+    return () => window.removeEventListener(ONBOARDING_COMPLETE_EVENT, onDone);
+  }, []);
+
   const load = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("platform_announcements")
-      .select("id, title, body, severity, audience, created_at")
-      .order("created_at", { ascending: true });
-    setQueue((data ?? []) as Announcement[]);
-  }, [user]);
+    if (!user || !canShow) return;
+    const [{ data: rows }, { data: dismissed }] = await Promise.all([
+      supabase
+        .from("platform_announcements")
+        .select("id, title, body, severity, audience, created_at, active")
+        .eq("active", true)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("announcement_dismissals")
+        .select("announcement_id")
+        .eq("user_id", user.id),
+    ]);
+    const dismissedIds = new Set((dismissed ?? []).map(d => d.announcement_id));
+    const next = (rows ?? []).filter(
+      a => a.title && a.body && !dismissedIds.has(a.id),
+    ) as Announcement[];
+    setQueue(next);
+  }, [user, canShow]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !canShow) return;
     load();
 
     const channel = supabase
-      .channel("announcement-popups")
+      .channel(`announcement-popups-${user.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "platform_announcements" },
         payload => {
           const row = payload.new as Announcement & { active?: boolean };
-          if (row.active === false) return;
+          if (row.active === false || !row.title || !row.body) return;
           setQueue(prev => (prev.some(a => a.id === row.id) ? prev : [...prev, row]));
         },
       )
@@ -76,6 +96,7 @@ export default function AnnouncementPopup() {
             setQueue(prev => prev.filter(a => a.id !== row.id));
             return;
           }
+          if (!row.title || !row.body) return;
           setQueue(prev => {
             if (prev.some(a => a.id === row.id)) return prev;
             return [...prev, row].sort(
@@ -101,7 +122,7 @@ export default function AnnouncementPopup() {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
     };
-  }, [user, load]);
+  }, [user, canShow, load]);
 
   const dismiss = async () => {
     if (!current || !user) return;
@@ -114,7 +135,7 @@ export default function AnnouncementPopup() {
     setQueue(prev => prev.slice(1));
   };
 
-  if (!current) return null;
+  if (!canShow || !current) return null;
 
   const style = severityStyles[current.severity] ?? severityStyles.info;
   const Icon = style.icon;

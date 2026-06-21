@@ -90,6 +90,15 @@ export default function Auth() {
     markPasskeyOfferPending();
   };
 
+  if (user) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background text-muted-foreground gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm">Taking you to your dashboard…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-gradient-to-br from-background via-background to-primary/[0.07]">
       <AuthBackground />
@@ -167,10 +176,7 @@ export default function Auth() {
                   </Button>
                 </div>
               </form>
-              <BiometricSignInButton
-                disabled={loading}
-                onSuccess={() => navigate(redirectTo)}
-              />
+              <BiometricSignInButton disabled={loading} />
             </TabsContent>
 
             <TabsContent value="signup" className="mt-0 focus-visible:outline-none">

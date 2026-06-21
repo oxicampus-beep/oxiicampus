@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AgentPricingExample = {
@@ -60,6 +60,7 @@ export async function fetchMtn1GbOfferPricing(): Promise<AgentPricingExample | n
 export function useMtn1GbOfferPricing() {
   const [example, setExample] = useState<AgentPricingExample | null>(null);
   const [loading, setLoading] = useState(true);
+  const channelId = useId().replace(/:/g, "");
 
   const load = useCallback(async () => {
     const result = await fetchMtn1GbOfferPricing();
@@ -71,7 +72,7 @@ export function useMtn1GbOfferPricing() {
     load();
 
     const channel = supabase
-      .channel("mtn-1gb-offer-pricing")
+      .channel(`mtn-1gb-offer-pricing-${channelId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "data_packages" },
@@ -80,7 +81,7 @@ export function useMtn1GbOfferPricing() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [load]);
+  }, [load, channelId]);
 
   return { example, loading };
 }

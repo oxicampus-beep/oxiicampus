@@ -10,6 +10,7 @@ import {
   consumePasskeyOfferPending,
   clearPasskeyOfferPending,
   friendlyPasskeyError,
+  isOnboardingDone,
   isPasskeySupported,
   ONBOARDING_COMPLETE_EVENT,
   peekPasskeyOfferPending,
@@ -30,11 +31,10 @@ export default function PasskeySetupDialog() {
     }
 
     const onDashboard = location.pathname.startsWith("/dashboard");
-    const onboardingDone = () => Boolean(localStorage.getItem("byteboss_onboarding_done"));
 
     const tryOpen = () => {
       if (!peekPasskeyOfferPending()) return;
-      if (onDashboard && !onboardingDone()) return;
+      if (onDashboard && !isOnboardingDone()) return;
       if (consumePasskeyOfferPending()) setOpen(true);
     };
 
@@ -55,8 +55,10 @@ export default function PasskeySetupDialog() {
     dismiss();
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={o => !o && dismiss()}>
+    <Dialog open onOpenChange={o => !o && dismiss()}>
       <DialogContent className="sm:max-w-md border-white/10 bg-[#0A0A0F] text-white">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-12 w-12 rounded-2xl bg-primary/15 border border-primary/30 grid place-items-center">
