@@ -26,7 +26,6 @@ export function PaystackCheckoutProvider({ children }: { children: ReactNode }) 
         open: true,
         reference: args.reference,
         amount: args.amount,
-        email: args.email,
         onSuccess: args.onSuccess,
         onClose: () => {
           close();

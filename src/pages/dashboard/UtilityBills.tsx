@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardPageHeader, GlassCard } from "@/components/dashboard/DashboardUi";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,7 @@ export default function UtilityBills() {
   const [tab, setTab] = useState("ecg");
   const [account, setAccount] = useState("");
   const [amount, setAmount] = useState("");
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (user?.email) setEmail(user.email);
-  }, [user?.email]);
 
   const current = TYPES.find(t => t.id === tab)!;
 
@@ -36,14 +31,12 @@ export default function UtilityBills() {
     const amt = Number(amount);
     if (account.length < 6) return toast.error("Enter a valid account/meter number");
     if (!amt || amt < 5) return toast.error("Minimum amount is ₵5");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
     if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setLoading(true);
     try {
       await initiatePaystackPayment({
         purpose: "utility",
-        email,
         metadata: {
           utility_type: tab,
           account_number: account,
@@ -76,7 +69,6 @@ export default function UtilityBills() {
               <form onSubmit={submit} className="space-y-4">
                 <p className="text-sm text-muted-foreground">{t.hint}</p>
                 <div><Label>{t.placeholder}</Label><Input value={account} onChange={e => setAccount(e.target.value)} className="mt-1" /></div>
-                <div><Label>Payment email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" /></div>
                 <div>
                   <Label>Amount (₵)</Label>
                   <Input type="number" min="5" step="1" value={amount} onChange={e => setAmount(e.target.value)} className="mt-1" />

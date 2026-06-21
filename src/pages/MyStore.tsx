@@ -136,14 +136,11 @@ export default function MyStore() {
     const needsPaystack = !isSubAgent && activation.enabled && activation.fee > 0;
 
     if (needsPaystack) {
-      const email = user.email;
-      if (!email?.includes("@")) return toast.error("Your account needs a valid email for Paystack payments.");
       if (!paystackConfigured()) return toast.error("Paystack is not configured.");
       setCreating(true);
       try {
         await initiatePaystackPayment({
           purpose: "store_activation",
-          email,
           metadata: {
             name: createForm.name.trim(),
             whatsapp: createForm.whatsapp.trim(),

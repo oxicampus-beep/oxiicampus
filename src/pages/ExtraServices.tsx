@@ -47,12 +47,9 @@ export default function ExtraServices() {
     setApplying(true);
     try {
       if (fee > 0) {
-        const email = user?.email;
-        if (!email?.includes("@")) return toast.error("Your account needs a valid email for Paystack.");
         if (!paystackConfigured()) return toast.error("Paystack is not configured.");
         await initiatePaystackPayment({
           purpose: "sub_agent_activation",
-          email,
           metadata: { parent_store_slug: slug.trim() },
           onSuccess: async () => {
             toast.success("Sub-agent application submitted!");

@@ -1,10 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   ghsToPesewas,
+  getPaystackSecret,
   paystackChargeMobileMoney,
   paystackCheckPendingCharge,
   paystackSubmitOtp,
   paystackVerify,
+  resolvePaystackEmail,
 } from "../_shared/paystack.ts";
 
 const corsHeaders = {
@@ -22,11 +24,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY");
-
-    if (!paystackSecret) {
-      return json({ success: false, error: "Paystack is not configured" }, 500);
-    }
+    const paystackSecret = getPaystackSecret();
 
     const body = await req.json();
     const action = String(body.action ?? "charge");
@@ -96,7 +94,11 @@ Deno.serve(async (req) => {
       }).eq("reference", reference);
 
       const result = await paystackChargeMobileMoney(paystackSecret, {
-        email: payment.customer_email,
+        email: resolvePaystackEmail({
+          explicit: payment.customer_email,
+          userId: payment.user_id,
+          phone: normalized,
+        }),
         amountPesewas: ghsToPesewas(Number(payment.amount)),
         reference,
         phone: normalized,
@@ -128,11 +130,14 @@ async function handleChargeResult(
   result: { status: boolean; message: string; data?: { status: string; display_text?: string; message?: string; reference?: string } },
 ) {
   if (!result.status || !result.data) {
+    const msg = result.message ?? "Charge failed";
     return json({
       success: false,
       charge_status: "failed",
-      error: result.message ?? "Charge failed",
-      display_text: result.message,
+      error: msg === "Invalid key"
+        ? "Payment provider configuration error. Please contact support."
+        : msg,
+      display_text: msg,
     });
   }
 

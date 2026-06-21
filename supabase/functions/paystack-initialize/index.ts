@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   generateReference,
+  getPaystackSecret,
+  resolvePaystackEmail,
   type PaystackPurpose,
 } from "../_shared/paystack.ts";
 
@@ -17,27 +19,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY");
-    const appUrl = Deno.env.get("APP_URL") ?? "http://localhost:5173";
-
-    if (!paystackSecret) {
-      return json({ success: false, error: "Paystack is not configured" }, 500);
-    }
+    getPaystackSecret();
 
     const body = await req.json();
     const purpose = body.purpose as PaystackPurpose;
     const metadata = (body.metadata ?? {}) as Record<string, unknown>;
-    const email = String(body.email ?? "").trim().toLowerCase();
     const callbackPath = String(body.callback_path ?? "/payment/callback");
 
-    if (!purpose || !email || !email.includes("@")) {
-      return json({ success: false, error: "purpose and valid email are required" }, 400);
+    if (!purpose) {
+      return json({ success: false, error: "purpose is required" }, 400);
     }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const appUrl = Deno.env.get("APP_URL") ?? "https://byteboss.shop";
 
     const admin = createClient(supabaseUrl, serviceKey);
     let userId: string | null = null;
+    let userEmail: string | null = null;
     const authHeader = req.headers.get("Authorization");
 
     if (!PUBLIC_PURPOSES.has(purpose)) {
@@ -50,14 +49,22 @@ Deno.serve(async (req) => {
         return json({ success: false, error: "Session expired — please sign in again" }, 401);
       }
       userId = user.id;
+      userEmail = user.email ?? null;
 
       await admin.from("profiles").upsert({
         id: user.id,
-        email: user.email ?? email,
+        email: user.email,
         full_name: (user.user_metadata?.full_name as string) ?? null,
         phone: (user.user_metadata?.phone as string) ?? null,
       }, { onConflict: "id" });
     }
+
+    const customerEmail = resolvePaystackEmail({
+      explicit: body.email as string | undefined,
+      userEmail,
+      userId,
+      phone: (metadata.customer_phone ?? metadata.recipient_phone) as string | undefined,
+    });
 
     const { data: amountGhs, error: quoteErr } = await admin.rpc("quote_paystack_amount", {
       p_purpose: purpose,
@@ -81,7 +88,7 @@ Deno.serve(async (req) => {
       amount,
       purpose,
       metadata,
-      customer_email: email,
+      customer_email: customerEmail,
       status: "pending",
     });
 

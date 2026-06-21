@@ -16,13 +16,8 @@ export default function WalletPage() {
   const { user } = useAuth();
   const { profile, refresh } = useProfile();
   const [amount, setAmount] = useState("");
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [recent, setRecent] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (user?.email) setEmail(user.email);
-  }, [user?.email]);
 
   const loadRecent = async () => {
     if (!user) return;
@@ -41,14 +36,12 @@ export default function WalletPage() {
     if (!user) return;
     const amt = Number(amount);
     if (!amt || amt <= 0) return toast.error("Enter a valid amount");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment receipt");
     if (!paystackConfigured()) return toast.error("Paystack is not configured on this app");
 
     setLoading(true);
     try {
       await initiatePaystackPayment({
         purpose: "wallet_topup",
-        email,
         metadata: { amount: amt },
         onSuccess: async () => {
           setAmount("");
@@ -75,10 +68,6 @@ export default function WalletPage() {
       </GlassCard>
 
       <GlassCard title="Top Up via Paystack">
-        <div className="space-y-2">
-          <Label>Email (for payment receipt)</Label>
-          <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-        </div>
         <div className="space-y-2">
           <Label>Amount (₵)</Label>
           <Input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="50" />

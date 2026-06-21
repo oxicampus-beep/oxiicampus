@@ -35,21 +35,18 @@ export default function StoreBuyDialog({
 }) {
   const { isDark } = useStoreTheme();
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!pkg) return null;
 
   const handleOrder = async () => {
     if (!phone.trim()) return toast.error("Enter your phone number.");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
     if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setLoading(true);
     try {
       await initiatePaystackPayment({
         purpose: "store_order",
-        email,
         metadata: {
           store_package_id: pkg.id,
           store_owner_id: storeOwnerId,
@@ -59,7 +56,6 @@ export default function StoreBuyDialog({
         onSuccess: () => {
           toast.success("Payment successful! Your data is being delivered.");
           setPhone("");
-          setEmail("");
           onOpenChange(false);
         },
       });
@@ -99,16 +95,6 @@ export default function StoreBuyDialog({
               placeholder="0241234567"
               value={phone}
               onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              className={isDark ? "bg-zinc-800 border-white/10" : "bg-white border-zinc-200"}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className={isDark ? "text-zinc-300" : "text-zinc-700"}>Email for payment receipt</Label>
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
               className={isDark ? "bg-zinc-800 border-white/10" : "bg-white border-zinc-200"}
             />
           </div>

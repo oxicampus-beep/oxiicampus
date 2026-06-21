@@ -18,14 +18,9 @@ export default function BulkDisbursement() {
   const [packages, setPackages] = useState<any[]>([]);
   const [packageId, setPackageId] = useState("");
   const [phones, setPhones] = useState("");
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState<any[]>([]);
   const [lastItems, setLastItems] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (user?.email) setEmail(user.email);
-  }, [user?.email]);
 
   const load = async () => {
     if (!user) return;
@@ -45,14 +40,12 @@ export default function BulkDisbursement() {
     if (!packageId) return toast.error("Select a package");
     if (list.length === 0) return toast.error("Enter at least one phone number");
     if (list.length > 50) return toast.error("Maximum 50 numbers per batch");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
     if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setLoading(true);
     try {
       await initiatePaystackPayment({
         purpose: "bulk_purchase",
-        email,
         metadata: { package_id: packageId, phones: list },
         onSuccess: async (result) => {
           if (result.job_id) {
@@ -83,10 +76,6 @@ export default function BulkDisbursement() {
 
       <GlassCard title="New batch">
         <form onSubmit={submit} className="space-y-4">
-          <div>
-            <Label>Payment email</Label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" />
-          </div>
           <div>
             <Label>Package</Label>
             <Select value={packageId} onValueChange={setPackageId}>

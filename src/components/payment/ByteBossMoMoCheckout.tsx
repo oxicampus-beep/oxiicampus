@@ -25,7 +25,6 @@ export type CheckoutSession = {
   open: boolean;
   reference: string;
   amount: number;
-  email: string;
   onSuccess?: (result: PaystackVerifyResult) => void | Promise<void>;
   onComplete: (result: PaystackVerifyResult) => void | Promise<void>;
   onClose: () => void;
@@ -50,7 +49,6 @@ export default function ByteBossMoMoCheckout({
   open,
   reference,
   amount,
-  email,
   onComplete,
   onClose,
 }: CheckoutSession) {
@@ -323,7 +321,7 @@ export default function ByteBossMoMoCheckout({
 
         <div className="px-6 pb-5">
           <p className="text-[10px] text-center text-muted-foreground">
-            Receipt sent to {email}
+            Secured by Paystack · ByteBoss Mobile Money
           </p>
         </div>
       </DialogContent>

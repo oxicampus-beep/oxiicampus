@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardPageHeader, GlassCard } from "@/components/dashboard/DashboardUi";
 import { Button } from "@/components/ui/button";
@@ -19,26 +19,19 @@ const NETWORKS = [
 export default function BuyAirtime() {
   const { user } = useAuth();
   const [form, setForm] = useState({ network: "mtn", phone: "", amount: "" });
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (user?.email) setEmail(user.email);
-  }, [user?.email]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(form.amount);
     if (form.phone.length < 10) return toast.error("Enter a valid phone number");
     if (!amt || amt < 1 || amt > 500) return toast.error("Amount must be between ₵1 and ₵500");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
     if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setLoading(true);
     try {
       await initiatePaystackPayment({
         purpose: "airtime",
-        email,
         metadata: {
           network: form.network,
           recipient_phone: form.phone,
@@ -69,10 +62,6 @@ export default function BuyAirtime() {
             </Select>
           </div>
           <div><Label>Phone number</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 10) }))} className="mt-1" placeholder="0241234567" /></div>
-          <div>
-            <Label>Payment email</Label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" placeholder="you@example.com" />
-          </div>
           <div>
             <Label>Amount (₵)</Label>
             <Input type="number" min="1" max="500" step="0.5" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="mt-1" placeholder="10" />

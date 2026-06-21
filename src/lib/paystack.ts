@@ -14,7 +14,6 @@ export type PaystackPurpose =
 
 export type PaystackInitOptions = {
   purpose: PaystackPurpose;
-  email: string;
   metadata: Record<string, unknown>;
   callbackPath?: string;
   onSuccess?: (result: PaystackVerifyResult) => void | Promise<void>;
@@ -50,7 +49,6 @@ export async function initiatePaystackPayment(opts: PaystackInitOptions): Promis
     error?: string;
   }>("paystack-initialize", {
     purpose: opts.purpose,
-    email: opts.email,
     metadata: opts.metadata,
     callback_path: opts.callbackPath ?? "/payment/callback",
   });
@@ -65,7 +63,6 @@ export async function initiatePaystackPayment(opts: PaystackInitOptions): Promis
   await openPaystackCheckout({
     reference,
     amount,
-    email: opts.email,
     onSuccess: async (result) => {
       sessionStorage.removeItem("paystack_pending");
       await opts.onSuccess?.(result);

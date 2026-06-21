@@ -82,18 +82,12 @@ export function useStoreSubAgent(storeSlug: string | undefined) {  const { user 
     setApplying(true);
     try {
       if (fee > 0) {
-        const email = user?.email;
-        if (!email?.includes("@")) {
-          setApplying(false);
-          return { error: new Error("Your account needs a valid email for Paystack payments.") };
-        }
         if (!paystackConfigured()) {
           setApplying(false);
           return { error: new Error("Paystack is not configured.") };
         }
         await initiatePaystackPayment({
           purpose: "sub_agent_activation",
-          email,
           metadata: { parent_store_slug: storeSlug },
           onSuccess: () => setStatus("pending"),
         });
@@ -107,7 +101,7 @@ export function useStoreSubAgent(storeSlug: string | undefined) {  const { user 
     } finally {
       setApplying(false);
     }
-  }, [storeSlug, canApply, fee, user?.email]);
+  }, [storeSlug, canApply, fee]);
 
   return {
     store,

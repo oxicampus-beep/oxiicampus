@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { paystackVerify } from "../_shared/paystack.ts";
+import { paystackVerify, getPaystackSecret } from "../_shared/paystack.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,11 +14,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY");
-
-    if (!paystackSecret) {
-      return json({ success: false, error: "Paystack is not configured" }, 500);
-    }
+    const paystackSecret = getPaystackSecret();
 
     const body = req.method === "POST" ? await req.json() : {};
     const url = new URL(req.url);

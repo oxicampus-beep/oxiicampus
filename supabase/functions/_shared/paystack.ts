@@ -90,8 +90,49 @@ export async function verifyPaystackWebhookSignature(
 }
 
 export function generateReference() {
-  const id = crypto.randomUUID().replace(/-/g, "");
-  return `OXI_${id.slice(0, 20).toUpperCase()}`;
+  const id = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+  // Paystack allows only alphanumeric, hyphen, dot, equals in references
+  return `BB${id}`;
+}
+
+export function getPaystackSecret(): string {
+  const key = (Deno.env.get("PAYSTACK_SECRET_KEY") ?? "").trim();
+  if (!key) {
+    throw new Error("Paystack is not configured on the server");
+  }
+  if (key.startsWith("pk_")) {
+    throw new Error("Paystack secret key is misconfigured (public key was set as secret)");
+  }
+  if (!key.startsWith("sk_")) {
+    throw new Error("Paystack secret key format is invalid");
+  }
+  return key;
+}
+
+/** Paystack requires an email; users never need to type one in our UI. */
+export function resolvePaystackEmail(input: {
+  explicit?: string | null;
+  userEmail?: string | null;
+  userId?: string | null;
+  phone?: string | null;
+}): string {
+  const explicit = input.explicit?.trim().toLowerCase();
+  if (explicit && explicit.includes("@")) return explicit;
+
+  const userEmail = input.userEmail?.trim().toLowerCase();
+  if (userEmail && userEmail.includes("@")) return userEmail;
+
+  const digits = (input.phone ?? "").replace(/\D/g, "");
+  if (digits.length >= 10) {
+    const local = digits.startsWith("233") ? digits.slice(3) : digits.replace(/^0/, "");
+    return `${local.slice(0, 10)}@byteboss.shop`;
+  }
+
+  if (input.userId) {
+    return `${input.userId.replace(/-/g, "").slice(0, 24)}@byteboss.shop`;
+  }
+
+  return `guest${Date.now()}@byteboss.shop`;
 }
 
 export function ghsToPesewas(amountGhs: number) {

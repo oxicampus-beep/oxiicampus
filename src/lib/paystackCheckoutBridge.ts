@@ -3,7 +3,6 @@ import type { PaystackVerifyResult } from "@/lib/paystack";
 export type PaystackCheckoutOpenArgs = {
   reference: string;
   amount: number;
-  email: string;
   onSuccess?: (result: PaystackVerifyResult) => void | Promise<void>;
 };
 

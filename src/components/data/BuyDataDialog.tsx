@@ -16,7 +16,6 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
 }) {
   const { user } = useAuth();
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [promoValid, setPromoValid] = useState<boolean | null>(null);
@@ -31,11 +30,10 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
       setDiscount(0);
       setPromoValid(null);
       setStep("enter");
-      if (user?.email) setEmail(user.email);
       supabase.from("platform_settings").select("purchases_enabled, maintenance_mode").eq("id", 1).maybeSingle()
         .then(({ data }) => setPurchasesEnabled(!(data?.maintenance_mode) && (data?.purchases_enabled ?? true)));
     }
-  }, [open, user?.email]);
+  }, [open]);
 
   if (!pkg) return null;
   const finalPrice = Math.max(0, Number(pkg.price) - discount);
@@ -59,14 +57,12 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
   const handlePay = async () => {
     if (!user) return;
     if (!purchasesEnabled) return toast.error("Purchases are temporarily disabled.");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
     if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setLoading(true);
     try {
       await initiatePaystackPayment({
         purpose: "data_purchase",
-        email,
         metadata: {
           package_id: pkg.id,
           recipient_phone: phone,
@@ -124,10 +120,6 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
               <Input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="0241234567" inputMode="numeric" />
             </div>
             <div>
-              <Label>Payment email</Label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-            </div>
-            <div>
               <Label className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Promo code (optional)</Label>
               <Input
                 value={promoCode}
@@ -141,7 +133,7 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button disabled={phone.length < 10 || !purchasesEnabled || !email.includes("@")} onClick={() => setStep("confirm")}>Continue</Button>
+              <Button disabled={phone.length < 10 || !purchasesEnabled} onClick={() => setStep("confirm")}>Continue</Button>
             </DialogFooter>
           </div>
         ) : (

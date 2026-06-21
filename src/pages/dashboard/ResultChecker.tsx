@@ -48,12 +48,7 @@ export default function ResultChecker() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<Product | null>(null);
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [buying, setBuying] = useState(false);
-
-  useEffect(() => {
-    if (user?.email) setEmail(user.email);
-  }, [user?.email]);
 
   const load = async () => {
     const [{ data: prods }, { data: ords }] = await Promise.all([
@@ -86,14 +81,12 @@ export default function ResultChecker() {
     if (!selected) return;
     const cleanPhone = phone.replace(/\D/g, "").slice(0, 10);
     if (cleanPhone.length < 10) return toast.error("Enter a valid 10-digit phone number.");
-    if (!email.includes("@")) return toast.error("Enter a valid email for payment.");
     if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setBuying(true);
     try {
       await initiatePaystackPayment({
         purpose: "result_checker",
-        email,
         metadata: {
           product_id: selected.id,
           recipient_phone: cleanPhone,
@@ -230,10 +223,6 @@ export default function ResultChecker() {
                   <span className="text-xl font-black text-primary">₵{priceFor(selected).toFixed(2)}</span>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Payment email</Label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-                </div>
-                <div className="space-y-1.5">
                   <Label>Phone number</Label>
                   <Input
                     value={phone}
@@ -248,7 +237,7 @@ export default function ResultChecker() {
                 <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
                 <Button
                   onClick={pay}
-                  disabled={buying || phone.length < 10 || !email.includes("@")}
+                  disabled={buying || phone.length < 10}
                   className="gap-2 font-semibold"
                 >
                   {buying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
