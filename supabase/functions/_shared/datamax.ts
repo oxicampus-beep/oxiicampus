@@ -31,7 +31,7 @@ export type DatamaxOrderStatusResponse = {
 
 /** Map ByteBoss network enum → Datamax API network values */
 export const BYTEBOSS_TO_DATAMAX_NETWORK: Record<string, string> = {
-  mtn: "mtn",
+  mtn: "express",
   telecel: "telecel",
   airteltigo_ishare: "airteltigo",
   airteltigo_bigtime: "bigtime",
