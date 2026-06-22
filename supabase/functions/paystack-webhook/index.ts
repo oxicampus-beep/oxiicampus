@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { paystackVerify, verifyPaystackWebhookSignature, getPaystackSecret } from "../_shared/paystack.ts";
+import { autoFulfillDataOrder } from "../_shared/fulfill-order.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
       return new Response("Amount mismatch", { status: 400 });
     }
 
-    const { error } = await admin.rpc("fulfill_paystack_payment", {
+    const { data: result, error } = await admin.rpc("fulfill_paystack_payment", {
       p_reference: reference,
       p_paystack_data: verified.data,
     });
@@ -66,6 +67,8 @@ Deno.serve(async (req) => {
       console.error("Fulfill error:", error);
       return new Response(error.message, { status: 500 });
     }
+
+    await autoFulfillDataOrder(admin, (result ?? {}) as Record<string, unknown>);
 
     return new Response("OK", { status: 200 });
   } catch (e) {

@@ -51,7 +51,20 @@ export function mapBytebossNetworkToDatamax(network: string): string | null {
 export function formatDatamaxVolume(sizeGb: number | string): string {
   const n = Number(sizeGb);
   if (!Number.isFinite(n)) return String(sizeGb);
-  return Number.isInteger(n) ? String(n) : String(n);
+  // Datamax catalog uses whole-GB bundle sizes (e.g. "1", "2", "5")
+  if (Number.isInteger(n)) return String(n);
+  return String(Math.round(n * 10) / 10);
+}
+
+export function datamaxRequestId(orderId: string): string {
+  const id = orderId.replace(/-/g, "").slice(0, 20).toUpperCase();
+  return `TXN${id}`;
+}
+
+export function isDatamaxPlaceSuccess(res: DatamaxPlaceOrderResponse): boolean {
+  if (res.success === true) return true;
+  const msg = (res.message ?? "").toLowerCase();
+  return msg.includes("duplicate request") && res.order_id != null;
 }
 
 export function normalizeGhanaPhone(phone: string): string {
@@ -113,6 +126,9 @@ export function mapDatamaxStatusToOrder(status?: string): string {
   }
   if (s.includes("fail") || s.includes("cancel") || s.includes("reject")) {
     return "failed";
+  }
+  if (s.includes("progress") || s.includes("pending") || s.includes("processing")) {
+    return "processing";
   }
   return "processing";
 }

@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { fulfillDataOrder } from "@/lib/fulfillDataOrder";
 import { toast } from "sonner";
-import { Loader2, Tag } from "lucide-react";
-import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
+import { Loader2, Tag, Wallet } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type Pkg = { id: string; network: any; size_gb: number; price: number; validity: string };
 
@@ -15,6 +17,7 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
   pkg: Pkg | null; open: boolean; onOpenChange: (o: boolean) => void; onSuccess?: () => void;
 }) {
   const { user } = useAuth();
+  const { profile, refresh } = useProfile();
   const [phone, setPhone] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -37,6 +40,7 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
 
   if (!pkg) return null;
   const finalPrice = Math.max(0, Number(pkg.price) - discount);
+  const balance = Number(profile?.wallet_balance ?? 0);
 
   const validatePromo = async (code: string) => {
     if (!code.trim()) { setDiscount(0); setPromoValid(null); return; }
@@ -57,39 +61,35 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
   const handlePay = async () => {
     if (!user) return;
     if (!purchasesEnabled) return toast.error("Purchases are temporarily disabled.");
-    if (!paystackConfigured()) return toast.error("Paystack is not configured.");
+    if (balance < finalPrice) {
+      return toast.error("Insufficient wallet balance. Top up your wallet first.");
+    }
 
     setLoading(true);
     try {
-      await initiatePaystackPayment({
-        purpose: "data_purchase",
-        metadata: {
-          package_id: pkg.id,
-          recipient_phone: phone,
-          ...(promoCode.trim() ? { promo_code: promoCode.trim() } : {}),
-        },
-        onSuccess: async (result) => {
-          const orderId = result.order_id;
-          if (orderId) {
-            const { data: fulfill, error: fulfillErr } = await supabase.functions.invoke("fulfill-data-order", {
-              body: { order_id: orderId },
-            });
-            if (fulfillErr || !fulfill?.success) {
-              toast.warning(fulfill?.error ?? "Order placed. Data delivery is pending.");
-            } else if (fulfill.status === "completed") {
-              toast.success("Purchase successful! Data has been delivered.");
-            } else {
-              toast.success("Purchase successful! Your data is being delivered.");
-            }
-          } else {
-            toast.success("Purchase successful!");
-          }
-          onOpenChange(false);
-          onSuccess?.();
-        },
+      const { data: orderId, error } = await supabase.rpc("purchase_data_package", {
+        p_package_id: pkg.id,
+        p_recipient_phone: phone,
+        p_promo_code: promoCode.trim() || null,
       });
+      if (error) throw new Error(error.message);
+
+      try {
+        const fulfill = await fulfillDataOrder(orderId as string);
+        if (fulfill.status === "completed") {
+          toast.success("Purchase successful! Data has been delivered.");
+        } else {
+          toast.success("Purchase successful! Your data is being delivered.");
+        }
+      } catch (fulfillErr) {
+        toast.warning(fulfillErr instanceof Error ? fulfillErr.message : "Order placed. Data delivery is pending.");
+      }
+
+      await refresh();
+      onOpenChange(false);
+      onSuccess?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Payment failed");
+      toast.error(e instanceof Error ? e.message : "Purchase failed");
     } finally {
       setLoading(false);
     }
@@ -113,6 +113,19 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
           <p className="text-destructive text-sm rounded-lg bg-destructive/10 p-3">Purchases are currently disabled. Please try again later.</p>
         )}
 
+        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <Wallet className="h-4 w-4" /> Wallet balance
+          </span>
+          <span className="font-bold">₵{balance.toFixed(2)}</span>
+        </div>
+        {balance < finalPrice && (
+          <p className="text-xs text-destructive">
+            Need ₵{(finalPrice - balance).toFixed(2)} more.{" "}
+            <Link to="/dashboard/wallet" className="underline">Top up wallet</Link>
+          </p>
+        )}
+
         {step === "enter" ? (
           <div className="space-y-4 py-2">
             <div>
@@ -133,7 +146,7 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button disabled={phone.length < 10 || !purchasesEnabled} onClick={() => setStep("confirm")}>Continue</Button>
+              <Button disabled={phone.length < 10 || !purchasesEnabled || balance < finalPrice} onClick={() => setStep("confirm")}>Continue</Button>
             </DialogFooter>
           </div>
         ) : (
@@ -145,12 +158,12 @@ export default function BuyDataDialog({ pkg, open, onOpenChange, onSuccess }: {
               {discount > 0 && <Row k="Promo discount" v={`-₵${discount.toFixed(2)}`} />}
               <Row k="Amount" v={`₵${finalPrice.toFixed(2)}`} highlight />
             </div>
-            <p className="text-xs text-muted-foreground">You will pay securely via Paystack (Mobile Money, card, or bank).</p>
+            <p className="text-xs text-muted-foreground">Paid from your wallet balance. Data is delivered instantly.</p>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setStep("enter")}>Back</Button>
-              <Button disabled={loading || !purchasesEnabled} onClick={handlePay} className="font-semibold gap-2">
+              <Button disabled={loading || !purchasesEnabled || balance < finalPrice} onClick={handlePay} className="font-semibold gap-2">
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Opening Paystack…" : `Pay ₵${finalPrice.toFixed(2)}`}
+                {loading ? "Processing…" : `Pay ₵${finalPrice.toFixed(2)} from wallet`}
               </Button>
             </DialogFooter>
           </div>

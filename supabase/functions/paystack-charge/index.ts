@@ -8,6 +8,7 @@ import {
   paystackVerify,
   resolvePaystackEmail,
 } from "../_shared/paystack.ts";
+import { autoFulfillDataOrder } from "../_shared/fulfill-order.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -160,11 +161,18 @@ async function handleChargeResult(
           error: `Payment received but fulfillment failed: ${error.message}. Contact support with ref ${reference}.`,
         });
       }
+
+      const upstream = await autoFulfillDataOrder(admin, fulfill as Record<string, unknown>);
       return json({
         success: true,
         charge_status: "success",
         display_text: displayText,
         ...fulfill,
+        ...(upstream?.success
+          ? { data_delivery_status: upstream.status, fulfillment_provider: upstream.fulfillment_provider }
+          : upstream && !upstream.success
+          ? { data_delivery_warning: upstream.error }
+          : {}),
       });
     }
   }

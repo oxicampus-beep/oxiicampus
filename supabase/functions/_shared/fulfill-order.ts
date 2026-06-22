@@ -1,7 +1,10 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   checkDatamaxBalance,
+  datamaxRequestId,
+  fetchDatamaxOrderStatus,
   formatDatamaxVolume,
+  isDatamaxPlaceSuccess,
   mapBytebossNetworkToDatamax,
   mapDatamaxStatusToOrder,
   placeDatamaxOrder,
@@ -46,6 +49,29 @@ export async function fulfillOrder(admin: SupabaseClient, orderId: string): Prom
     return fulfillDatamaxOrder(admin, orderId);
   }
   return fulfillSwiftOrder(admin, orderId);
+}
+
+/** After Paystack creates a data order, send it to the active upstream provider. */
+export async function autoFulfillDataOrder(
+  admin: SupabaseClient,
+  paystackResult: Record<string, unknown>,
+): Promise<FulfillSuccess | FulfillFailure | null> {
+  const purpose = String(paystackResult.purpose ?? "");
+  let dataOrderId: string | null = null;
+
+  if (purpose === "store_order" && paystackResult.data_order_id) {
+    dataOrderId = String(paystackResult.data_order_id);
+  } else if (purpose === "data_purchase" && paystackResult.order_id) {
+    dataOrderId = String(paystackResult.order_id);
+  }
+
+  if (!dataOrderId) return null;
+
+  const result = await fulfillOrder(admin, dataOrderId);
+  if (!result.success) {
+    console.error("autoFulfillDataOrder failed:", dataOrderId, result.error);
+  }
+  return result;
 }
 
 async function fulfillSwiftOrder(admin: SupabaseClient, orderId: string): Promise<FulfillSuccess | FulfillFailure> {
@@ -180,14 +206,14 @@ async function fulfillDatamaxOrder(admin: SupabaseClient, orderId: string): Prom
 
   const volume = formatDatamaxVolume(order.size_gb);
   const datamaxRes = await placeDatamaxOrder(datamaxKey, {
-    request_id: orderId,
+    request_id: datamaxRequestId(orderId),
     network: datamaxNetwork,
     volume,
     customer_number: order.recipient_phone,
     quantity: 1,
   });
 
-  if (!datamaxRes.success || datamaxRes.http_status >= 400) {
+  if (!isDatamaxPlaceSuccess(datamaxRes) || datamaxRes.http_status >= 400) {
     const errMsg = datamaxRes.message || datamaxRes.error || "Datamax purchase failed";
     await admin.from("data_orders").update({
       status: "failed",
@@ -199,12 +225,21 @@ async function fulfillDatamaxOrder(admin: SupabaseClient, orderId: string): Prom
   }
 
   const providerOrderId = datamaxRes.order_id != null ? String(datamaxRes.order_id) : null;
-  const mappedStatus = mapDatamaxStatusToOrder(datamaxRes.message);
+  let providerStatus = datamaxRes.message ?? "placed";
+  let mappedStatus = mapDatamaxStatusToOrder(providerStatus);
+
+  if (providerOrderId) {
+    const statusRes = await fetchDatamaxOrderStatus(datamaxKey, providerOrderId);
+    if (statusRes.success && statusRes.status) {
+      providerStatus = statusRes.status_label ?? statusRes.status;
+      mappedStatus = mapDatamaxStatusToOrder(statusRes.status);
+    }
+  }
 
   await admin.from("data_orders").update({
     status: mappedStatus,
     provider_order_id: providerOrderId,
-    provider_status: datamaxRes.message ?? "placed",
+    provider_status: providerStatus,
     provider_error: null,
     fulfillment_provider: "datamax",
   }).eq("id", orderId);
@@ -214,7 +249,7 @@ async function fulfillDatamaxOrder(admin: SupabaseClient, orderId: string): Prom
     order_id: orderId,
     status: mappedStatus,
     provider_order_id: providerOrderId,
-    provider_status: datamaxRes.message ?? "placed",
+    provider_status: providerStatus,
     fulfillment_provider: "datamax",
   };
 }

@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardPageHeader, GlassCard } from "@/components/dashboard/DashboardUi";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Send } from "lucide-react";
 import { labelFor } from "@/components/data/BuyDataDialog";
-import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
+import { fulfillDataOrders } from "@/lib/fulfillDataOrder";
 
 export default function BulkDisbursement() {
   const { user } = useAuth();
+  const { refresh } = useProfile();
   const [packages, setPackages] = useState<any[]>([]);
   const [packageId, setPackageId] = useState("");
   const [phones, setPhones] = useState("");
@@ -40,31 +41,36 @@ export default function BulkDisbursement() {
     if (!packageId) return toast.error("Select a package");
     if (list.length === 0) return toast.error("Enter at least one phone number");
     if (list.length > 50) return toast.error("Maximum 50 numbers per batch");
-    if (!paystackConfigured()) return toast.error("Paystack is not configured.");
 
     setLoading(true);
     try {
-      await initiatePaystackPayment({
-        purpose: "bulk_purchase",
-        metadata: { package_id: packageId, phones: list },
-        onSuccess: async (result) => {
-          if (result.job_id) {
-            const { data: items } = await supabase
-              .from("bulk_disbursement_items")
-              .select("*")
-              .eq("job_id", result.job_id);
-            setLastItems(items ?? []);
-            for (const item of (items ?? []).filter((i: any) => i.data_order_id).slice(0, 10)) {
-              await supabase.functions.invoke("fulfill-data-order", { body: { order_id: item.data_order_id } });
-            }
-            toast.success(`Bulk job complete — ${(items ?? []).filter((i: any) => i.status === "success").length}/${list.length} succeeded`);
-          }
-          setPhones("");
-          load();
-        },
+      const { data: jobId, error } = await supabase.rpc("bulk_purchase_data", {
+        p_package_id: packageId,
+        p_phones: list,
       });
+      if (error) throw new Error(error.message);
+
+      const { data: items } = await supabase
+        .from("bulk_disbursement_items")
+        .select("*")
+        .eq("job_id", jobId);
+      setLastItems(items ?? []);
+
+      const orderIds = (items ?? [])
+        .filter((i: { data_order_id?: string | null }) => i.data_order_id)
+        .map((i: { data_order_id: string }) => i.data_order_id);
+
+      if (orderIds.length > 0) {
+        await fulfillDataOrders(orderIds);
+      }
+
+      const successCount = (items ?? []).filter((i: { status: string }) => i.status === "success").length;
+      toast.success(`Bulk job complete — ${successCount}/${list.length} charged to wallet`);
+      setPhones("");
+      await refresh();
+      load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Payment failed");
+      toast.error(err instanceof Error ? err.message : "Bulk purchase failed");
     } finally {
       setLoading(false);
     }
@@ -72,7 +78,7 @@ export default function BulkDisbursement() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <DashboardPageHeader title="Bulk Disbursement" description="Send the same data bundle to multiple numbers at once (max 50) via Paystack." />
+      <DashboardPageHeader title="Bulk Disbursement" description="Send the same data bundle to multiple numbers at once (max 50) from your wallet." />
 
       <GlassCard title="New batch">
         <form onSubmit={submit} className="space-y-4">
@@ -93,7 +99,7 @@ export default function BulkDisbursement() {
           </div>
           <Button type="submit" disabled={loading} className="w-full font-bold gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {loading ? "Opening Paystack…" : "Pay & send batch"}
+            {loading ? "Processing…" : "Pay from wallet & send batch"}
           </Button>
         </form>
       </GlassCard>

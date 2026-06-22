@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { paystackVerify, getPaystackSecret } from "../_shared/paystack.ts";
+import { autoFulfillDataOrder } from "../_shared/fulfill-order.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,6 +61,8 @@ Deno.serve(async (req) => {
       console.error(fulfillErr);
       return json({ success: false, error: fulfillErr.message }, 500);
     }
+
+    await autoFulfillDataOrder(admin, { ...(result as Record<string, unknown>) });
 
     return json({ success: true, ...result });
   } catch (e) {

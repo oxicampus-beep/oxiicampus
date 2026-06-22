@@ -9,6 +9,7 @@ import { labelFor } from "@/components/data/BuyDataDialog";
 import NetworkBadge from "@/components/store/NetworkBadge";
 import { useStoreTheme } from "@/components/store/StoreThemeProvider";
 import { cn } from "@/lib/utils";
+import { fulfillDataOrder } from "@/lib/fulfillDataOrder";
 import { initiatePaystackPayment, paystackConfigured } from "@/lib/paystack";
 
 type Pkg = {
@@ -53,7 +54,15 @@ export default function StoreBuyDialog({
           customer_phone: phone.trim(),
         },
         callbackPath: window.location.pathname,
-        onSuccess: () => {
+        onSuccess: async (result) => {
+          const dataOrderId = result.data_order_id;
+          if (dataOrderId) {
+            try {
+              await fulfillDataOrder(dataOrderId);
+            } catch {
+              toast.warning("Payment received. Data delivery is in progress.");
+            }
+          }
           toast.success("Payment successful! Your data is being delivered.");
           setPhone("");
           onOpenChange(false);
